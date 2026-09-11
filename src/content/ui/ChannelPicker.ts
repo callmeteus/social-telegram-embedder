@@ -1,4 +1,5 @@
 import type { TelegramChannel } from "../../core/types/Config";
+import { t } from "../../core/i18n/I18n";
 import { sortChannelsForPicker } from "../../core/storage/Storage";
 
 let activePicker: HTMLElement | null = null;
@@ -23,7 +24,7 @@ export function showChannelPicker(
 
     const title = document.createElement("div");
     title.className = "x2tg-picker__title";
-    title.textContent = "Enviar para qual canal?";
+    title.textContent = t("pickerTitle");
     picker.appendChild(title);
 
     for (const channel of sorted) {

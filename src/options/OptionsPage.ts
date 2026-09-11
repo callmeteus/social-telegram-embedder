@@ -1,4 +1,6 @@
 import type { DetectedTelegramChannel } from "../core/telegram/DiscoverChannels";
+import { applyChannelRowI18n, applyOptionsPageI18n } from "../core/i18n/ApplyOptionsPageI18n";
+import { t } from "../core/i18n/I18n";
 import {
     createEmptyChannel,
     isChannelValid,
@@ -29,6 +31,8 @@ const channelRows: ChannelRowState[] = [];
 void init();
 
 async function init(): Promise<void> {
+    applyOptionsPageI18n();
+
     const config = await loadConfig();
     botTokenInput.value = config.botToken;
 
@@ -59,6 +63,8 @@ async function init(): Promise<void> {
 
 function addChannelRow(channel: TelegramChannel): void {
     const fragment = channelTemplate.content.cloneNode(true) as DocumentFragment;
+    applyChannelRowI18n(fragment);
+
     const element = fragment.querySelector(".channel-row") as HTMLElement;
     const labelInput = fragment.querySelector(".channel-label") as HTMLInputElement;
     const chatIdInput = fragment.querySelector(".channel-chat-id") as HTMLInputElement;
@@ -132,7 +138,7 @@ async function handleTestBot(): Promise<void> {
     const token = botTokenInput.value.trim();
 
     if (!token) {
-        setStatus(botStatusEl, "Informe o token do bot.", "error");
+        setStatus(botStatusEl, t("optionsEnterBotToken"), "error");
         return;
     }
 
@@ -141,17 +147,17 @@ async function handleTestBot(): Promise<void> {
         botToken: token
     });
 
-    setStatus(botStatusEl, "Validando token...", "info");
+    setStatus(botStatusEl, t("optionsValidatingToken"), "info");
 
     const client = new TelegramClient(token);
     const response = await client.getMe();
 
     if (!response?.ok) {
-        setStatus(botStatusEl, response?.error ?? "Token inválido.", "error");
+        setStatus(botStatusEl, response?.error ?? t("optionsInvalidToken"), "error");
         return;
     }
 
-    setStatus(botStatusEl, "Token válido.", "success");
+    setStatus(botStatusEl, t("optionsValidToken"), "success");
 }
 
 function readConfigFromForm(): ExtensionConfig {
@@ -170,12 +176,12 @@ async function handleSave(): Promise<void> {
     const validChannels = config.channels.filter(isChannelValid);
 
     if (!config.botToken) {
-        setStatus(saveStatusEl, "Informe o token do bot antes de salvar.", "error");
+        setStatus(saveStatusEl, t("optionsEnterTokenBeforeSave"), "error");
         return;
     }
 
     if (validChannels.length === 0) {
-        setStatus(saveStatusEl, "Cadastre pelo menos um canal com nome e chat_id.", "error");
+        setStatus(saveStatusEl, t("optionsNeedChannelBeforeSave"), "error");
         return;
     }
 
@@ -187,14 +193,14 @@ async function handleSave(): Promise<void> {
         lastUsedChannelId: existing.lastUsedChannelId
     });
 
-    setStatus(saveStatusEl, "Configuração salva com sucesso.", "success");
+    setStatus(saveStatusEl, t("optionsSavedSuccess"), "success");
 }
 
 async function handleDiscoverChannels(): Promise<void> {
     const token = botTokenInput.value.trim();
 
     if (!token) {
-        setStatus(discoverStatusEl, "Informe e valide o token do bot antes de buscar canais.", "error");
+        setStatus(discoverStatusEl, t("optionsEnterTokenBeforeDiscover"), "error");
         return;
     }
 
@@ -204,13 +210,13 @@ async function handleDiscoverChannels(): Promise<void> {
     });
 
     discoveredChannelsEl.innerHTML = "";
-    setStatus(discoverStatusEl, "Buscando canais do bot...", "info");
+    setStatus(discoverStatusEl, t("optionsDiscoveringChannels"), "info");
 
     const client = new TelegramClient(token);
     const response = await client.discoverChannels();
 
     if (!response?.ok) {
-        setStatus(discoverStatusEl, response?.error ?? "Falha ao buscar canais.", "error");
+        setStatus(discoverStatusEl, response?.error ?? t("optionsDiscoverFailed"), "error");
         return;
     }
 
@@ -219,7 +225,7 @@ async function handleDiscoverChannels(): Promise<void> {
     } else {
         setStatus(
             discoverStatusEl,
-            `${response.channels?.length ?? 0} canal(is) detectado(s). Clique em Adicionar para incluir na lista.`,
+            t("optionsChannelsFound", String(response.channels?.length ?? 0)),
             "success"
         );
     }
@@ -251,14 +257,16 @@ function renderDiscoveredChannels(channels: DetectedTelegramChannel[]): void {
         const addButton = document.createElement("button");
         addButton.type = "button";
         addButton.className = "btn btn--secondary";
-        addButton.textContent = isChannelAlreadyListed(channel.chatId) ? "Já adicionado" : "Adicionar";
+        addButton.textContent = isChannelAlreadyListed(channel.chatId)
+            ? t("optionsAlreadyAdded")
+            : t("optionsAddDetectedChannel");
         addButton.disabled = isChannelAlreadyListed(channel.chatId);
 
         addButton.addEventListener("click", () => {
             addDetectedChannel(channel);
             addButton.disabled = true;
-            addButton.textContent = "Já adicionado";
-            setStatus(discoverStatusEl, `Canal "${channel.title}" adicionado à lista. Clique em Salvar configuração.`, "success");
+            addButton.textContent = t("optionsAlreadyAdded");
+            setStatus(discoverStatusEl, t("optionsChannelAdded", channel.title), "success");
         });
 
         item.appendChild(info);
@@ -298,7 +306,7 @@ async function handleTestChannel(rowState: ChannelRowState): Promise<void> {
     const chatId = rowState.chatIdInput.value.trim();
 
     if (!label || !chatId) {
-        setStatus(rowState.statusEl, "Preencha nome e chat_id antes de testar.", "error");
+        setStatus(rowState.statusEl, t("optionsFillBeforeTest"), "error");
         return;
     }
 
@@ -308,17 +316,17 @@ async function handleTestChannel(rowState: ChannelRowState): Promise<void> {
         lastUsedChannelId: (await loadConfig()).lastUsedChannelId
     });
 
-    setStatus(rowState.statusEl, "Enviando mensagem de teste...", "info");
+    setStatus(rowState.statusEl, t("optionsSendingTest"), "info");
 
     const client = new TelegramClient(config.botToken);
     const response = await client.sendTestMessage(chatId);
 
     if (!response?.ok) {
-        setStatus(rowState.statusEl, response?.error ?? "Falha no teste.", "error");
+        setStatus(rowState.statusEl, response?.error ?? t("optionsTestFailed"), "error");
         return;
     }
 
-    setStatus(rowState.statusEl, `Teste enviado para ${label} (${chatId}).`, "success");
+    setStatus(rowState.statusEl, t("optionsTestSent", [label, chatId]), "success");
 }
 
 function setStatus(

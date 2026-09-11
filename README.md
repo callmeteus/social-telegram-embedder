@@ -89,12 +89,12 @@ Compare the output with the contents of the `.sha256` file from the release.
 
 1. Click the extension icon, then **Options** (or right-click the icon -> Options)
 2. Paste your bot token from [@BotFather](https://t.me/BotFather)
-3. Click **Validar token**
+3. Click **Validate token**
 4. Add your channels:
-   - Click **Buscar canais** to detect channels from bot updates, or
+   - Click **Discover channels** to detect channels from bot updates, or
    - Add them manually (friendly name + `@channel` or `-100...` ID)
-5. Click **Salvar configuração**
-6. Use **Testar canal** on each channel to confirm posting works
+5. Click **Save settings**
+6. Use **Test channel** on each channel to confirm posting works
 
 ### 3. Send a tweet
 
@@ -163,17 +163,28 @@ Each caption includes the tweet text (when available) and the FixupX link so rea
 
 ---
 
-## Options Page (UI language)
+## Localization
 
-The options UI is in **Brazilian Portuguese** (personal tool). Button labels you will see:
+The extension uses Chrome's built-in i18n (`chrome.i18n`) with automatic locale detection from the browser language.
 
-| Label | Meaning |
-|-------|---------|
-| Validar token | Validate bot token |
-| Buscar canais | Discover channels from bot updates |
-| Adicionar canal | Add a channel manually |
-| Salvar configuração | Save settings |
-| Testar canal | Send a test message to that channel |
+| Locale folder | Language |
+|---------------|----------|
+| `_locales/en/` | English (default) |
+| `_locales/pt_BR/` | Brazilian Portuguese |
+
+All user-facing copy (options page, toasts, progress messages, and errors) comes from `_locales/*/messages.json`. To add a language, create a new folder under `_locales/` following [Chrome's locale rules](https://developer.chrome.com/docs/extensions/reference/api/i18n).
+
+Example button labels in English:
+
+| Label | Action |
+|-------|--------|
+| Validate token | Check the @BotFather token |
+| Discover channels | Read bot updates to find channels |
+| Add channel | Add a channel manually |
+| Save settings | Persist bot token and channel list |
+| Test channel | Send a test message to that channel |
+
+With Portuguese (`pt-BR`) as the browser language, the same controls appear in Brazilian Portuguese automatically.
 
 ---
 
@@ -182,7 +193,7 @@ The options UI is in **Brazilian Portuguese** (personal tool). Button labels you
 | Symptom | What to try |
 |---------|-------------|
 | Bot cannot post | Confirm the bot is a channel admin with **Post Messages** |
-| Channel not in discovery | Post in the channel, then click **Buscar canais** again |
+| Channel not in discovery | Post in the channel, then click **Discover channels** again |
 | Media missing in Telegram | Retry; extension falls back to direct upload if URL fetch fails |
 | Button not visible on tweets | Reload the extension; X DOM changes may require an update |
 | Invalid token | Re-copy the token from @BotFather |
@@ -225,7 +236,9 @@ Load the `dist/` folder via **Load unpacked** while developing. After changes, c
 
 | Path | Role |
 |------|------|
-| `src/core/` | Extension core: types, storage, Telegram client, network helpers |
+| `src/core/` | Types, storage, Telegram client, network helpers |
+| `src/core/i18n/` | `chrome.i18n` helper and options page localization |
+| `_locales/` | Localized message catalogs (`en`, `pt_BR`) |
 | `src/platforms/` | Social platform registry and adapters (`x/` today) |
 | `src/platforms/x/` | X/Twitter: FixupX URL, FxTwitter API, action bar injection |
 | `src/content/` | Content script orchestrator and shared UI (picker, toasts) |

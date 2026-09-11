@@ -42,6 +42,7 @@ export interface SocialPlatform {
         onProgress?: SendProgressCallback
     ): Promise<SendResult>;
     progressMessages: {
+        /** i18n message keys resolved via chrome.i18n at runtime. */
         fetching: string;
         invalidUrl: string;
     };

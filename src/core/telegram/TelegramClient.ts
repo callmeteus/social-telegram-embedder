@@ -1,6 +1,7 @@
 import { buildTelegramCaption } from "./Caption";
 import { chunkSocialMedia } from "./MediaBatch";
 import type { FetchedSocialPost, SocialMediaItem } from "../../platforms/types";
+import { t } from "../i18n/I18n";
 import {
     fetchBlobWithProgress,
     formatDownloadProgressMessage
@@ -66,7 +67,7 @@ export class TelegramClient {
         const mediaTotal = post.media.length;
 
         if (post.media.length === 0) {
-            onProgress?.({ message: "Enviando link..." });
+            onProgress?.({ message: t("progressSendingLink") });
             return this.sendMessage(normalizedChatId, caption);
         }
 
@@ -97,11 +98,11 @@ export class TelegramClient {
         }
 
         if (batches.length > 1) {
-            onProgress?.({ message: "Enviando link complementar..." });
+            onProgress?.({ message: t("progressComplementaryLink") });
 
             const continuation = await this.sendMessage(
                 normalizedChatId,
-                `Mais mídia do post:\n${post.embedUrl}`
+                t("followUpMoreMedia", post.embedUrl)
             );
 
             if (!continuation.ok) {
@@ -125,7 +126,7 @@ export class TelegramClient {
     public async sendTestMessage(chatId: string): Promise<SendResult> {
         return this.sendMessage(
             chatId,
-            "Teste da extensão Social Telegram Embedder. Se você vê esta mensagem, o canal está configurado corretamente."
+            t("testChannelMessage")
         );
     }
 
@@ -138,14 +139,14 @@ export class TelegramClient {
         if (!webhookResponse.ok) {
             return {
                 ok: false,
-                error: translateTelegramError(webhookResponse.description ?? "Falha ao consultar webhook.")
+                error: translateTelegramError(webhookResponse.description ?? t("errorWebhookQueryFailed"))
             };
         }
 
         if (webhookResponse.result?.url) {
             return {
                 ok: false,
-                error: "Este bot usa webhook. Remova o webhook (deleteWebhook) para detectar canais pela extensão."
+                error: t("errorWebhookActive")
             };
         }
 
@@ -162,7 +163,7 @@ export class TelegramClient {
             if (!updatesResponse.ok) {
                 return {
                     ok: false,
-                    error: translateTelegramError(updatesResponse.description ?? "Falha ao buscar updates.")
+                    error: translateTelegramError(updatesResponse.description ?? t("errorDiscoverUpdatesFailed"))
                 };
             }
 
@@ -184,8 +185,7 @@ export class TelegramClient {
             return {
                 ok: true,
                 channels: [],
-                warning:
-                    "Nenhum canal encontrado. Adicione o bot como admin do canal e publique uma mensagem no canal (ou busque de novo depois)."
+                warning: t("warningDiscoverNoChannels")
             };
         }
 
@@ -239,8 +239,12 @@ export class TelegramClient {
     ): Promise<SendResult> {
         onProgress?.({
             message: itemTotal > 1
-                ? `Enviando mídia ${startIndex + 1} a ${Math.min(startIndex + mediaItems.length, itemTotal)} de ${itemTotal}...`
-                : "Enviando mídia..."
+                ? t("progressSendingMediaRange", [
+                    String(startIndex + 1),
+                    String(Math.min(startIndex + mediaItems.length, itemTotal)),
+                    String(itemTotal)
+                ])
+                : t("progressSendingMedia")
         });
 
         const media: TelegramInputMedia[] = mediaItems.map((item, index) => ({
@@ -290,8 +294,8 @@ export class TelegramClient {
     ): Promise<SendResult> {
         onProgress?.({
             message: itemTotal > 1
-                ? `Enviando mídia ${itemIndex} de ${itemTotal}...`
-                : "Enviando mídia..."
+                ? t("progressSendingMediaIndexed", [String(itemIndex), String(itemTotal)])
+                : t("progressSendingMedia")
         });
 
         const byUrl = await this.request(method, {
@@ -334,8 +338,8 @@ export class TelegramClient {
 
             onProgress?.({
                 message: itemTotal > 1
-                    ? `Enviando mídia ${itemIndex} de ${itemTotal} para o Telegram...`
-                    : "Enviando mídia para o Telegram..."
+                    ? t("progressSendingToTelegramIndexed", [String(itemIndex), String(itemTotal)])
+                    : t("progressSendingToTelegram")
             });
 
             const extension = guessFileExtension(mediaUrl, blob.type);
@@ -350,18 +354,16 @@ export class TelegramClient {
 
             return this.requestForm(method, formData);
         } catch (err) {
-            const fallbackMessage = "Falha ao enviar mídia para o Telegram.";
-
             if (err instanceof Error && err.message.startsWith("Download failed")) {
                 return {
                     ok: false,
-                    error: "Não foi possível baixar a mídia do tweet."
+                    error: t("errorMediaDownloadFailed")
                 };
             }
 
             return {
                 ok: false,
-                error: err instanceof Error ? err.message : fallbackMessage
+                error: err instanceof Error ? err.message : t("errorMediaUploadFailed")
             };
         }
     }
@@ -373,7 +375,7 @@ export class TelegramClient {
         if (!this.botToken) {
             return {
                 ok: false,
-                error: "Token do bot não configurado."
+                error: t("errorBotTokenMissing")
             };
         }
 
@@ -391,7 +393,7 @@ export class TelegramClient {
             if (!data.ok) {
                 return {
                     ok: false,
-                    error: translateTelegramError(data.description ?? "Erro desconhecido do Telegram.")
+                    error: translateTelegramError(data.description ?? t("errorTelegramUnknown"))
                 };
             }
 
@@ -399,7 +401,7 @@ export class TelegramClient {
         } catch (err) {
             return {
                 ok: false,
-                error: err instanceof Error ? err.message : "Falha de rede ao contatar o Telegram."
+                error: err instanceof Error ? err.message : t("errorNetworkTelegram")
             };
         }
     }
@@ -411,7 +413,7 @@ export class TelegramClient {
         if (!this.botToken) {
             return {
                 ok: false,
-                description: "Token do bot não configurado."
+                description: t("errorBotTokenMissing")
             };
         }
 
@@ -431,7 +433,7 @@ export class TelegramClient {
         } catch (err) {
             return {
                 ok: false,
-                description: err instanceof Error ? err.message : "Falha de rede ao contatar o Telegram."
+                description: err instanceof Error ? err.message : t("errorNetworkTelegram")
             };
         }
     }
@@ -445,7 +447,7 @@ export class TelegramClient {
         if (!data.ok) {
             return {
                 ok: false,
-                error: translateTelegramError(data.description ?? "Erro desconhecido do Telegram.")
+                error: translateTelegramError(data.description ?? t("errorTelegramUnknown"))
             };
         }
 
@@ -454,25 +456,25 @@ export class TelegramClient {
 }
 
 /**
- * Maps common Telegram API errors to Portuguese messages.
+ * Maps common Telegram API errors to localized messages.
  */
 function translateTelegramError(description: string): string {
     const lower = description.toLowerCase();
 
     if (lower.includes("unauthorized") || lower.includes("bot token")) {
-        return "Token do bot inválido. Verifique o token do @BotFather.";
+        return t("telegramErrorUnauthorized");
     }
 
     if (lower.includes("chat not found")) {
-        return "Canal não encontrado. Confira o chat_id (@canal ou -100...).";
+        return t("telegramErrorChatNotFound");
     }
 
     if (lower.includes("not enough rights") || lower.includes("have rights")) {
-        return "O bot não tem permissão para postar neste canal. Adicione-o como administrador.";
+        return t("telegramErrorNoRights");
     }
 
     if (lower.includes("bot was kicked") || lower.includes("bot is not a member")) {
-        return "O bot não está no canal. Adicione-o como administrador.";
+        return t("telegramErrorNotMember");
     }
 
     return description;

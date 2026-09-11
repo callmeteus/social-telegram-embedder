@@ -1,4 +1,5 @@
 import { RuntimeMessageType } from "../../../core/types/Messages";
+import { t } from "../../../core/i18n/I18n";
 import { isConfigReady, loadConfig } from "../../../core/storage/Storage";
 import { SocialPlatformId } from "../../types";
 import {
@@ -149,8 +150,8 @@ function prepareClonedActionButton(button: HTMLButtonElement): void {
     button.removeAttribute("aria-expanded");
     button.removeAttribute("role");
     button.classList.add("x2tg-send-button");
-    button.setAttribute("aria-label", "Enviar para Telegram");
-    button.setAttribute("title", "Enviar para Telegram");
+    button.setAttribute("aria-label", t("sendToTelegram"));
+    button.setAttribute("title", t("sendToTelegram"));
     button.type = "button";
 
     for (const counter of Array.from(button.querySelectorAll('[data-testid="app-text-transition-container"]'))) {
@@ -200,7 +201,7 @@ async function handleSendClick(button: HTMLButtonElement, postUrl: string): Prom
     const config = await loadConfig();
 
     if (!isConfigReady(config)) {
-        showToast("Configure o token do bot e pelo menos um canal nas opções da extensão.", "error");
+        showToast(t("configureExtension"), "error");
         openOptionsPage();
         return;
     }
@@ -224,12 +225,12 @@ async function sendToChannel(
     const lastSent = recentSends.get(dedupeKey) ?? 0;
 
     if (Date.now() - lastSent < SEND_DEBOUNCE_MS) {
-        showToast("Aguarde alguns segundos antes de reenviar o mesmo post.", "info");
+        showToast(t("waitBeforeResend"), "info");
         return;
     }
 
     const requestId = crypto.randomUUID();
-    updateProgressToast(requestId, "Preparando envio...");
+    updateProgressToast(requestId, t("preparingSend"));
 
     const response = await chrome.runtime.sendMessage({
         type: RuntimeMessageType.SEND_POST,
@@ -242,12 +243,12 @@ async function sendToChannel(
     dismissProgressToast(requestId);
 
     if (!response?.ok) {
-        showToast(response?.error ?? "Falha ao enviar para o Telegram.", "error");
+        showToast(response?.error ?? t("sendFailed"), "error");
         return;
     }
 
     recentSends.set(dedupeKey, Date.now());
-    showToast(`Enviado para ${channelLabel}`, "success");
+    showToast(t("sentToChannel", channelLabel), "success");
 }
 
 function insertActionButtonSlot(actionBar: Element, buttonSlot: HTMLElement): void {

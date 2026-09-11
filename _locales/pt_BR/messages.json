@@ -1,0 +1,341 @@
+{
+    "extName": {
+        "message": "Social Telegram Embedder"
+    },
+    "extDescription": {
+        "message": "Embute posts de redes sociais em canais do Telegram com mídia rica. X/Twitter suportado hoje; mais redes em breve."
+    },
+    "optionsPageTitle": {
+        "message": "Social Telegram Embedder - Configurações"
+    },
+    "optionsSubtitle": {
+        "message": "Configure o bot e os canais. Hoje funciona no X/Twitter; mais redes virão depois. Cada envio pergunta para qual canal mandar."
+    },
+    "optionsBotSection": {
+        "message": "Bot do Telegram"
+    },
+    "optionsBotTokenLabel": {
+        "message": "Token do @BotFather"
+    },
+    "optionsBotTokenPlaceholder": {
+        "message": "123456789:ABC..."
+    },
+    "optionsValidateToken": {
+        "message": "Validar token"
+    },
+    "optionsChannelsSection": {
+        "message": "Canais"
+    },
+    "optionsAddChannel": {
+        "message": "Adicionar canal"
+    },
+    "optionsDetectedChannelsTitle": {
+        "message": "Canais detectados do bot"
+    },
+    "optionsDiscoverChannels": {
+        "message": "Buscar canais"
+    },
+    "optionsDiscoverHint": {
+        "message": "A extensão lê os updates do bot no Telegram. Se o canal não aparecer, adicione o bot como admin, publique uma mensagem no canal e clique em Buscar canais de novo."
+    },
+    "optionsSavedChannelsTitle": {
+        "message": "Seus canais salvos"
+    },
+    "optionsSavedChannelsHint": {
+        "message": "Use @nomeDoCanal para canais públicos ou o ID -100... para canais privados."
+    },
+    "optionsSaveConfig": {
+        "message": "Salvar configuração"
+    },
+    "optionsChannelNameLabel": {
+        "message": "Nome"
+    },
+    "optionsChannelChatIdLabel": {
+        "message": "Chat ID"
+    },
+    "optionsChannelNamePlaceholder": {
+        "message": "Ex.: Fofocas"
+    },
+    "optionsChannelChatIdPlaceholder": {
+        "message": "Ex.: @meuCanal"
+    },
+    "optionsMoveUpTitle": {
+        "message": "Mover para cima"
+    },
+    "optionsMoveDownTitle": {
+        "message": "Mover para baixo"
+    },
+    "optionsTestChannel": {
+        "message": "Testar canal"
+    },
+    "optionsRemoveChannel": {
+        "message": "Remover"
+    },
+    "optionsEnterBotToken": {
+        "message": "Informe o token do bot."
+    },
+    "optionsValidatingToken": {
+        "message": "Validando token..."
+    },
+    "optionsInvalidToken": {
+        "message": "Token inválido."
+    },
+    "optionsValidToken": {
+        "message": "Token válido."
+    },
+    "optionsEnterTokenBeforeSave": {
+        "message": "Informe o token do bot antes de salvar."
+    },
+    "optionsNeedChannelBeforeSave": {
+        "message": "Cadastre pelo menos um canal com nome e chat_id."
+    },
+    "optionsSavedSuccess": {
+        "message": "Configuração salva com sucesso."
+    },
+    "optionsEnterTokenBeforeDiscover": {
+        "message": "Informe e valide o token do bot antes de buscar canais."
+    },
+    "optionsDiscoveringChannels": {
+        "message": "Buscando canais do bot..."
+    },
+    "optionsDiscoverFailed": {
+        "message": "Falha ao buscar canais."
+    },
+    "optionsChannelsFound": {
+        "message": "$1 canal(is) detectado(s). Clique em Adicionar para incluir na lista.",
+        "placeholders": {
+            "count": {
+                "content": "$1",
+                "example": "3"
+            }
+        }
+    },
+    "optionsAlreadyAdded": {
+        "message": "Já adicionado"
+    },
+    "optionsAddDetectedChannel": {
+        "message": "Adicionar"
+    },
+    "optionsChannelAdded": {
+        "message": "Canal \"$1\" adicionado à lista. Clique em Salvar configuração.",
+        "placeholders": {
+            "title": {
+                "content": "$1",
+                "example": "Fofocas"
+            }
+        }
+    },
+    "optionsFillBeforeTest": {
+        "message": "Preencha nome e chat_id antes de testar."
+    },
+    "optionsSendingTest": {
+        "message": "Enviando mensagem de teste..."
+    },
+    "optionsTestFailed": {
+        "message": "Falha no teste."
+    },
+    "optionsTestSent": {
+        "message": "Teste enviado para $1 ($2).",
+        "placeholders": {
+            "label": {
+                "content": "$1",
+                "example": "Fofocas"
+            },
+            "chatId": {
+                "content": "$2",
+                "example": "@fofocas"
+            }
+        }
+    },
+    "pickerTitle": {
+        "message": "Enviar para qual canal?"
+    },
+    "sendToTelegram": {
+        "message": "Enviar para Telegram"
+    },
+    "configureExtension": {
+        "message": "Configure o token do bot e pelo menos um canal nas opções da extensão."
+    },
+    "waitBeforeResend": {
+        "message": "Aguarde alguns segundos antes de reenviar o mesmo post."
+    },
+    "preparingSend": {
+        "message": "Preparando envio..."
+    },
+    "sendFailed": {
+        "message": "Falha ao enviar para o Telegram."
+    },
+    "sentToChannel": {
+        "message": "Enviado para $1",
+        "placeholders": {
+            "label": {
+                "content": "$1",
+                "example": "Fofocas"
+            }
+        }
+    },
+    "progressFetchingPost": {
+        "message": "Buscando informações do post..."
+    },
+    "progressSendingLink": {
+        "message": "Enviando link..."
+    },
+    "progressComplementaryLink": {
+        "message": "Enviando link complementar..."
+    },
+    "progressSendingMedia": {
+        "message": "Enviando mídia..."
+    },
+    "progressSendingMediaIndexed": {
+        "message": "Enviando mídia $1 de $2...",
+        "placeholders": {
+            "index": {
+                "content": "$1",
+                "example": "2"
+            },
+            "total": {
+                "content": "$2",
+                "example": "4"
+            }
+        }
+    },
+    "progressSendingMediaRange": {
+        "message": "Enviando mídia $1 a $2 de $3...",
+        "placeholders": {
+            "from": {
+                "content": "$1",
+                "example": "2"
+            },
+            "to": {
+                "content": "$2",
+                "example": "4"
+            },
+            "total": {
+                "content": "$3",
+                "example": "6"
+            }
+        }
+    },
+    "progressSendingToTelegram": {
+        "message": "Enviando mídia para o Telegram..."
+    },
+    "progressSendingToTelegramIndexed": {
+        "message": "Enviando mídia $1 de $2 para o Telegram...",
+        "placeholders": {
+            "index": {
+                "content": "$1",
+                "example": "2"
+            },
+            "total": {
+                "content": "$2",
+                "example": "4"
+            }
+        }
+    },
+    "progressDownloadSingle": {
+        "message": "Baixando mídia..."
+    },
+    "progressDownloadMulti": {
+        "message": "Baixando mídia $1 de $2...",
+        "placeholders": {
+            "index": {
+                "content": "$1",
+                "example": "2"
+            },
+            "total": {
+                "content": "$2",
+                "example": "4"
+            }
+        }
+    },
+    "progressDownloadPercent": {
+        "message": "$1%",
+        "placeholders": {
+            "percent": {
+                "content": "$1",
+                "example": "67"
+            }
+        }
+    },
+    "progressDownloadKilobytes": {
+        "message": "$1 KB",
+        "placeholders": {
+            "kilobytes": {
+                "content": "$1",
+                "example": "512"
+            }
+        }
+    },
+    "errorUnsupportedPlatform": {
+        "message": "Plataforma não suportada."
+    },
+    "errorChannelNotFound": {
+        "message": "Canal não encontrado na configuração."
+    },
+    "errorInternal": {
+        "message": "Erro interno da extensão."
+    },
+    "errorInvalidPostUrl": {
+        "message": "URL do post inválida."
+    },
+    "errorUnsupportedMessageType": {
+        "message": "Tipo de mensagem não suportado: $1",
+        "placeholders": {
+            "type": {
+                "content": "$1",
+                "example": "UNKNOWN"
+            }
+        }
+    },
+    "errorBotTokenMissing": {
+        "message": "Token do bot não configurado."
+    },
+    "errorMediaDownloadFailed": {
+        "message": "Não foi possível baixar a mídia do post."
+    },
+    "errorMediaUploadFailed": {
+        "message": "Falha ao enviar mídia para o Telegram."
+    },
+    "errorNetworkTelegram": {
+        "message": "Falha de rede ao contatar o Telegram."
+    },
+    "errorTelegramUnknown": {
+        "message": "Erro desconhecido do Telegram."
+    },
+    "errorWebhookQueryFailed": {
+        "message": "Falha ao consultar webhook."
+    },
+    "errorWebhookActive": {
+        "message": "Este bot usa webhook. Remova o webhook (deleteWebhook) para detectar canais pela extensão."
+    },
+    "errorDiscoverUpdatesFailed": {
+        "message": "Falha ao buscar updates."
+    },
+    "warningDiscoverNoChannels": {
+        "message": "Nenhum canal encontrado. Adicione o bot como admin do canal e publique uma mensagem no canal (ou busque de novo depois)."
+    },
+    "followUpMoreMedia": {
+        "message": "Mais mídia do post:\n$1",
+        "placeholders": {
+            "url": {
+                "content": "$1",
+                "example": "https://fixupx.com/user/status/1"
+            }
+        }
+    },
+    "testChannelMessage": {
+        "message": "Teste da extensão Social Telegram Embedder. Se você vê esta mensagem, o canal está configurado corretamente."
+    },
+    "telegramErrorUnauthorized": {
+        "message": "Token do bot inválido. Verifique o token do @BotFather."
+    },
+    "telegramErrorChatNotFound": {
+        "message": "Canal não encontrado. Confira o chat_id (@canal ou -100...)."
+    },
+    "telegramErrorNoRights": {
+        "message": "O bot não tem permissão para postar neste canal. Adicione-o como administrador."
+    },
+    "telegramErrorNotMember": {
+        "message": "O bot não está no canal. Adicione-o como administrador."
+    }
+}

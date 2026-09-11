@@ -29,6 +29,7 @@ await esbuild.build({
 });
 
 cpSync(join(root, "manifest.json"), join(dist, "manifest.json"));
+cpSync(join(root, "_locales"), join(dist, "_locales"), { recursive: true });
 cpSync(join(root, "src/options/OptionsPage.html"), join(dist, "options.html"));
 cpSync(join(root, "src/options/OptionsPage.css"), join(dist, "options.css"));
 cpSync(join(root, "src/content/styles/content.css"), join(dist, "content.css"));

@@ -1,4 +1,5 @@
 import { handleSendPost } from "./handlers/SendPostHandler";
+import { t } from "../core/i18n/I18n";
 import { findChannelById, loadConfig } from "../core/storage/Storage";
 import { TelegramClient } from "../core/telegram/TelegramClient";
 import {
@@ -21,7 +22,7 @@ chrome.runtime.onMessage.addListener((
         .catch((err: unknown) => {
             sendResponse({
                 ok: false,
-                error: err instanceof Error ? err.message : "Erro interno da extensão."
+                error: err instanceof Error ? err.message : t("errorInternal")
             } satisfies SendResult);
         });
 
@@ -47,7 +48,7 @@ async function handleMessage(
         const channel = findChannelById(config, message.channelId);
 
         if (!channel) {
-            return { ok: false, error: "Canal não encontrado na configuração." };
+            return { ok: false, error: t("errorChannelNotFound") };
         }
 
         return client.sendTestMessage(channel.chatId);
@@ -59,6 +60,6 @@ async function handleMessage(
 
     return {
         ok: false,
-        error: `Tipo de mensagem não suportado: ${String((message as { type?: string }).type ?? "")}`
+        error: t("errorUnsupportedMessageType", String((message as { type?: string }).type ?? ""))
     };
 }

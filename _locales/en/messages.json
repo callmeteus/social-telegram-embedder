@@ -1,0 +1,341 @@
+{
+    "extName": {
+        "message": "Social Telegram Embedder"
+    },
+    "extDescription": {
+        "message": "Embed social posts in Telegram channels with rich media. X/Twitter supported today; more networks coming."
+    },
+    "optionsPageTitle": {
+        "message": "Social Telegram Embedder - Settings"
+    },
+    "optionsSubtitle": {
+        "message": "Configure your bot and channels. X/Twitter works today; more networks are coming. Every send asks which channel to use."
+    },
+    "optionsBotSection": {
+        "message": "Telegram bot"
+    },
+    "optionsBotTokenLabel": {
+        "message": "@BotFather token"
+    },
+    "optionsBotTokenPlaceholder": {
+        "message": "123456789:ABC..."
+    },
+    "optionsValidateToken": {
+        "message": "Validate token"
+    },
+    "optionsChannelsSection": {
+        "message": "Channels"
+    },
+    "optionsAddChannel": {
+        "message": "Add channel"
+    },
+    "optionsDetectedChannelsTitle": {
+        "message": "Channels detected from the bot"
+    },
+    "optionsDiscoverChannels": {
+        "message": "Discover channels"
+    },
+    "optionsDiscoverHint": {
+        "message": "The extension reads your bot updates. If a channel is missing, add the bot as admin, post in the channel, then click Discover channels again."
+    },
+    "optionsSavedChannelsTitle": {
+        "message": "Your saved channels"
+    },
+    "optionsSavedChannelsHint": {
+        "message": "Use @channelName for public channels or the -100... ID for private channels."
+    },
+    "optionsSaveConfig": {
+        "message": "Save settings"
+    },
+    "optionsChannelNameLabel": {
+        "message": "Name"
+    },
+    "optionsChannelChatIdLabel": {
+        "message": "Chat ID"
+    },
+    "optionsChannelNamePlaceholder": {
+        "message": "e.g. Gossip"
+    },
+    "optionsChannelChatIdPlaceholder": {
+        "message": "e.g. @myChannel"
+    },
+    "optionsMoveUpTitle": {
+        "message": "Move up"
+    },
+    "optionsMoveDownTitle": {
+        "message": "Move down"
+    },
+    "optionsTestChannel": {
+        "message": "Test channel"
+    },
+    "optionsRemoveChannel": {
+        "message": "Remove"
+    },
+    "optionsEnterBotToken": {
+        "message": "Enter the bot token."
+    },
+    "optionsValidatingToken": {
+        "message": "Validating token..."
+    },
+    "optionsInvalidToken": {
+        "message": "Invalid token."
+    },
+    "optionsValidToken": {
+        "message": "Token is valid."
+    },
+    "optionsEnterTokenBeforeSave": {
+        "message": "Enter the bot token before saving."
+    },
+    "optionsNeedChannelBeforeSave": {
+        "message": "Add at least one channel with a name and chat ID."
+    },
+    "optionsSavedSuccess": {
+        "message": "Settings saved successfully."
+    },
+    "optionsEnterTokenBeforeDiscover": {
+        "message": "Enter and validate the bot token before discovering channels."
+    },
+    "optionsDiscoveringChannels": {
+        "message": "Discovering bot channels..."
+    },
+    "optionsDiscoverFailed": {
+        "message": "Could not discover channels."
+    },
+    "optionsChannelsFound": {
+        "message": "$1 channel(s) found. Click Add to include them in the list.",
+        "placeholders": {
+            "count": {
+                "content": "$1",
+                "example": "3"
+            }
+        }
+    },
+    "optionsAlreadyAdded": {
+        "message": "Already added"
+    },
+    "optionsAddDetectedChannel": {
+        "message": "Add"
+    },
+    "optionsChannelAdded": {
+        "message": "Channel \"$1\" added to the list. Click Save settings.",
+        "placeholders": {
+            "title": {
+                "content": "$1",
+                "example": "News"
+            }
+        }
+    },
+    "optionsFillBeforeTest": {
+        "message": "Fill in the name and chat ID before testing."
+    },
+    "optionsSendingTest": {
+        "message": "Sending test message..."
+    },
+    "optionsTestFailed": {
+        "message": "Test failed."
+    },
+    "optionsTestSent": {
+        "message": "Test sent to $1 ($2).",
+        "placeholders": {
+            "label": {
+                "content": "$1",
+                "example": "News"
+            },
+            "chatId": {
+                "content": "$2",
+                "example": "@news"
+            }
+        }
+    },
+    "pickerTitle": {
+        "message": "Send to which channel?"
+    },
+    "sendToTelegram": {
+        "message": "Send to Telegram"
+    },
+    "configureExtension": {
+        "message": "Set up the bot token and at least one channel in the extension options."
+    },
+    "waitBeforeResend": {
+        "message": "Wait a few seconds before sending the same post again."
+    },
+    "preparingSend": {
+        "message": "Preparing send..."
+    },
+    "sendFailed": {
+        "message": "Could not send to Telegram."
+    },
+    "sentToChannel": {
+        "message": "Sent to $1",
+        "placeholders": {
+            "label": {
+                "content": "$1",
+                "example": "News"
+            }
+        }
+    },
+    "progressFetchingPost": {
+        "message": "Fetching post details..."
+    },
+    "progressSendingLink": {
+        "message": "Sending link..."
+    },
+    "progressComplementaryLink": {
+        "message": "Sending follow-up link..."
+    },
+    "progressSendingMedia": {
+        "message": "Sending media..."
+    },
+    "progressSendingMediaIndexed": {
+        "message": "Sending media $1 of $2...",
+        "placeholders": {
+            "index": {
+                "content": "$1",
+                "example": "2"
+            },
+            "total": {
+                "content": "$2",
+                "example": "4"
+            }
+        }
+    },
+    "progressSendingMediaRange": {
+        "message": "Sending media $1 to $2 of $3...",
+        "placeholders": {
+            "from": {
+                "content": "$1",
+                "example": "2"
+            },
+            "to": {
+                "content": "$2",
+                "example": "4"
+            },
+            "total": {
+                "content": "$3",
+                "example": "6"
+            }
+        }
+    },
+    "progressSendingToTelegram": {
+        "message": "Uploading media to Telegram..."
+    },
+    "progressSendingToTelegramIndexed": {
+        "message": "Uploading media $1 of $2 to Telegram...",
+        "placeholders": {
+            "index": {
+                "content": "$1",
+                "example": "2"
+            },
+            "total": {
+                "content": "$2",
+                "example": "4"
+            }
+        }
+    },
+    "progressDownloadSingle": {
+        "message": "Downloading media..."
+    },
+    "progressDownloadMulti": {
+        "message": "Downloading media $1 of $2...",
+        "placeholders": {
+            "index": {
+                "content": "$1",
+                "example": "2"
+            },
+            "total": {
+                "content": "$2",
+                "example": "4"
+            }
+        }
+    },
+    "progressDownloadPercent": {
+        "message": "$1%",
+        "placeholders": {
+            "percent": {
+                "content": "$1",
+                "example": "67"
+            }
+        }
+    },
+    "progressDownloadKilobytes": {
+        "message": "$1 KB",
+        "placeholders": {
+            "kilobytes": {
+                "content": "$1",
+                "example": "512"
+            }
+        }
+    },
+    "errorUnsupportedPlatform": {
+        "message": "Unsupported platform."
+    },
+    "errorChannelNotFound": {
+        "message": "Channel not found in settings."
+    },
+    "errorInternal": {
+        "message": "Internal extension error."
+    },
+    "errorInvalidPostUrl": {
+        "message": "Invalid post URL."
+    },
+    "errorUnsupportedMessageType": {
+        "message": "Unsupported message type: $1",
+        "placeholders": {
+            "type": {
+                "content": "$1",
+                "example": "UNKNOWN"
+            }
+        }
+    },
+    "errorBotTokenMissing": {
+        "message": "Bot token is not configured."
+    },
+    "errorMediaDownloadFailed": {
+        "message": "Could not download the post media."
+    },
+    "errorMediaUploadFailed": {
+        "message": "Could not upload media to Telegram."
+    },
+    "errorNetworkTelegram": {
+        "message": "Network error while contacting Telegram."
+    },
+    "errorTelegramUnknown": {
+        "message": "Unknown Telegram error."
+    },
+    "errorWebhookQueryFailed": {
+        "message": "Could not query the bot webhook."
+    },
+    "errorWebhookActive": {
+        "message": "This bot uses a webhook. Remove it (deleteWebhook) before discovering channels in the extension."
+    },
+    "errorDiscoverUpdatesFailed": {
+        "message": "Could not fetch bot updates."
+    },
+    "warningDiscoverNoChannels": {
+        "message": "No channels found. Add the bot as a channel admin and post in the channel, then try again."
+    },
+    "followUpMoreMedia": {
+        "message": "More media from this post:\n$1",
+        "placeholders": {
+            "url": {
+                "content": "$1",
+                "example": "https://fixupx.com/user/status/1"
+            }
+        }
+    },
+    "testChannelMessage": {
+        "message": "Social Telegram Embedder test. If you see this message, the channel is configured correctly."
+    },
+    "telegramErrorUnauthorized": {
+        "message": "Invalid bot token. Check the token from @BotFather."
+    },
+    "telegramErrorChatNotFound": {
+        "message": "Channel not found. Check the chat ID (@channel or -100...)."
+    },
+    "telegramErrorNoRights": {
+        "message": "The bot cannot post in this channel. Add it as an administrator."
+    },
+    "telegramErrorNotMember": {
+        "message": "The bot is not in the channel. Add it as an administrator."
+    }
+}

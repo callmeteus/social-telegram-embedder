@@ -41,7 +41,7 @@ export const xPlatform: SocialPlatform = {
         return client.sendSocialPost(chatId, post, onProgress);
     },
     progressMessages: {
-        fetching: "Buscando informações do post...",
-        invalidUrl: "URL do post inválida."
+        fetching: "progressFetchingPost",
+        invalidUrl: "errorInvalidPostUrl"
     }
 };

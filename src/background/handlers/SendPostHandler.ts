@@ -1,4 +1,5 @@
 import { createTabProgressReporter } from "../ProgressReporter";
+import { t } from "../../core/i18n/I18n";
 import { findChannelById, loadConfig, setLastUsedChannelId } from "../../core/storage/Storage";
 import { TelegramClient } from "../../core/telegram/TelegramClient";
 import type { SendPostMessage, SendResult } from "../../core/types";
@@ -16,7 +17,7 @@ export async function handleSendPost(
     if (!platform) {
         return {
             ok: false,
-            error: "Plataforma não suportada."
+            error: t("errorUnsupportedPlatform")
         };
     }
 
@@ -26,7 +27,7 @@ export async function handleSendPost(
     if (!channel) {
         return {
             ok: false,
-            error: "Canal não encontrado na configuração."
+            error: t("errorChannelNotFound")
         };
     }
 
@@ -35,7 +36,7 @@ export async function handleSendPost(
     if (!normalizedUrl) {
         return {
             ok: false,
-            error: platform.progressMessages.invalidUrl
+            error: t(platform.progressMessages.invalidUrl)
         };
     }
 
@@ -46,7 +47,7 @@ export async function handleSendPost(
 
     const client = new TelegramClient(config.botToken);
 
-    onProgress?.({ message: platform.progressMessages.fetching });
+    onProgress?.({ message: t(platform.progressMessages.fetching) });
 
     const fetchedPost = await platform.fetchPost(normalizedUrl);
     const result = fetchedPost

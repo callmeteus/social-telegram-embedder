@@ -1,3 +1,5 @@
+import { t } from "../i18n/I18n";
+
 /**
  * Downloads a remote resource with byte progress when Content-Length is available.
  */
@@ -52,20 +54,21 @@ export function formatDownloadProgressMessage(
     total: number | null
 ): { message: string; percent?: number } {
     const prefix = itemTotal > 1
-        ? `Baixando mídia ${itemIndex} de ${itemTotal}...`
-        : "Baixando mídia...";
+        ? t("progressDownloadMulti", [String(itemIndex), String(itemTotal)])
+        : t("progressDownloadSingle");
 
     if (!total || total <= 0) {
         const kilobytes = Math.max(1, Math.round(loaded / 1024));
+
         return {
-            message: `${prefix} ${kilobytes} KB`
+            message: `${prefix} ${t("progressDownloadKilobytes", String(kilobytes))}`
         };
     }
 
     const percent = Math.min(100, Math.round((loaded / total) * 100));
 
     return {
-        message: `${prefix} ${percent}%`,
+        message: `${prefix} ${t("progressDownloadPercent", String(percent))}`,
         percent
     };
 }
