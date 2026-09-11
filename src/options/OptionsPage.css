@@ -234,6 +234,19 @@ body {
     border: 1px solid #2f3336;
 }
 
+.btn--icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+}
+
+.btn--icon svg {
+    display: block;
+}
+
 .btn--danger {
     background: transparent;
     color: #f4212e;

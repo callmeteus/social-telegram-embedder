@@ -1,6 +1,8 @@
 import type { DetectedTelegramChannel } from "../core/telegram/DiscoverChannels";
 import { applyChannelRowI18n, applyOptionsPageI18n } from "../core/i18n/ApplyOptionsPageI18n";
 import { t } from "../core/i18n/I18n";
+import { setButtonLucideIcon } from "../core/ui/LucideIcon";
+import { ArrowDown, ArrowUp } from "lucide-static";
 import {
     createEmptyChannel,
     isChannelValid,
@@ -64,6 +66,7 @@ async function init(): Promise<void> {
 function addChannelRow(channel: TelegramChannel): void {
     const fragment = channelTemplate.content.cloneNode(true) as DocumentFragment;
     applyChannelRowI18n(fragment);
+    wireChannelRowIcons(fragment);
 
     const element = fragment.querySelector(".channel-row") as HTMLElement;
     const labelInput = fragment.querySelector(".channel-label") as HTMLInputElement;
@@ -99,6 +102,20 @@ function addChannelRow(channel: TelegramChannel): void {
 
     channelRows.push(rowState);
     channelsListEl.appendChild(fragment);
+}
+
+function wireChannelRowIcons(root: ParentNode): void {
+    const moveUpButton = root.querySelector(".btn-move-up");
+
+    if (moveUpButton instanceof HTMLButtonElement) {
+        setButtonLucideIcon(moveUpButton, ArrowUp);
+    }
+
+    const moveDownButton = root.querySelector(".btn-move-down");
+
+    if (moveDownButton instanceof HTMLButtonElement) {
+        setButtonLucideIcon(moveDownButton, ArrowDown);
+    }
 }
 
 function removeChannelRow(rowState: ChannelRowState): void {
