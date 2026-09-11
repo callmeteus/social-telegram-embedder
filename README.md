@@ -3,6 +3,8 @@
 # Social Telegram Embedder
 
 > Embed social posts in Telegram channels with one click - rich media today on X/Twitter, more networks planned.
+>
+> [github.com/callmeteus/social-telegram-embedder](https://github.com/callmeteus/social-telegram-embedder)
 
 **A Chrome extension that adds a send button to social posts, lets you pick a Telegram channel, and delivers photos, videos, GIFs, and text with source links. X/Twitter is supported first via FixupX.**
 
@@ -51,14 +53,12 @@ Under the hood it uses the public [FxTwitter Status API](https://github.com/FxEm
 
 ## Download
 
-**Recommended:** install from [GitHub Releases](https://github.com/YOUR_GITHUB_USERNAME/social-telegram-embedder/releases/latest).
+**Recommended:** install from [GitHub Releases](https://github.com/callmeteus/social-telegram-embedder/releases/latest).
 
 1. Open the latest release page.
 2. Download `social-telegram-embedder-vX.Y.Z.zip` (and optionally verify the `.sha256` checksum).
 3. Unzip the archive. You should see `manifest.json`, `background.js`, `content.js`, and the rest of the extension files at the top level of the folder.
 4. Continue with [Install in Chrome](#install-in-chrome) below.
-
-> Replace `YOUR_GITHUB_USERNAME` in links after you publish the repository, or use your repo's Releases tab directly.
 
 ### Verify checksum (optional)
 
@@ -209,7 +209,8 @@ The options UI is in **Brazilian Portuguese** (personal tool). Button labels you
 ### Scripts
 
 ```bash
-cd Pacotes/x-to-telegram   # or your clone path
+git clone https://github.com/callmeteus/social-telegram-embedder.git
+cd social-telegram-embedder
 
 yarn install
 yarn typecheck
