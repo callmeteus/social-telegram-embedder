@@ -1,0 +1,147 @@
+/* Cloned from native X action buttons; avoid overriding their sizing. */
+.x2tg-send-button-slot {
+    pointer-events: auto;
+    margin-inline-start: 12px;
+}
+
+.x2tg-send-button {
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.x2tg-send-button:hover,
+.x2tg-send-button:focus-visible {
+    color: rgb(42, 171, 238);
+    outline: none;
+}
+
+.x2tg-send-button:hover > div,
+.x2tg-send-button:focus-visible > div {
+    color: rgb(42, 171, 238);
+}
+
+.x2tg-send-button:hover > div > div:first-of-type,
+.x2tg-send-button:focus-visible > div > div:first-of-type {
+    background-color: rgba(42, 171, 238, 0.1);
+}
+
+.x2tg-picker {
+    position: absolute;
+    z-index: 100000;
+    min-width: 220px;
+    max-width: 320px;
+    padding: 8px;
+    border-radius: 12px;
+    background: rgb(0, 0, 0);
+    border: 1px solid rgb(47, 51, 54);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.x2tg-picker__title {
+    padding: 4px 8px 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgb(231, 233, 234);
+}
+
+.x2tg-picker__item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    margin: 0;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: rgb(231, 233, 234);
+    cursor: pointer;
+    text-align: left;
+}
+
+.x2tg-picker__item:hover,
+.x2tg-picker__item:focus-visible {
+    background: rgb(24, 26, 27);
+    outline: none;
+}
+
+.x2tg-picker__item--recent {
+    border: 1px solid rgba(29, 155, 240, 0.35);
+}
+
+.x2tg-picker__label {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.x2tg-toast-container {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 100001;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.x2tg-toast {
+    max-width: 360px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    color: rgb(231, 233, 234);
+    background: rgb(24, 26, 27);
+    border: 1px solid rgb(47, 51, 54);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.x2tg-toast--success {
+    border-color: rgba(0, 186, 124, 0.5);
+}
+
+.x2tg-toast--error {
+    border-color: rgba(244, 33, 46, 0.5);
+}
+
+.x2tg-toast--info {
+    border-color: rgba(29, 155, 240, 0.5);
+}
+
+.x2tg-toast--progress {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.x2tg-toast__message {
+    word-break: break-word;
+}
+
+.x2tg-toast__progress-track {
+    display: none;
+    width: 100%;
+    height: 4px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgb(47, 51, 54);
+}
+
+.x2tg-toast__progress-bar {
+    width: 0%;
+    height: 100%;
+    border-radius: inherit;
+    background: rgb(29, 155, 240);
+    transition: width 0.15s ease;
+}
+
+.x2tg-toast--hide {
+    opacity: 0;
+    transform: translateY(8px);
+}

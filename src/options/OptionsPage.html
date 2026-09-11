@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Telegram Embedder - Configurações</title>
+    <link rel="stylesheet" href="options.css">
+</head>
+<body>
+    <main class="page">
+        <header class="page__header">
+            <h1>Social Telegram Embedder</h1>
+            <p class="page__subtitle">
+                Configure o bot e os canais. Hoje funciona no X/Twitter; mais redes virão depois. Ao clicar no botão de um tweet, a extensão sempre pergunta para qual canal enviar.
+            </p>
+        </header>
+
+        <section class="card">
+            <h2>Bot do Telegram</h2>
+            <label class="field" for="bot-token">
+                <span class="field__label">Token do @BotFather</span>
+                <input id="bot-token" class="field__input" type="password" autocomplete="off" placeholder="123456789:ABC...">
+            </label>
+            <div class="actions">
+                <button id="test-bot" type="button" class="btn btn--secondary">Validar token</button>
+            </div>
+            <p id="bot-status" class="status" aria-live="polite"></p>
+        </section>
+
+        <section class="card card--channels">
+            <div class="card__header-row">
+                <h2>Canais</h2>
+                <button id="add-channel" type="button" class="btn btn--primary">Adicionar canal</button>
+            </div>
+
+            <div class="detected-section">
+                <div class="detected-section__header">
+                    <h3 class="subsection-title">Canais detectados do bot</h3>
+                    <button id="discover-channels" type="button" class="btn btn--secondary">Buscar canais</button>
+                </div>
+                <p class="hint">
+                    A extensão lê os updates do bot no Telegram. Se o canal não aparecer, adicione o bot como admin,
+                    publique uma mensagem no canal e clique em <strong>Buscar canais</strong> de novo.
+                </p>
+                <p id="discover-status" class="status" aria-live="polite"></p>
+                <div id="discovered-channels" class="discovered-list"></div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <h3 class="subsection-title">Seus canais salvos</h3>
+            <p class="hint hint--compact">
+                Use <code>@nomeDoCanal</code> para canais públicos ou o ID <code>-100...</code> para canais privados.
+            </p>
+            <div id="channels-list" class="channels-list"></div>
+        </section>
+
+        <footer class="page__footer">
+            <button id="save-config" type="button" class="btn btn--primary">Salvar configuração</button>
+            <p id="save-status" class="status" aria-live="polite"></p>
+        </footer>
+    </main>
+
+    <template id="channel-row-template">
+        <article class="channel-row">
+            <div class="channel-row__fields">
+                <label class="field">
+                    <span class="field__label">Nome</span>
+                    <input class="field__input channel-label" type="text" placeholder="Ex.: Fofocas">
+                </label>
+                <label class="field">
+                    <span class="field__label">Chat ID</span>
+                    <input class="field__input channel-chat-id" type="text" placeholder="Ex.: @meuCanal">
+                </label>
+            </div>
+            <div class="channel-row__actions">
+                <button type="button" class="btn btn--secondary btn-move-up" title="Mover para cima">↑</button>
+                <button type="button" class="btn btn--secondary btn-move-down" title="Mover para baixo">↓</button>
+                <button type="button" class="btn btn--secondary btn-test-channel">Testar canal</button>
+                <button type="button" class="btn btn--danger btn-remove-channel">Remover</button>
+            </div>
+            <p class="channel-row__status status" aria-live="polite"></p>
+        </article>
+    </template>
+
+    <script src="options.js"></script>
+</body>
+</html>

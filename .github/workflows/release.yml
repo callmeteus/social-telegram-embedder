@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: yarn
+
+      - name: Read version from manifest
+        id: version
+        run: |
+          VERSION=$(node -p "require('./manifest.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Manifest version: $VERSION"
+
+      - name: Verify tag matches manifest
+        if: github.event_name == 'push'
+        run: |
+          if [ "${{ github.ref_name }}" != "${{ steps.version.outputs.tag }}" ]; then
+            echo "Tag ${{ github.ref_name }} must match manifest version (${{ steps.version.outputs.tag }})."
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Typecheck
+        run: yarn typecheck
+
+      - name: Test
+        run: yarn test
+
+      - name: Build extension
+        run: yarn build
+
+      - name: Package zip
+        run: yarn package:zip
+
+      - name: Create checksum
+        run: |
+          cd release
+          sha256sum "social-telegram-embedder-v${{ steps.version.outputs.version }}.zip" > "social-telegram-embedder-v${{ steps.version.outputs.version }}.zip.sha256"
+          cat "social-telegram-embedder-v${{ steps.version.outputs.version }}.zip.sha256"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Social Telegram Embedder v${{ steps.version.outputs.version }}
+          files: |
+            release/social-telegram-embedder-v${{ steps.version.outputs.version }}.zip
+            release/social-telegram-embedder-v${{ steps.version.outputs.version }}.zip.sha256
+          generate_release_notes: true
+          draft: false
+          prerelease: false

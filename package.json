@@ -1,0 +1,27 @@
+{
+    "name": "social-telegram-embedder",
+    "version": "1.1.0",
+    "private": true,
+    "description": "Chrome extension to embed social posts in Telegram channels with rich media",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/YOUR_GITHUB_USERNAME/social-telegram-embedder.git"
+    },
+    "scripts": {
+        "build": "node scripts/generate-icons.mjs && node scripts/build.mjs",
+        "package:zip": "yarn build && node scripts/package.mjs",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run"
+    },
+    "devDependencies": {
+        "@types/chrome": "^0.0.287",
+        "archiver": "^7.0.1",
+        "esbuild": "^0.25.0",
+        "jsdom": "^26.0.0",
+        "lucide-static": "^1.45.0",
+        "sharp": "^0.35.4",
+        "typescript": "^5.7.3",
+        "vitest": "^2.1.8"
+    }
+}
