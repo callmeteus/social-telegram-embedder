@@ -192,13 +192,15 @@
 }
 
 .x2tg-picker__item:hover,
-.x2tg-picker__item:focus-visible {
+.x2tg-picker__item:focus-visible,
+.x2tg-picker__item--active {
     background: rgb(24, 26, 27);
     outline: none;
 }
 
 .x2tg-picker--facebook .x2tg-picker__item:hover,
-.x2tg-picker--facebook .x2tg-picker__item:focus-visible {
+.x2tg-picker--facebook .x2tg-picker__item:focus-visible,
+.x2tg-picker--facebook .x2tg-picker__item--active {
     background: var(--hover-overlay, rgba(255, 255, 255, 0.1));
 }
 
