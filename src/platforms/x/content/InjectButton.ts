@@ -1,3 +1,4 @@
+import { isExtensionContextValid, sendRuntimeMessage } from "../../../core/extension";
 import { RuntimeMessageType } from "../../../core/types/Messages";
 import { t } from "../../../core/i18n/I18n";
 import { isConfigReady, loadConfig } from "../../../core/storage/Storage";
@@ -139,7 +140,7 @@ function buildSendButtonSlot(actionBar: Element, postUrl: string): HTMLElement |
     wireSendButton(button, postUrl);
 
     slot.appendChild(button);
-    slot.classList.add("x2tg-send-button-slot");
+    slot.classList.add("x2tg-send-button-slot", "x2tg-send-button-slot--x");
 
     return slot;
 }
@@ -149,7 +150,7 @@ function prepareClonedActionButton(button: HTMLButtonElement): void {
     button.removeAttribute("aria-haspopup");
     button.removeAttribute("aria-expanded");
     button.removeAttribute("role");
-    button.classList.add("x2tg-send-button");
+    button.classList.add("x2tg-send-button", "x2tg-send-button--x");
     button.setAttribute("aria-label", t("sendToTelegram"));
     button.setAttribute("title", t("sendToTelegram"));
     button.type = "button";
@@ -198,6 +199,11 @@ function wireSendButton(button: HTMLButtonElement, postUrl: string): void {
 }
 
 async function handleSendClick(button: HTMLButtonElement, postUrl: string): Promise<void> {
+    if (!isExtensionContextValid()) {
+        showToast(t("extensionContextInvalidated"), "info");
+        return;
+    }
+
     const config = await loadConfig();
 
     if (!isConfigReady(config)) {
@@ -212,7 +218,8 @@ async function handleSendClick(button: HTMLButtonElement, postUrl: string): Prom
         config.lastUsedChannelId,
         (channel) => {
             void sendToChannel(channel.id, channel.label, postUrl);
-        }
+        },
+        SocialPlatformId.X
     );
 }
 
@@ -232,7 +239,7 @@ async function sendToChannel(
     const requestId = crypto.randomUUID();
     updateProgressToast(requestId, t("preparingSend"));
 
-    const response = await chrome.runtime.sendMessage({
+    const response = await sendRuntimeMessage<{ ok?: boolean; error?: string }>({
         type: RuntimeMessageType.SEND_POST,
         platformId: SocialPlatformId.X,
         requestId,
@@ -241,6 +248,11 @@ async function sendToChannel(
     });
 
     dismissProgressToast(requestId);
+
+    if (response === undefined) {
+        showToast(t("extensionContextInvalidated"), "info");
+        return;
+    }
 
     if (!response?.ok) {
         showToast(response?.error ?? t("sendFailed"), "error");

@@ -1,8 +1,10 @@
 import { createTabProgressReporter } from "../ProgressReporter";
+import { hydrateSnapshotMediaBlobs } from "../../content/media/BlobSnapshotTransfer";
 import { t } from "../../core/i18n/I18n";
 import { findChannelById, loadConfig, setLastUsedChannelId } from "../../core/storage/Storage";
 import { TelegramClient } from "../../core/telegram/TelegramClient";
 import type { SendPostMessage, SendResult } from "../../core/types";
+import { snapshotToFetchedPost } from "../../platforms/types";
 import { getPlatformById } from "../../platforms/registry";
 
 /**
@@ -49,7 +51,13 @@ export async function handleSendPost(
 
     onProgress?.({ message: t(platform.progressMessages.fetching) });
 
-    const fetchedPost = await platform.fetchPost(normalizedUrl);
+    const hydratedSnapshot = message.postSnapshot
+        ? await hydrateSnapshotMediaBlobs(message.postSnapshot)
+        : undefined;
+
+    const fetchedPost = hydratedSnapshot
+        ? snapshotToFetchedPost(normalizedUrl, hydratedSnapshot)
+        : await platform.fetchPost(normalizedUrl);
     const result = fetchedPost
         ? await platform.sendPost(client, channel.chatId, fetchedPost, onProgress)
         : await client.sendMessage(channel.chatId, normalizedUrl);

@@ -1,9 +1,11 @@
+import { facebookPlatform } from "./facebook";
 import { xPlatform } from "./x";
 import type { SocialPlatform, SocialPlatformId } from "./types";
 
 /** Registered social platforms, in display order. */
 export const socialPlatforms: SocialPlatform[] = [
-    xPlatform
+    xPlatform,
+    facebookPlatform
 ];
 
 /**

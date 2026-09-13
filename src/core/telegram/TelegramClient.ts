@@ -30,6 +30,8 @@ interface TelegramInputMedia {
     caption?: string;
 }
 
+const TELEGRAM_HTML_PARSE_MODE = "HTML";
+
 /**
  * Client for Telegram Bot API calls from the extension service worker.
  */
@@ -46,11 +48,16 @@ export class TelegramClient {
     /**
      * Sends a text message to a Telegram chat or channel.
      */
-    public async sendMessage(chatId: string, text: string): Promise<SendResult> {
+    public async sendMessage(
+        chatId: string,
+        text: string,
+        parseMode?: string
+    ): Promise<SendResult> {
         return this.request("sendMessage", {
             chat_id: chatId.trim(),
             text,
-            disable_web_page_preview: false
+            disable_web_page_preview: false,
+            ...(parseMode ? { parse_mode: parseMode } : {})
         });
     }
 
@@ -68,7 +75,7 @@ export class TelegramClient {
 
         if (post.media.length === 0) {
             onProgress?.({ message: t("progressSendingLink") });
-            return this.sendMessage(normalizedChatId, caption);
+            return this.sendMessage(normalizedChatId, caption, TELEGRAM_HTML_PARSE_MODE);
         }
 
         if (post.media.length === 1) {
@@ -203,6 +210,19 @@ export class TelegramClient {
         itemTotal: number,
         onProgress?: SendProgressCallback
     ): Promise<SendResult> {
+        if (media.inlineBlob) {
+            return this.uploadMediaFromInlineBlob(
+                media.kind === "photo" ? "sendPhoto" : "sendVideo",
+                chatId,
+                media.kind === "photo" ? "photo" : "video",
+                media.inlineBlob,
+                caption,
+                itemIndex,
+                itemTotal,
+                onProgress
+            );
+        }
+
         if (media.kind === "photo") {
             return this.sendMediaByUrl("sendPhoto", chatId, "photo", media.url, caption, itemIndex, itemTotal, onProgress);
         }
@@ -255,7 +275,8 @@ export class TelegramClient {
 
         const byUrl = await this.request("sendMediaGroup", {
             chat_id: chatId,
-            media
+            media,
+            parse_mode: TELEGRAM_HTML_PARSE_MODE
         });
 
         if (byUrl.ok) {
@@ -301,7 +322,8 @@ export class TelegramClient {
         const byUrl = await this.request(method, {
             chat_id: chatId,
             [fieldName]: mediaUrl,
-            caption
+            caption,
+            parse_mode: TELEGRAM_HTML_PARSE_MODE
         });
 
         if (byUrl.ok) {
@@ -336,23 +358,17 @@ export class TelegramClient {
                 onProgress?.(progress);
             });
 
-            onProgress?.({
-                message: itemTotal > 1
-                    ? t("progressSendingToTelegramIndexed", [String(itemIndex), String(itemTotal)])
-                    : t("progressSendingToTelegram")
-            });
-
-            const extension = guessFileExtension(mediaUrl, blob.type);
-            const formData = new FormData();
-
-            formData.append("chat_id", chatId);
-            formData.append(fieldName, blob, `tweet-media.${extension}`);
-
-            if (caption) {
-                formData.append("caption", caption);
-            }
-
-            return this.requestForm(method, formData);
+            return this.uploadMediaBlob(
+                method,
+                chatId,
+                fieldName,
+                blob,
+                mediaUrl,
+                caption,
+                itemIndex,
+                itemTotal,
+                onProgress
+            );
         } catch (err) {
             if (err instanceof Error && err.message.startsWith("Download failed")) {
                 return {
@@ -366,6 +382,69 @@ export class TelegramClient {
                 error: err instanceof Error ? err.message : t("errorMediaUploadFailed")
             };
         }
+    }
+
+    private async uploadMediaFromInlineBlob(
+        method: "sendPhoto" | "sendVideo" | "sendAnimation",
+        chatId: string,
+        fieldName: "photo" | "video" | "animation",
+        inlineBlob: NonNullable<SocialMediaItem["inlineBlob"]>,
+        caption: string | undefined,
+        itemIndex: number,
+        itemTotal: number,
+        onProgress?: SendProgressCallback
+    ): Promise<SendResult> {
+        try {
+            const blob = base64ToBlob(inlineBlob.base64, inlineBlob.mimeType);
+
+            return this.uploadMediaBlob(
+                method,
+                chatId,
+                fieldName,
+                blob,
+                inlineBlob.mimeType,
+                caption,
+                itemIndex,
+                itemTotal,
+                onProgress
+            );
+        } catch (err) {
+            return {
+                ok: false,
+                error: err instanceof Error ? err.message : t("errorMediaUploadFailed")
+            };
+        }
+    }
+
+    private async uploadMediaBlob(
+        method: "sendPhoto" | "sendVideo" | "sendAnimation",
+        chatId: string,
+        fieldName: "photo" | "video" | "animation",
+        blob: Blob,
+        nameHint: string,
+        caption: string | undefined,
+        itemIndex: number,
+        itemTotal: number,
+        onProgress?: SendProgressCallback
+    ): Promise<SendResult> {
+        onProgress?.({
+            message: itemTotal > 1
+                ? t("progressSendingToTelegramIndexed", [String(itemIndex), String(itemTotal)])
+                : t("progressSendingToTelegram")
+        });
+
+        const extension = guessFileExtension(nameHint, blob.type);
+        const formData = new FormData();
+
+        formData.append("chat_id", chatId);
+        formData.append(fieldName, blob, `social-media.${extension}`);
+
+        if (caption) {
+            formData.append("caption", caption);
+            formData.append("parse_mode", TELEGRAM_HTML_PARSE_MODE);
+        }
+
+        return this.requestForm(method, formData);
     }
 
     private async requestForm(
@@ -502,4 +581,15 @@ function guessFileExtension(mediaUrl: string, mimeType: string): string {
     }
 
     return "bin";
+}
+
+function base64ToBlob(base64: string, mimeType: string): Blob {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+
+    for (let index = 0; index < binary.length; index++) {
+        bytes[index] = binary.charCodeAt(index);
+    }
+
+    return new Blob([bytes], { type: mimeType });
 }

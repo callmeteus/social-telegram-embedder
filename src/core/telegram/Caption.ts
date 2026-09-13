@@ -1,9 +1,11 @@
+import { escapeTelegramHtml } from "./SocialCaption";
+
 /**
  * Builds a Telegram caption with post text and source link.
  */
 export function buildTelegramCaption(embedUrl: string, text: string): string {
     const trimmedText = text.trim();
-    const linkBlock = embedUrl.trim();
+    const linkBlock = escapeTelegramHtml(embedUrl.trim());
 
     if (!trimmedText) {
         return linkBlock.slice(0, 1024);

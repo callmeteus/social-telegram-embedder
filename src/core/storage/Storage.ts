@@ -1,5 +1,6 @@
 import type { ExtensionConfig, TelegramChannel } from "../types/Config";
 import { DefaultExtensionConfig } from "../types/Config";
+import { isExtensionContextError, isExtensionContextValid } from "../extension";
 
 const STORAGE_KEY = "xToTelegramConfig";
 
@@ -7,18 +8,30 @@ const STORAGE_KEY = "xToTelegramConfig";
  * Loads extension configuration from chrome.storage.sync.
  */
 export async function loadConfig(): Promise<ExtensionConfig> {
-    const result = await chrome.storage.sync.get(STORAGE_KEY);
-    const stored = result[STORAGE_KEY] as ExtensionConfig | undefined;
-
-    if (!stored) {
+    if (!isExtensionContextValid()) {
         return { ...DefaultExtensionConfig };
     }
 
-    return {
-        botToken: stored.botToken ?? "",
-        channels: Array.isArray(stored.channels) ? stored.channels : [],
-        lastUsedChannelId: stored.lastUsedChannelId
-    };
+    try {
+        const result = await chrome.storage.sync.get(STORAGE_KEY);
+        const stored = result[STORAGE_KEY] as ExtensionConfig | undefined;
+
+        if (!stored) {
+            return { ...DefaultExtensionConfig };
+        }
+
+        return {
+            botToken: stored.botToken ?? "",
+            channels: Array.isArray(stored.channels) ? stored.channels : [],
+            lastUsedChannelId: stored.lastUsedChannelId
+        };
+    } catch (err) {
+        if (isExtensionContextError(err)) {
+            return { ...DefaultExtensionConfig };
+        }
+
+        throw err;
+    }
 }
 
 /**

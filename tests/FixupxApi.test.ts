@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
     buildTweetCaption,
+    buildTweetPostText,
     chunkTweetMedia,
     extractTweetMediaItems,
     parseFixupxTweetUrl
@@ -54,6 +55,54 @@ describe("buildTweetCaption", () => {
     it("returns only link when tweet has no text", () => {
         expect(buildTweetCaption("https://fixupx.com/jack/status/1", "   "))
             .toBe("https://fixupx.com/jack/status/1");
+    });
+});
+
+describe("buildTweetPostText", () => {
+    it("includes author name for regular tweets", () => {
+        expect(buildTweetPostText({
+            text: "Art:lichee",
+            author: {
+                name: "Lily Van Hauntt",
+                screen_name: "lilyvanhauntt"
+            }
+        })).toBe([
+            "<b>@lilyvanhauntt</b>",
+            "Art:lichee"
+        ].join("\n\n"));
+    });
+
+    it("uses original author and reposter for retweets", () => {
+        expect(buildTweetPostText({
+            text: "RT @lilyvanhauntt: Art:lichee",
+            author: {
+                name: "Arioch Iankoski",
+                screen_name: "ariooch"
+            },
+            retweet: {
+                text: "Art:lichee",
+                author: {
+                    name: "Lily Van Hauntt",
+                    screen_name: "lilyvanhauntt"
+                }
+            }
+        })).toBe([
+            "<b>@ariooch</b> 🔁 <b>@lilyvanhauntt</b>",
+            "Art:lichee"
+        ].join("\n\n"));
+    });
+
+    it("parses legacy RT prefix when retweet object is missing", () => {
+        expect(buildTweetPostText({
+            text: "RT @lilyvanhauntt: Art:lichee",
+            author: {
+                name: "Arioch Iankoski",
+                screen_name: "ariooch"
+            }
+        })).toBe([
+            "<b>@ariooch</b> 🔁 <b>@lilyvanhauntt</b>",
+            "Art:lichee"
+        ].join("\n\n"));
     });
 });
 

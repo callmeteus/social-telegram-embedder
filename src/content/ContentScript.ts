@@ -1,21 +1,63 @@
+import { isExtensionContextError, isExtensionContextValid } from "../core/extension";
 import { ContentMessageType, type SendProgressPayload } from "../core/network/SendProgress";
 import { socialPlatforms } from "../platforms/registry";
 import { updateProgressToast } from "./ui/Toast";
 
-chrome.runtime.onMessage.addListener((message: SendProgressPayload) => {
-    if (message.type !== ContentMessageType.SEND_PROGRESS) {
+let domObserver: MutationObserver | null = null;
+let contentScriptStopped = false;
+
+try {
+    chrome.runtime.onMessage.addListener((message: SendProgressPayload) => {
+        if (!isExtensionContextValid()) {
+            stopContentScript();
+            return;
+        }
+
+        if (message.type !== ContentMessageType.SEND_PROGRESS) {
+            return;
+        }
+
+        updateProgressToast(message.requestId, message.message, message.percent);
+    });
+} catch (err) {
+    if (isExtensionContextError(err)) {
+        contentScriptStopped = true;
+    }
+}
+
+/**
+ * Stops DOM scanning after the extension context is invalidated.
+ */
+export function stopContentScript(): void {
+    if (contentScriptStopped) {
         return;
     }
 
-    updateProgressToast(message.requestId, message.message, message.percent);
-});
+    contentScriptStopped = true;
+    domObserver?.disconnect();
+    domObserver = null;
+}
 
 /**
  * Scans the document and injects platform-specific send buttons.
  */
 function scanPlatforms(root: ParentNode = document): void {
-    for (const platform of socialPlatforms) {
-        platform.injectContent(root);
+    if (contentScriptStopped || !isExtensionContextValid()) {
+        stopContentScript();
+        return;
+    }
+
+    try {
+        for (const platform of socialPlatforms) {
+            platform.injectContent(root);
+        }
+    } catch (err) {
+        if (isExtensionContextError(err)) {
+            stopContentScript();
+            return;
+        }
+
+        throw err;
     }
 }
 
@@ -23,9 +65,18 @@ function scanPlatforms(root: ParentNode = document): void {
  * Starts observing DOM mutations to inject buttons on dynamically loaded posts.
  */
 function startObserver(): void {
+    if (contentScriptStopped || !isExtensionContextValid()) {
+        return;
+    }
+
     scanPlatforms(document);
 
-    const observer = new MutationObserver((mutations) => {
+    domObserver = new MutationObserver((mutations) => {
+        if (contentScriptStopped || !isExtensionContextValid()) {
+            stopContentScript();
+            return;
+        }
+
         for (const mutation of mutations) {
             for (const node of Array.from(mutation.addedNodes)) {
                 if (!(node instanceof HTMLElement)) {
@@ -37,7 +88,7 @@ function startObserver(): void {
         }
     });
 
-    observer.observe(document.body, {
+    domObserver.observe(document.body, {
         childList: true,
         subtree: true
     });

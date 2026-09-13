@@ -1,33 +1,148 @@
-/* Cloned from native X action buttons; avoid overriding their sizing. */
-.x2tg-send-button-slot {
+/* X / Twitter action bar */
+.x2tg-send-button-slot--x {
     pointer-events: auto;
     margin-inline-start: 12px;
 }
 
-.x2tg-send-button {
+.x2tg-send-button--x {
     cursor: pointer;
     transition: color 0.2s ease;
 }
 
-.x2tg-send-button:hover,
-.x2tg-send-button:focus-visible {
+.x2tg-send-button--x:hover,
+.x2tg-send-button--x:focus-visible {
     color: rgb(42, 171, 238);
     outline: none;
 }
 
-.x2tg-send-button:hover > div,
-.x2tg-send-button:focus-visible > div {
+.x2tg-send-button--x:hover > div,
+.x2tg-send-button--x:focus-visible > div {
     color: rgb(42, 171, 238);
 }
 
-.x2tg-send-button:hover > div > div:first-of-type,
-.x2tg-send-button:focus-visible > div > div:first-of-type {
+.x2tg-send-button--x:hover > div > div:first-of-type,
+.x2tg-send-button--x:focus-visible > div > div:first-of-type {
     background-color: rgba(42, 171, 238, 0.1);
 }
 
-.x2tg-picker {
+/* Facebook feed / modal action bar */
+.x2tg-send-button-slot--facebook {
+    pointer-events: auto;
+}
+
+.x2tg-send-button--facebook {
+    cursor: pointer;
+    color: var(--secondary-icon, #b0b3b8);
+    position: relative;
+}
+
+.x2tg-send-button--facebook .x2tg-send-button__overlay,
+.x2tg-send-button--facebook > div[role="none"][data-visualcompletion="ignore"] {
     position: absolute;
+    inset: -8px 0;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+.x2tg-send-button--facebook:hover .x2tg-send-button__overlay,
+.x2tg-send-button--facebook:focus-visible .x2tg-send-button__overlay,
+.x2tg-send-button--facebook:hover > div[role="none"][data-visualcompletion="ignore"],
+.x2tg-send-button--facebook:focus-visible > div[role="none"][data-visualcompletion="ignore"] {
+    background-color: var(--hover-overlay, rgba(255, 255, 255, 0.1));
+}
+
+.x2tg-send-button--facebook:focus-visible {
+    outline: none;
+}
+
+.x2tg-send-button--facebook svg {
+    --x-color: var(--secondary-icon, #b0b3b8);
+    color: var(--secondary-icon, #b0b3b8);
+    fill: currentColor;
+}
+
+.x2tg-send-button--facebook svg path {
+    fill: currentColor;
+}
+
+.x2tg-send-button-slot--facebook-labeled-share {
+    display: inline-flex;
+    width: auto;
+    flex: 0 0 auto;
+    align-self: center;
+}
+
+.x2tg-send-button--facebook-labeled-share {
+    width: auto;
+    min-height: 0;
+    flex: 0 0 auto;
+}
+
+.x2tg-send-button--facebook-labeled-share > div {
+    width: auto;
+}
+
+/* Facebook reel side rail */
+.x2tg-send-button-slot--facebook-reel {
+    pointer-events: auto;
+}
+
+.x2tg-send-button--facebook-reel {
+    cursor: pointer;
+    color: var(--always-white, #ffffff);
+    position: relative;
+}
+
+.x2tg-send-button--facebook-reel .x2tg-send-button__overlay,
+.x2tg-send-button--facebook-reel > div[role="none"][data-visualcompletion="ignore"] {
+    position: absolute;
+    inset: -8px 0;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+.x2tg-send-button--facebook-reel:hover .x2tg-send-button__overlay,
+.x2tg-send-button--facebook-reel:focus-visible .x2tg-send-button__overlay,
+.x2tg-send-button--facebook-reel:hover > div[role="none"][data-visualcompletion="ignore"],
+.x2tg-send-button--facebook-reel:focus-visible > div[role="none"][data-visualcompletion="ignore"] {
+    background-color: var(--hover-overlay, rgba(255, 255, 255, 0.1));
+}
+
+.x2tg-send-button--facebook-reel:focus-visible {
+    outline: none;
+}
+
+.x2tg-send-button--facebook-reel svg {
+    --x-color: var(--always-white, #ffffff);
+    color: var(--always-white, #ffffff);
+    fill: currentColor;
+}
+
+.x2tg-send-button--facebook-reel svg path {
+    fill: currentColor;
+}
+
+.x2tg-picker-overlay {
+    position: fixed;
+    inset: 0;
     z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.72);
+}
+
+.x2tg-picker-overlay--facebook {
+    background: rgba(0, 0, 0, 0.75);
+}
+
+.x2tg-picker {
+    position: relative;
+    z-index: 100001;
+    width: min(100%, 320px);
+    max-height: min(70vh, 480px);
+    overflow-y: auto;
     min-width: 220px;
     max-width: 320px;
     padding: 8px;
@@ -38,11 +153,23 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
+.x2tg-picker--facebook {
+    border-radius: 8px;
+    background: var(--popover-background, #242526);
+    border: 1px solid var(--divider, #3E4042);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+    color: var(--primary-text, #E4E6EB);
+}
+
 .x2tg-picker__title {
     padding: 4px 8px 8px;
     font-size: 13px;
     font-weight: 600;
     color: rgb(231, 233, 234);
+}
+
+.x2tg-picker--facebook .x2tg-picker__title {
+    color: var(--primary-text, #E4E6EB);
 }
 
 .x2tg-picker__item {
@@ -60,14 +187,27 @@
     text-align: left;
 }
 
+.x2tg-picker--facebook .x2tg-picker__item {
+    color: var(--primary-text, #E4E6EB);
+}
+
 .x2tg-picker__item:hover,
 .x2tg-picker__item:focus-visible {
     background: rgb(24, 26, 27);
     outline: none;
 }
 
+.x2tg-picker--facebook .x2tg-picker__item:hover,
+.x2tg-picker--facebook .x2tg-picker__item:focus-visible {
+    background: var(--hover-overlay, rgba(255, 255, 255, 0.1));
+}
+
 .x2tg-picker__item--recent {
     border: 1px solid rgba(29, 155, 240, 0.35);
+}
+
+.x2tg-picker--facebook .x2tg-picker__item--recent {
+    border-color: var(--accent, #2D88FF);
 }
 
 .x2tg-picker__label {

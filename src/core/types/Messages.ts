@@ -1,4 +1,4 @@
-import type { SocialPlatformId } from "../../platforms/types";
+import type { SocialPlatformId, SocialPostSnapshot } from "../../platforms/types";
 
 /** Message types between content script and service worker. */
 export enum RuntimeMessageType {
@@ -15,6 +15,8 @@ export interface SendPostMessage {
     requestId: string;
     channelId: string;
     postUrl: string;
+    /** Optional DOM snapshot from the content script (Facebook and similar). */
+    postSnapshot?: SocialPostSnapshot;
 }
 
 /** Payload to test a single channel. */

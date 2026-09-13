@@ -2,6 +2,8 @@
  * Floating toast notifications inside the X/Twitter page.
  */
 
+import { isExtensionContextValid } from "../../core/extension";
+
 let toastContainer: HTMLElement | null = null;
 
 interface ProgressToastEntry {
@@ -121,7 +123,11 @@ export function dismissProgressToast(requestId: string): void {
  * Opens the extension options page.
  */
 export function openOptionsPage(): void {
-    if (chrome.runtime.openOptionsPage) {
-        chrome.runtime.openOptionsPage();
+    try {
+        if (isExtensionContextValid() && chrome.runtime.openOptionsPage) {
+            chrome.runtime.openOptionsPage();
+        }
+    } catch {
+        // Extension was reloaded while the page stayed open.
     }
 }

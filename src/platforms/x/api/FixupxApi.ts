@@ -1,9 +1,16 @@
-/**
- * Parsed tweet identity from a FixupX/FxTwitter URL.
- */
+import { buildSocialPostText, SocialCaptionAuthorStyle } from "../../../core/telegram/SocialCaption";
+import { buildTelegramCaption } from "../../../core/telegram/Caption";
 export interface FixupxTweetIdentity {
     username: string;
     statusId: string;
+}
+
+/**
+ * Tweet author payload from the FxTwitter API.
+ */
+export interface FxTwitterApiAuthor {
+    name?: string;
+    screen_name?: string;
 }
 
 /**
@@ -33,6 +40,9 @@ interface FxTwitterApiResponse {
 interface FxTwitterApiTweet {
     url?: string;
     text?: string;
+    author?: FxTwitterApiAuthor;
+    quote?: FxTwitterApiTweet;
+    retweet?: FxTwitterApiTweet;
     media?: FxTwitterApiMedia;
 }
 
@@ -137,11 +147,13 @@ export async function fetchTweetByFixupxUrl(fixupxUrl: string): Promise<FetchedT
         return null;
     }
 
+    const sourceTweet = payload.tweet.retweet ?? payload.tweet;
+
     return {
         fixupxUrl,
         originalUrl: payload.tweet.url ?? fixupxUrl,
-        text: payload.tweet.text ?? "",
-        media: extractTweetMediaItems(payload.tweet.media)
+        text: buildTweetPostText(payload.tweet),
+        media: extractTweetMediaItems(sourceTweet.media ?? payload.tweet.media)
     };
 }
 
@@ -192,23 +204,44 @@ export function extractTweetMediaItems(media?: FxTwitterApiMedia): TweetMediaIte
 }
 
 /**
+ * Builds the Telegram caption body for a tweet API payload.
+ */
+export function buildTweetPostText(tweet: FxTwitterApiTweet): string {
+    const retweet = tweet.retweet;
+    const authorHandle = readFxTwitterAuthorHandle(tweet.author);
+
+    if (retweet) {
+        return buildSocialPostText({
+            body: stripLegacyRetweetPrefix(retweet.text ?? ""),
+            pageName: readFxTwitterAuthorHandle(retweet.author) ?? undefined,
+            repostedBy: authorHandle ?? undefined,
+            authorStyle: SocialCaptionAuthorStyle.HANDLE
+        });
+    }
+
+    const legacyRetweet = parseLegacyRetweetText(tweet.text ?? "", authorHandle);
+
+    if (legacyRetweet) {
+        return buildSocialPostText({
+            body: legacyRetweet.body,
+            pageName: legacyRetweet.pageName,
+            repostedBy: legacyRetweet.repostedBy,
+            authorStyle: SocialCaptionAuthorStyle.HANDLE
+        });
+    }
+
+    return buildSocialPostText({
+        body: tweet.text ?? "",
+        pageName: authorHandle ?? undefined,
+        authorStyle: SocialCaptionAuthorStyle.HANDLE
+    });
+}
+
+/**
  * Builds a Telegram caption with tweet text and FixupX link.
  */
 export function buildTweetCaption(fixupxUrl: string, text: string): string {
-    const trimmedText = text.trim();
-    const linkBlock = fixupxUrl.trim();
-
-    if (!trimmedText) {
-        return linkBlock.slice(0, 1024);
-    }
-
-    const maxTextLength = 1024 - linkBlock.length - 2;
-
-    if (maxTextLength <= 0) {
-        return linkBlock.slice(0, 1024);
-    }
-
-    return `${trimmedText.slice(0, maxTextLength)}\n\n${linkBlock}`;
+    return buildTelegramCaption(fixupxUrl, text);
 }
 
 /**
@@ -246,4 +279,51 @@ function mapApiMediaItem(item: FxTwitterApiMediaItem): TweetMediaItem | null {
     }
 
     return null;
+}
+
+function readFxTwitterAuthorHandle(author?: FxTwitterApiAuthor): string | null {
+    const screenName = author?.screen_name?.trim();
+
+    if (screenName) {
+        return `@${screenName}`;
+    }
+
+    return readFxTwitterAuthorName(author);
+}
+
+function readFxTwitterAuthorName(author?: FxTwitterApiAuthor): string | null {
+    const name = author?.name?.trim();
+
+    if (name) {
+        return name;
+    }
+
+    const screenName = author?.screen_name?.trim();
+
+    if (screenName) {
+        return `@${screenName}`;
+    }
+
+    return null;
+}
+
+function stripLegacyRetweetPrefix(text: string): string {
+    return text.replace(/^RT\s+@\w+:\s*/i, "").trim();
+}
+
+function parseLegacyRetweetText(
+    text: string,
+    reposterName: string | null
+): { body: string; pageName?: string; repostedBy?: string } | null {
+    const match = text.match(/^RT\s+@(\w+):\s*([\s\S]*)$/i);
+
+    if (!match) {
+        return null;
+    }
+
+    return {
+        body: match[2].trim(),
+        pageName: `@${match[1]}`,
+        repostedBy: reposterName ?? undefined
+    };
 }

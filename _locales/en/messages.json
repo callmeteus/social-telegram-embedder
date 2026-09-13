@@ -3,13 +3,13 @@
         "message": "Social Telegram Embedder"
     },
     "extDescription": {
-        "message": "Embed social posts in Telegram channels with rich media. X/Twitter supported today; more networks coming."
+        "message": "Embed social posts in Telegram channels with rich media. Works on X/Twitter and Facebook."
     },
     "optionsPageTitle": {
         "message": "Social Telegram Embedder - Settings"
     },
     "optionsSubtitle": {
-        "message": "Configure your bot and channels. X/Twitter works today; more networks are coming. Every send asks which channel to use."
+        "message": "Configure your bot and channels. Works on X/Twitter and Facebook. Every send asks which channel to use."
     },
     "optionsBotSection": {
         "message": "Telegram bot"
@@ -165,6 +165,9 @@
     "sendFailed": {
         "message": "Could not send to Telegram."
     },
+    "extensionContextInvalidated": {
+        "message": "The extension was reloaded. Refresh this page to keep using it."
+    },
     "sentToChannel": {
         "message": "Sent to $1",
         "placeholders": {
@@ -176,6 +179,9 @@
     },
     "progressFetchingPost": {
         "message": "Fetching post details..."
+    },
+    "progressResolvingVideo": {
+        "message": "Resolving video..."
     },
     "progressSendingLink": {
         "message": "Sending link..."

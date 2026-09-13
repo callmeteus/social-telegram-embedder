@@ -3,13 +3,13 @@
         "message": "Social Telegram Embedder"
     },
     "extDescription": {
-        "message": "Embute posts de redes sociais em canais do Telegram com mídia rica. X/Twitter suportado hoje; mais redes em breve."
+        "message": "Embute posts de redes sociais em canais do Telegram com mídia rica. Funciona no X/Twitter e no Facebook."
     },
     "optionsPageTitle": {
         "message": "Social Telegram Embedder - Configurações"
     },
     "optionsSubtitle": {
-        "message": "Configure o bot e os canais. Hoje funciona no X/Twitter; mais redes virão depois. Cada envio pergunta para qual canal mandar."
+        "message": "Configure o bot e os canais. Funciona no X/Twitter e no Facebook. Cada envio pergunta para qual canal mandar."
     },
     "optionsBotSection": {
         "message": "Bot do Telegram"
@@ -165,6 +165,9 @@
     "sendFailed": {
         "message": "Falha ao enviar para o Telegram."
     },
+    "extensionContextInvalidated": {
+        "message": "A extensão foi recarregada. Atualize esta página para continuar usando."
+    },
     "sentToChannel": {
         "message": "Enviado para $1",
         "placeholders": {
@@ -176,6 +179,9 @@
     },
     "progressFetchingPost": {
         "message": "Buscando informações do post..."
+    },
+    "progressResolvingVideo": {
+        "message": "Resolvendo vídeo..."
     },
     "progressSendingLink": {
         "message": "Enviando link..."

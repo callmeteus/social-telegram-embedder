@@ -1,26 +1,40 @@
 import type { TelegramChannel } from "../../core/types/Config";
 import { t } from "../../core/i18n/I18n";
 import { sortChannelsForPicker } from "../../core/storage/Storage";
+import { SocialPlatformId } from "../../platforms/types";
 
-let activePicker: HTMLElement | null = null;
+let activeOverlay: HTMLElement | null = null;
 let outsideClickHandler: ((event: MouseEvent) => void) | null = null;
 let escapeHandler: ((event: KeyboardEvent) => void) | null = null;
 
 /**
- * Shows a channel picker anchored to a button element.
+ * Shows a centered channel picker modal.
  */
 export function showChannelPicker(
-    anchor: HTMLElement,
+    _anchor: HTMLElement,
     channels: TelegramChannel[],
     lastUsedChannelId: string | undefined,
-    onSelect: (channel: TelegramChannel) => void
+    onSelect: (channel: TelegramChannel) => void,
+    platformId: SocialPlatformId = SocialPlatformId.X
 ): void {
     closeChannelPicker();
 
     const sorted = sortChannelsForPicker(channels, lastUsedChannelId);
+    const overlay = document.createElement("div");
+    overlay.className = "x2tg-picker-overlay";
+
+    if (platformId === SocialPlatformId.FACEBOOK) {
+        overlay.classList.add("x2tg-picker-overlay--facebook");
+    }
+
     const picker = document.createElement("div");
     picker.className = "x2tg-picker";
-    picker.setAttribute("role", "menu");
+    picker.setAttribute("role", "dialog");
+    picker.setAttribute("aria-modal", "true");
+
+    if (platformId === SocialPlatformId.FACEBOOK) {
+        picker.classList.add("x2tg-picker--facebook");
+    }
 
     const title = document.createElement("div");
     title.className = "x2tg-picker__title";
@@ -53,14 +67,15 @@ export function showChannelPicker(
         picker.appendChild(item);
     }
 
-    document.body.appendChild(picker);
-    positionPicker(picker, anchor);
-    activePicker = picker;
+    overlay.appendChild(picker);
+    document.body.appendChild(overlay);
+
+    activeOverlay = overlay;
 
     outsideClickHandler = (event: MouseEvent) => {
         const target = event.target as Node | null;
 
-        if (!target || picker.contains(target) || anchor.contains(target)) {
+        if (!target || picker.contains(target)) {
             return;
         }
 
@@ -86,9 +101,9 @@ export function showChannelPicker(
  * Closes the active channel picker if present.
  */
 export function closeChannelPicker(): void {
-    if (activePicker) {
-        activePicker.remove();
-        activePicker = null;
+    if (activeOverlay) {
+        activeOverlay.remove();
+        activeOverlay = null;
     }
 
     if (outsideClickHandler) {
@@ -100,24 +115,4 @@ export function closeChannelPicker(): void {
         document.removeEventListener("keydown", escapeHandler, true);
         escapeHandler = null;
     }
-}
-
-function positionPicker(picker: HTMLElement, anchor: HTMLElement): void {
-    const rect = anchor.getBoundingClientRect();
-    const pickerRect = picker.getBoundingClientRect();
-    const top = rect.bottom + window.scrollY + 8;
-    let left = rect.left + window.scrollX - pickerRect.width + rect.width;
-
-    if (left < 8) {
-        left = 8;
-    }
-
-    const maxLeft = window.innerWidth - pickerRect.width - 8;
-
-    if (left > maxLeft) {
-        left = maxLeft;
-    }
-
-    picker.style.top = `${top}px`;
-    picker.style.left = `${left}px`;
 }

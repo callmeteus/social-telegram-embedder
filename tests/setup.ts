@@ -26,6 +26,9 @@ function getMessage(name: string, substitutions?: string | string[]): string {
 
 Object.assign(globalThis, {
     chrome: {
+        runtime: {
+            id: "test-extension-id"
+        },
         i18n: {
             getMessage,
             getUILanguage: () => "en"

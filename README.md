@@ -2,11 +2,11 @@
 
 # Social Telegram Embedder
 
-> Embed social posts in Telegram channels with one click - rich media today on X/Twitter, more networks planned.
+> Embed social posts in Telegram channels with one click - rich media on X/Twitter and Facebook.
 >
 > [github.com/callmeteus/social-telegram-embedder](https://github.com/callmeteus/social-telegram-embedder)
 
-**A Chrome extension that adds a send button to social posts, lets you pick a Telegram channel, and delivers photos, videos, GIFs, and text with source links. X/Twitter is supported first via FixupX.**
+**A Chrome extension that adds a send button to social posts, lets you pick a Telegram channel, and delivers photos, videos, GIFs, and text with source links. Supports X/Twitter (FixupX) and Facebook (page snapshot).**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Chrome Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4.svg)](#)
@@ -21,7 +21,7 @@
 
 ## What Is Social Telegram Embedder?
 
-Sharing posts from social networks to a Telegram channel usually means copy-paste and broken previews. This extension embeds the real media in Telegram. **X/Twitter is supported today**; additional platforms are planned.
+Sharing posts from social networks to a Telegram channel usually means copy-paste and broken previews. This extension embeds the real media in Telegram. **X/Twitter and Facebook are supported today.**
 
 ```text
   Tweet on X/Twitter
@@ -239,8 +239,9 @@ Load the `dist/` folder via **Load unpacked** while developing. After changes, c
 | `src/core/` | Types, storage, Telegram client, network helpers |
 | `src/core/i18n/` | `chrome.i18n` helper and options page localization |
 | `_locales/` | Localized message catalogs (`en`, `pt_BR`) |
-| `src/platforms/` | Social platform registry and adapters (`x/` today) |
+| `src/platforms/` | Social platform registry and adapters (`x/`, `facebook/`) |
 | `src/platforms/x/` | X/Twitter: FixupX URL, FxTwitter API, action bar injection |
+| `src/platforms/facebook/` | Facebook: DOM snapshot, action bar injection, Open Graph fallback |
 | `src/content/` | Content script orchestrator and shared UI (picker, toasts) |
 | `src/background/` | Service worker and send handler |
 | `src/options/` | Settings page |
