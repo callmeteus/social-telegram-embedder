@@ -23,8 +23,19 @@ describe("buildSocialPostText", () => {
             repostedBy: "@ariooch",
             authorStyle: SocialCaptionAuthorStyle.HANDLE
         })).toBe([
-            "<b>@ariooch</b> 🔁 <b>@lilyvanhauntt</b>",
+            "@<b>ariooch</b> 🔁 @<b>lilyvanhauntt</b>",
             "Art:lichee"
+        ].join("\n\n"));
+    });
+
+    it("keeps @ outside bold tags so Telegram HTML parsing does not break", () => {
+        expect(buildSocialPostText({
+            body: "The final YCH",
+            pageName: "@SkipsyAD",
+            authorStyle: SocialCaptionAuthorStyle.HANDLE
+        })).toBe([
+            "@<b>SkipsyAD</b>",
+            "The final YCH"
         ].join("\n\n"));
     });
 });

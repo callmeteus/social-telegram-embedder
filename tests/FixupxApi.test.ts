@@ -67,7 +67,7 @@ describe("buildTweetPostText", () => {
                 screen_name: "lilyvanhauntt"
             }
         })).toBe([
-            "<b>@lilyvanhauntt</b>",
+            "@<b>lilyvanhauntt</b>",
             "Art:lichee"
         ].join("\n\n"));
     });
@@ -87,7 +87,7 @@ describe("buildTweetPostText", () => {
                 }
             }
         })).toBe([
-            "<b>@ariooch</b> 🔁 <b>@lilyvanhauntt</b>",
+            "@<b>ariooch</b> 🔁 @<b>lilyvanhauntt</b>",
             "Art:lichee"
         ].join("\n\n"));
     });
@@ -100,7 +100,7 @@ describe("buildTweetPostText", () => {
                 screen_name: "ariooch"
             }
         })).toBe([
-            "<b>@ariooch</b> 🔁 <b>@lilyvanhauntt</b>",
+            "@<b>ariooch</b> 🔁 @<b>lilyvanhauntt</b>",
             "Art:lichee"
         ].join("\n\n"));
     });

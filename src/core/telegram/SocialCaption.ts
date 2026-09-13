@@ -72,7 +72,13 @@ function formatAuthorLabel(value: string | undefined, style: SocialCaptionAuthor
 }
 
 function boldTelegram(value: string): string {
-    return `<b>${escapeTelegramHtml(value)}</b>`;
+    const escaped = escapeTelegramHtml(value);
+
+    if (escaped.startsWith("@")) {
+        return `@<b>${escaped.slice(1)}</b>`;
+    }
+
+    return `<b>${escaped}</b>`;
 }
 
 /**
