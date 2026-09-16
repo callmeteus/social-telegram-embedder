@@ -5,7 +5,8 @@ import {
     chunkTweetMedia,
     extractTweetMediaItems,
     fetchTweetByFixupxUrl,
-    parseFixupxTweetUrl
+    parseFixupxTweetUrl,
+    pickTelegramSafeVideoUrl
 } from "../src/platforms/x/api/FixupxApi";
 
 describe("parseFixupxTweetUrl", () => {
@@ -44,6 +45,39 @@ describe("extractTweetMediaItems", () => {
             { kind: "photo", url: "https://pbs.twimg.com/photo.jpg" },
             { kind: "video", url: "https://video.twimg.com/video.mp4" }
         ]);
+    });
+
+    it("picks a lower bitrate video variant for long Telegram uploads", () => {
+        const media = extractTweetMediaItems({
+            all: [{
+                type: "video",
+                url: "https://video.twimg.com/amplify_video/1/vid/avc1/1920x1080/top.mp4",
+                duration: 249.6,
+                formats: [
+                    { url: "https://video.twimg.com/amplify_video/1/vid/avc1/480x270/low.mp4", bitrate: 256000, container: "mp4" },
+                    { url: "https://video.twimg.com/amplify_video/1/vid/avc1/640x360/mid.mp4", bitrate: 832000, container: "mp4" },
+                    { url: "https://video.twimg.com/amplify_video/1/vid/avc1/1280x720/high.mp4", bitrate: 2176000, container: "mp4" },
+                    { url: "https://video.twimg.com/amplify_video/1/vid/avc1/1920x1080/top.mp4", bitrate: 10368000, container: "mp4" }
+                ]
+            }]
+        });
+
+        expect(media).toEqual([
+            { kind: "video", url: "https://video.twimg.com/amplify_video/1/vid/avc1/1280x720/high.mp4" }
+        ]);
+    });
+});
+
+describe("pickTelegramSafeVideoUrl", () => {
+    it("falls back to the lowest mp4 when every estimate exceeds the bot limit", () => {
+        expect(pickTelegramSafeVideoUrl({
+            url: "https://video.twimg.com/top.mp4",
+            duration: 0,
+            formats: [
+                { url: "https://video.twimg.com/top.mp4", bitrate: 10368000, container: "mp4" },
+                { url: "https://video.twimg.com/low.mp4", bitrate: 256000, container: "mp4" }
+            ]
+        })).toBe("https://video.twimg.com/low.mp4");
     });
 });
 

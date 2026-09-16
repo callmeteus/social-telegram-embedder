@@ -343,5 +343,8 @@
     },
     "telegramErrorNotMember": {
         "message": "The bot is not in the channel. Add it as an administrator."
+    },
+    "telegramErrorFileTooLarge": {
+        "message": "The video is too large for Telegram bots (50 MB max). The extension now picks a smaller quality when possible; try again after reloading the extension."
     }
 }

@@ -56,10 +56,20 @@ interface FxTwitterApiMedia {
 interface FxTwitterApiMediaItem {
     type?: string;
     url?: string;
-    formats?: {
-        jpeg?: string;
-        webp?: string;
-    };
+    duration?: number;
+    formats?: FxTwitterApiVideoFormat[] | FxTwitterApiMosaicFormats;
+}
+
+interface FxTwitterApiVideoFormat {
+    url?: string;
+    bitrate?: number;
+    container?: string;
+    codec?: string;
+}
+
+interface FxTwitterApiMosaicFormats {
+    jpeg?: string;
+    webp?: string;
 }
 
 interface FxTwitterApiPhoto {
@@ -69,6 +79,8 @@ interface FxTwitterApiPhoto {
 interface FxTwitterApiVideo {
     url: string;
     type?: "video" | "gif";
+    duration?: number;
+    formats?: FxTwitterApiVideoFormat[];
 }
 
 interface FxTwitterApiMosaic {
@@ -84,6 +96,16 @@ const TELEGRAM_MEDIA_GROUP_LIMIT = 10;
 /** Retries after the first failed FxTwitter API attempt. */
 const FXTWITTER_FETCH_RETRY_COUNT = 3;
 const FXTWITTER_FETCH_RETRY_BASE_DELAY_MS = 400;
+/** Telegram Bot API upload limit for sendVideo. */
+export const TELEGRAM_BOT_MAX_VIDEO_BYTES = 50 * 1024 * 1024;
+/** Twitter VBR streams are often smaller than peak bitrate * duration. */
+const TWITTER_VIDEO_SIZE_ESTIMATE_FACTOR = 0.55;
+
+interface FxTwitterVideoSource {
+    url?: string;
+    duration?: number;
+    formats?: FxTwitterApiVideoFormat[];
+}
 
 /**
  * Parses username and status id from a FixupX/FxTwitter tweet URL.
@@ -176,10 +198,13 @@ export function extractTweetMediaItems(media?: FxTwitterApiMedia): TweetMediaIte
             continue;
         }
 
-        items.push({
-            kind: video.type === "gif" ? "gif" : "video",
-            url: video.url
-        });
+        if (video.type === "gif") {
+            items.push({ kind: "gif", url: video.url });
+            continue;
+        }
+
+        const videoUrl = pickTelegramSafeVideoUrl(video) ?? video.url;
+        items.push({ kind: "video", url: videoUrl });
     }
 
     const mosaicUrl = media.mosaic?.formats?.jpeg ?? media.mosaic?.formats?.webp;
@@ -245,6 +270,59 @@ export function chunkTweetMedia(media: TweetMediaItem[], size = TELEGRAM_MEDIA_G
     return batches;
 }
 
+/**
+ * Picks the highest-quality MP4 variant that should fit Telegram bot upload limits.
+ */
+export function pickTelegramSafeVideoUrl(source: FxTwitterVideoSource): string | null {
+    const mp4Formats = (source.formats ?? [])
+        .filter((format) => format.container === "mp4" && format.url && typeof format.bitrate === "number")
+        .sort((left, right) => (right.bitrate ?? 0) - (left.bitrate ?? 0));
+
+    if (mp4Formats.length === 0) {
+        return source.url ?? null;
+    }
+
+    const durationSeconds = source.duration ?? 0;
+
+    if (durationSeconds > 0) {
+        for (const format of mp4Formats) {
+            const estimatedBytes = estimateTwitterVideoBytes(format.bitrate ?? 0, durationSeconds);
+
+            if (estimatedBytes <= TELEGRAM_BOT_MAX_VIDEO_BYTES) {
+                return format.url ?? null;
+            }
+        }
+    }
+
+    const lowestBitrateFormat = mp4Formats[mp4Formats.length - 1];
+
+    return lowestBitrateFormat.url ?? source.url ?? null;
+}
+
+function estimateTwitterVideoBytes(bitrate: number, durationSeconds: number): number {
+    return (bitrate * durationSeconds / 8) * TWITTER_VIDEO_SIZE_ESTIMATE_FACTOR;
+}
+
+function readVideoFormats(
+    formats?: FxTwitterApiVideoFormat[] | FxTwitterApiMosaicFormats
+): FxTwitterApiVideoFormat[] | undefined {
+    if (!formats || !Array.isArray(formats)) {
+        return undefined;
+    }
+
+    return formats;
+}
+
+function readMosaicFormatUrl(
+    formats?: FxTwitterApiVideoFormat[] | FxTwitterApiMosaicFormats
+): string | undefined {
+    if (!formats || Array.isArray(formats)) {
+        return undefined;
+    }
+
+    return formats.jpeg ?? formats.webp;
+}
+
 async function fetchFxTwitterApiPayload(apiUrl: string): Promise<FxTwitterApiResponse | null> {
     let response: Response;
 
@@ -294,11 +372,17 @@ function mapApiMediaItem(item: FxTwitterApiMediaItem): TweetMediaItem | null {
     }
 
     if (item.type === "video" && item.url) {
-        return { kind: "video", url: item.url };
+        const videoUrl = pickTelegramSafeVideoUrl({
+            url: item.url,
+            duration: item.duration,
+            formats: readVideoFormats(item.formats)
+        }) ?? item.url;
+
+        return { kind: "video", url: videoUrl };
     }
 
     if (item.type === "mosaic_photo") {
-        const mosaicUrl = item.formats?.jpeg ?? item.formats?.webp;
+        const mosaicUrl = readMosaicFormatUrl(item.formats);
 
         if (mosaicUrl) {
             return { kind: "photo", url: mosaicUrl };

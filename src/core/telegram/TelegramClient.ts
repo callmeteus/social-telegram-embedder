@@ -556,6 +556,10 @@ function translateTelegramError(description: string): string {
         return t("telegramErrorNotMember");
     }
 
+    if (lower.includes("entity too large") || lower.includes("file is too big") || lower.includes("request entity too large")) {
+        return t("telegramErrorFileTooLarge");
+    }
+
     return description;
 }
 

@@ -343,5 +343,8 @@
     },
     "telegramErrorNotMember": {
         "message": "O bot não está no canal. Adicione-o como administrador."
+    },
+    "telegramErrorFileTooLarge": {
+        "message": "O vídeo é grande demais para bots do Telegram (máx. 50 MB). A extensão agora escolhe uma qualidade menor quando possível; recarregue a extensão e tente de novo."
     }
 }
