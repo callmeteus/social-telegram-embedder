@@ -81,6 +81,9 @@ interface FxTwitterApiMosaic {
 const FXTWITTER_API_BASE = "https://api.fxtwitter.com";
 const FXTWITTER_USER_AGENT = "social-telegram-embedder/1.1.0";
 const TELEGRAM_MEDIA_GROUP_LIMIT = 10;
+/** Retries after the first failed FxTwitter API attempt. */
+const FXTWITTER_FETCH_RETRY_COUNT = 3;
+const FXTWITTER_FETCH_RETRY_BASE_DELAY_MS = 400;
 
 /**
  * Parses username and status id from a FixupX/FxTwitter tweet URL.
@@ -118,43 +121,28 @@ export async function fetchTweetByFixupxUrl(fixupxUrl: string): Promise<FetchedT
 
     const apiUrl = `${FXTWITTER_API_BASE}/${identity.username}/status/${identity.statusId}`;
 
-    let response: Response;
+    for (let attempt = 0; attempt <= FXTWITTER_FETCH_RETRY_COUNT; attempt++) {
+        if (attempt > 0) {
+            await sleep(FXTWITTER_FETCH_RETRY_BASE_DELAY_MS * attempt);
+        }
 
-    try {
-        response = await fetch(apiUrl, {
-            headers: {
-                "User-Agent": FXTWITTER_USER_AGENT,
-                Accept: "application/json"
-            }
-        });
-    } catch {
-        return null;
+        const payload = await fetchFxTwitterApiPayload(apiUrl);
+
+        if (!payload?.tweet) {
+            continue;
+        }
+
+        const sourceTweet = payload.tweet.retweet ?? payload.tweet;
+
+        return {
+            fixupxUrl,
+            originalUrl: payload.tweet.url ?? fixupxUrl,
+            text: buildTweetPostText(payload.tweet),
+            media: extractTweetMediaItems(sourceTweet.media ?? payload.tweet.media)
+        };
     }
 
-    if (!response.ok) {
-        return null;
-    }
-
-    let payload: FxTwitterApiResponse;
-
-    try {
-        payload = (await response.json()) as FxTwitterApiResponse;
-    } catch {
-        return null;
-    }
-
-    if (payload.code !== 200 || !payload.tweet) {
-        return null;
-    }
-
-    const sourceTweet = payload.tweet.retweet ?? payload.tweet;
-
-    return {
-        fixupxUrl,
-        originalUrl: payload.tweet.url ?? fixupxUrl,
-        text: buildTweetPostText(payload.tweet),
-        media: extractTweetMediaItems(sourceTweet.media ?? payload.tweet.media)
-    };
+    return null;
 }
 
 /**
@@ -255,6 +243,45 @@ export function chunkTweetMedia(media: TweetMediaItem[], size = TELEGRAM_MEDIA_G
     }
 
     return batches;
+}
+
+async function fetchFxTwitterApiPayload(apiUrl: string): Promise<FxTwitterApiResponse | null> {
+    let response: Response;
+
+    try {
+        response = await fetch(apiUrl, {
+            headers: {
+                "User-Agent": FXTWITTER_USER_AGENT,
+                Accept: "application/json"
+            }
+        });
+    } catch {
+        return null;
+    }
+
+    if (!response.ok) {
+        return null;
+    }
+
+    let payload: FxTwitterApiResponse;
+
+    try {
+        payload = (await response.json()) as FxTwitterApiResponse;
+    } catch {
+        return null;
+    }
+
+    if (payload.code !== 200 || !payload.tweet) {
+        return null;
+    }
+
+    return payload;
+}
+
+function sleep(durationMs: number): Promise<void> {
+    return new Promise((resolve) => {
+        setTimeout(resolve, durationMs);
+    });
 }
 
 function mapApiMediaItem(item: FxTwitterApiMediaItem): TweetMediaItem | null {
