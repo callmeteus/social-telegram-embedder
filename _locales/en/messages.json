@@ -42,7 +42,7 @@
         "message": "Your saved channels"
     },
     "optionsSavedChannelsHint": {
-        "message": "Use @channelName for public channels or the -100... ID for private channels."
+        "message": "Use @channelName, the -100... ID, or the channel profile id from Telegram (e.g. 1.194.845.578)."
     },
     "optionsSaveConfig": {
         "message": "Save settings"

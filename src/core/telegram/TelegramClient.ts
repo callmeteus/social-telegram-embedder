@@ -13,6 +13,7 @@ import {
     sortDetectedChannels,
     type TelegramUpdateSnapshot
 } from "./DiscoverChannels";
+import { normalizeTelegramChatId } from "./NormalizeChatId";
 
 interface TelegramApiResponse<T = unknown> {
     ok: boolean;
@@ -28,6 +29,10 @@ interface TelegramInputMedia {
     type: "photo" | "video";
     media: string;
     caption?: string;
+}
+
+interface TelegramSentMessage {
+    message_id: number;
 }
 
 const TELEGRAM_HTML_PARSE_MODE = "HTML";
@@ -54,7 +59,7 @@ export class TelegramClient {
         parseMode?: string
     ): Promise<SendResult> {
         return this.request("sendMessage", {
-            chat_id: chatId.trim(),
+            chat_id: normalizeTelegramChatId(chatId),
             text,
             disable_web_page_preview: false,
             ...(parseMode ? { parse_mode: parseMode } : {})
@@ -69,7 +74,7 @@ export class TelegramClient {
         post: FetchedSocialPost,
         onProgress?: SendProgressCallback
     ): Promise<SendResult> {
-        const normalizedChatId = chatId.trim();
+        const normalizedChatId = normalizeTelegramChatId(chatId);
         const caption = buildTelegramCaption(post.embedUrl, post.text);
         const mediaTotal = post.media.length;
 
@@ -128,13 +133,33 @@ export class TelegramClient {
     }
 
     /**
-     * Sends a test message to verify channel access.
+     * Sends a test message to verify channel access, then deletes it from the channel.
      */
     public async sendTestMessage(chatId: string): Promise<SendResult> {
-        return this.sendMessage(
-            chatId,
-            t("testChannelMessage")
-        );
+        const normalizedChatId = normalizeTelegramChatId(chatId);
+        const sendResponse = await this.requestRaw<TelegramSentMessage>("sendMessage", {
+            chat_id: normalizedChatId,
+            text: t("testChannelMessage"),
+            disable_web_page_preview: false
+        });
+
+        if (!sendResponse.ok) {
+            return {
+                ok: false,
+                error: translateTelegramError(sendResponse.description ?? t("errorTelegramUnknown"))
+            };
+        }
+
+        const messageId = sendResponse.result?.message_id;
+
+        if (messageId !== undefined) {
+            await this.request("deleteMessage", {
+                chat_id: normalizedChatId,
+                message_id: messageId
+            });
+        }
+
+        return { ok: true };
     }
 
     /**

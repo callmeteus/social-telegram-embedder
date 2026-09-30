@@ -42,7 +42,7 @@
         "message": "Seus canais salvos"
     },
     "optionsSavedChannelsHint": {
-        "message": "Use @nomeDoCanal para canais públicos ou o ID -100... para canais privados."
+        "message": "Use @nomeDoCanal, o ID -100... ou o número do perfil do canal no Telegram (ex.: 1.194.845.578)."
     },
     "optionsSaveConfig": {
         "message": "Salvar configuração"

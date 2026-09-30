@@ -9,6 +9,7 @@ import {
     loadConfig,
     saveConfig
 } from "../core/storage/Storage";
+import { normalizeTelegramChatId } from "../core/telegram/NormalizeChatId";
 import { TelegramClient } from "../core/telegram/TelegramClient";
 import type { ExtensionConfig, TelegramChannel } from "../core/types/Config";
 
@@ -183,7 +184,7 @@ function readConfigFromForm(): ExtensionConfig {
         channels: channelRows.map((row) => ({
             id: row.id,
             label: row.labelInput.value.trim(),
-            chatId: row.chatIdInput.value.trim()
+            chatId: normalizeTelegramChatId(row.chatIdInput.value)
         }))
     };
 }
@@ -320,7 +321,9 @@ function addDetectedChannel(channel: DetectedTelegramChannel): void {
 
 async function handleTestChannel(rowState: ChannelRowState): Promise<void> {
     const label = rowState.labelInput.value.trim();
-    const chatId = rowState.chatIdInput.value.trim();
+    const chatId = normalizeTelegramChatId(rowState.chatIdInput.value);
+
+    rowState.chatIdInput.value = chatId;
 
     if (!label || !chatId) {
         setStatus(rowState.statusEl, t("optionsFillBeforeTest"), "error");
