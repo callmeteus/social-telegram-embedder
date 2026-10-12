@@ -18,6 +18,7 @@ describe("showChannelPicker keyboard navigation", () => {
 
         const items = Array.from(document.querySelectorAll(".x2tg-picker__item"));
 
+        expect(items[0]?.querySelector(".x2tg-picker__destination-icon")).toBeTruthy();
         expect(items[0]?.classList.contains("x2tg-picker__item--active")).toBe(true);
 
         document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));

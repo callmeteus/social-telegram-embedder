@@ -1,3 +1,4 @@
+import { preferTwitterLargeMediaUrl } from "../../../core/media/TwitterMediaUrl";
 import { buildSocialPostText, SocialCaptionAuthorStyle } from "../../../core/telegram/SocialCaption";
 import { buildTelegramCaption } from "../../../core/telegram/Caption";
 export interface FixupxTweetIdentity {
@@ -189,7 +190,7 @@ export function extractTweetMediaItems(media?: FxTwitterApiMedia): TweetMediaIte
 
     for (const photo of media.photos ?? []) {
         if (photo.url) {
-            items.push({ kind: "photo", url: photo.url });
+            items.push({ kind: "photo", url: preferTwitterLargeMediaUrl(photo.url) });
         }
     }
 
@@ -210,7 +211,7 @@ export function extractTweetMediaItems(media?: FxTwitterApiMedia): TweetMediaIte
     const mosaicUrl = media.mosaic?.formats?.jpeg ?? media.mosaic?.formats?.webp;
 
     if (mosaicUrl && items.length === 0) {
-        items.push({ kind: "photo", url: mosaicUrl });
+        items.push({ kind: "photo", url: preferTwitterLargeMediaUrl(mosaicUrl) });
     }
 
     return items;
@@ -364,7 +365,7 @@ function sleep(durationMs: number): Promise<void> {
 
 function mapApiMediaItem(item: FxTwitterApiMediaItem): TweetMediaItem | null {
     if (item.type === "photo" && item.url) {
-        return { kind: "photo", url: item.url };
+        return { kind: "photo", url: preferTwitterLargeMediaUrl(item.url) };
     }
 
     if (item.type === "gif" && item.url) {
@@ -385,7 +386,7 @@ function mapApiMediaItem(item: FxTwitterApiMediaItem): TweetMediaItem | null {
         const mosaicUrl = readMosaicFormatUrl(item.formats);
 
         if (mosaicUrl) {
-            return { kind: "photo", url: mosaicUrl };
+            return { kind: "photo", url: preferTwitterLargeMediaUrl(mosaicUrl) };
         }
     }
 

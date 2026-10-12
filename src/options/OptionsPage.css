@@ -9,6 +9,78 @@ body {
     color: #e7e9ea;
 }
 
+html.x2tg-options--popup {
+    width: 420px;
+}
+
+html.x2tg-options--popup body {
+    max-height: 580px;
+    overflow-y: auto;
+}
+
+html.x2tg-options--popup .page {
+    max-width: none;
+    margin: 0;
+    padding: 16px 16px 24px;
+}
+
+html.x2tg-options--popup .page__header h1 {
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+html.x2tg-options--popup .page__subtitle {
+    font-size: 13px;
+}
+
+html.x2tg-options--popup .card {
+    margin-top: 16px;
+    padding: 16px;
+    border-radius: 12px;
+}
+
+html.x2tg-options--popup .card h2 {
+    font-size: 16px;
+    margin-bottom: 14px;
+}
+
+html.x2tg-options--popup .card__header-row {
+    flex-direction: column;
+    align-items: stretch;
+    margin-bottom: 14px;
+}
+
+html.x2tg-options--popup .detected-section__header {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+html.x2tg-options--popup .channel-row__fields {
+    grid-template-columns: 1fr;
+}
+
+html.x2tg-options--popup .channel-row {
+    padding: 14px;
+}
+
+html.x2tg-options--popup .page__footer {
+    margin-top: 20px;
+}
+
+html.x2tg-options--popup .btn {
+    width: 100%;
+    justify-content: center;
+}
+
+html.x2tg-options--popup .discovered-item {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+html.x2tg-options--popup .channel-row__actions .btn:not(.btn--icon) {
+    flex: 1 1 auto;
+}
+
 .page {
     max-width: 760px;
     margin: 0 auto;

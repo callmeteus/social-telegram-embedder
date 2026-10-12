@@ -12,7 +12,15 @@ import {
     stripFacebookExpandSuffix
 } from "./PostTextUtils";
 import { resolveFacebookPostBody } from "./PostTextResolve";
+import { filterMediaToSelectedPhotos, narrowMediaForPhotoViewer } from "./PhotoViewerMedia";
 import { resolveFacebookPostMedia } from "./VideoMediaResolve";
+
+/**
+ * Options for building a Facebook post snapshot at send time.
+ */
+export interface BuildFacebookPostSnapshotOptions {
+    selectedPhotoUrls?: string[];
+}
 
 /**
  * Extracts post text and media from a Facebook post container.
@@ -36,7 +44,8 @@ export function extractPostSnapshot(root: Element, postUrl?: string | null): Soc
  */
 export async function buildPostSnapshot(
     root: Element,
-    postUrl?: string | null
+    postUrl?: string | null,
+    options?: BuildFacebookPostSnapshotOptions
 ): Promise<SocialPostSnapshot> {
     const attribution = extractFacebookAttribution(root, postUrl);
     const initialBody = extractPostBody(root);
@@ -47,6 +56,13 @@ export async function buildPostSnapshot(
         () => extractPostBody(root)
     );
 
+    let media = await resolveFacebookPostMedia(root, postUrl);
+    media = narrowMediaForPhotoViewer(root, window.location, media);
+
+    if (options?.selectedPhotoUrls) {
+        media = filterMediaToSelectedPhotos(media, options.selectedPhotoUrls);
+    }
+
     return {
         text: buildSocialPostText({
             body,
@@ -54,7 +70,7 @@ export async function buildPostSnapshot(
             repostedBy: attribution.repostedBy,
             authorStyle: SocialCaptionAuthorStyle.NAME
         }),
-        media: await resolveFacebookPostMedia(root, postUrl)
+        media
     };
 }
 

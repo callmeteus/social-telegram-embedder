@@ -47,6 +47,19 @@ describe("extractTweetMediaItems", () => {
         ]);
     });
 
+    it("normalizes Twitter timeline photo URLs to orig quality", () => {
+        const media = extractTweetMediaItems({
+            all: [{
+                type: "photo",
+                url: "https://pbs.twimg.com/media/HURjTRVbIAEtr_h?format=jpg&name=360x360"
+            }]
+        });
+
+        expect(media).toEqual([
+            { kind: "photo", url: "https://pbs.twimg.com/media/HURjTRVbIAEtr_h.jpg?name=orig" }
+        ]);
+    });
+
     it("picks a lower bitrate video variant for long Telegram uploads", () => {
         const media = extractTweetMediaItems({
             all: [{

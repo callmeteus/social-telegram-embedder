@@ -1,3 +1,4 @@
+import { isTwitterTimelinePhotoUrl, preferTwitterLargeMediaUrl } from "../media/TwitterMediaUrl";
 import { buildTelegramCaption } from "./Caption";
 import { chunkSocialMedia } from "./MediaBatch";
 import type { FetchedSocialPost, SocialMediaItem } from "../../platforms/types";
@@ -29,6 +30,7 @@ interface TelegramInputMedia {
     type: "photo" | "video";
     media: string;
     caption?: string;
+    parse_mode?: string;
 }
 
 interface TelegramSentMessage {
@@ -292,16 +294,45 @@ export class TelegramClient {
                 : t("progressSendingMedia")
         });
 
-        const media: TelegramInputMedia[] = mediaItems.map((item, index) => ({
-            type: item.kind === "photo" ? "photo" : "video",
-            media: item.url,
-            caption: index === 0 ? caption : undefined
-        }));
+        const shouldUploadTwitterPhotos = mediaItems.some(
+            (item) => item.kind === "photo" && isTwitterTimelinePhotoUrl(item.url)
+        );
+
+        if (shouldUploadTwitterPhotos) {
+            const uploaded = await this.sendMediaBatchByUpload(
+                chatId,
+                mediaItems,
+                caption,
+                startIndex,
+                itemTotal,
+                onProgress
+            );
+
+            if (uploaded.ok) {
+                return uploaded;
+            }
+        }
+
+        const media: TelegramInputMedia[] = mediaItems.map((item, index) => {
+            const photoUrl = item.kind === "photo"
+                ? preferTwitterLargeMediaUrl(item.url)
+                : item.url;
+            const entry: TelegramInputMedia = {
+                type: item.kind === "photo" ? "photo" : "video",
+                media: photoUrl
+            };
+
+            if (index === 0 && caption) {
+                entry.caption = caption;
+                entry.parse_mode = TELEGRAM_HTML_PARSE_MODE;
+            }
+
+            return entry;
+        });
 
         const byUrl = await this.request("sendMediaGroup", {
             chat_id: chatId,
-            media,
-            parse_mode: TELEGRAM_HTML_PARSE_MODE
+            media
         });
 
         if (byUrl.ok) {
@@ -328,6 +359,82 @@ export class TelegramClient {
         return { ok: true };
     }
 
+    private async sendMediaBatchByUpload(
+        chatId: string,
+        mediaItems: SocialMediaItem[],
+        caption: string | undefined,
+        startIndex: number,
+        itemTotal: number,
+        onProgress?: SendProgressCallback
+    ): Promise<SendResult> {
+        const formData = new FormData();
+        const mediaPayload: TelegramInputMedia[] = [];
+
+        formData.append("chat_id", chatId);
+
+        for (let index = 0; index < mediaItems.length; index++) {
+            const item = mediaItems[index];
+            const attachName = `file${index}`;
+            const downloadUrl = item.kind === "photo"
+                ? preferTwitterLargeMediaUrl(item.url)
+                : item.url;
+
+            onProgress?.({
+                message: itemTotal > 1
+                    ? t("progressSendingMediaIndexed", [String(startIndex + index + 1), String(itemTotal)])
+                    : t("progressSendingMedia")
+            });
+
+            try {
+                const blob = await fetchBlobWithProgress(downloadUrl, (loaded, total) => {
+                    const progress = formatDownloadProgressMessage(startIndex + index + 1, itemTotal, loaded, total);
+                    onProgress?.(progress);
+                });
+                const extension = guessFileExtension(downloadUrl, blob.type);
+
+                formData.append(attachName, blob, `social-media-${index}.${extension}`);
+            } catch (err) {
+                if (err instanceof Error && err.message.startsWith("Download failed")) {
+                    return {
+                        ok: false,
+                        error: t("errorMediaDownloadFailed")
+                    };
+                }
+
+                return {
+                    ok: false,
+                    error: err instanceof Error ? err.message : t("errorMediaUploadFailed")
+                };
+            }
+
+            const entry: TelegramInputMedia = {
+                type: item.kind === "photo" ? "photo" : "video",
+                media: `attach://${attachName}`
+            };
+
+            if (index === 0 && caption) {
+                entry.caption = caption;
+                entry.parse_mode = TELEGRAM_HTML_PARSE_MODE;
+            }
+
+            mediaPayload.push(entry);
+        }
+
+        formData.append("media", JSON.stringify(mediaPayload));
+
+        onProgress?.({
+            message: itemTotal > 1
+                ? t("progressSendingMediaRange", [
+                    String(startIndex + 1),
+                    String(Math.min(startIndex + mediaItems.length, itemTotal)),
+                    String(itemTotal)
+                ])
+                : t("progressSendingMedia")
+        });
+
+        return this.requestForm("sendMediaGroup", formData);
+    }
+
     private async sendMediaByUrl(
         method: "sendPhoto" | "sendVideo" | "sendAnimation",
         chatId: string,
@@ -338,15 +445,32 @@ export class TelegramClient {
         itemTotal: number,
         onProgress?: SendProgressCallback
     ): Promise<SendResult> {
+        const resolvedUrl = fieldName === "photo"
+            ? preferTwitterLargeMediaUrl(mediaUrl)
+            : mediaUrl;
+
         onProgress?.({
             message: itemTotal > 1
                 ? t("progressSendingMediaIndexed", [String(itemIndex), String(itemTotal)])
                 : t("progressSendingMedia")
         });
 
+        if (fieldName === "photo" && isTwitterTimelinePhotoUrl(resolvedUrl)) {
+            return this.uploadMediaFromUrl(
+                method,
+                chatId,
+                fieldName,
+                resolvedUrl,
+                caption,
+                itemIndex,
+                itemTotal,
+                onProgress
+            );
+        }
+
         const byUrl = await this.request(method, {
             chat_id: chatId,
-            [fieldName]: mediaUrl,
+            [fieldName]: resolvedUrl,
             caption,
             parse_mode: TELEGRAM_HTML_PARSE_MODE
         });
@@ -359,7 +483,7 @@ export class TelegramClient {
             method,
             chatId,
             fieldName,
-            mediaUrl,
+            resolvedUrl,
             caption,
             itemIndex,
             itemTotal,

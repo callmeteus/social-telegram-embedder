@@ -150,6 +150,33 @@
     "pickerTitle": {
         "message": "Send to which channel?"
     },
+    "xMediaChoiceTitle": {
+        "message": "How many images should be sent?"
+    },
+    "xMediaChoiceBothTwo": {
+        "message": "Both images"
+    },
+    "xMediaChoiceAll": {
+        "message": "All $1 images",
+        "placeholders": {
+            "count": {
+                "content": "$1",
+                "example": "4"
+            }
+        }
+    },
+    "xMediaChoiceOne": {
+        "message": "One only"
+    },
+    "xMediaChoiceImageLabel": {
+        "message": "Image $1",
+        "placeholders": {
+            "index": {
+                "content": "$1",
+                "example": "1"
+            }
+        }
+    },
     "sendToTelegram": {
         "message": "Send to Telegram"
     },

@@ -15,7 +15,7 @@ export interface SendPostMessage {
     requestId: string;
     channelId: string;
     postUrl: string;
-    /** Optional DOM snapshot from the content script (Facebook and similar). */
+    /** Optional DOM snapshot from the content script (photo viewer, Facebook, etc.). */
     postSnapshot?: SocialPostSnapshot;
 }
 

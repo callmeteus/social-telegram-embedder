@@ -34,6 +34,7 @@ const channelRows: ChannelRowState[] = [];
 void init();
 
 async function init(): Promise<void> {
+    applyToolbarPopupLayoutIfNeeded();
     applyOptionsPageI18n();
 
     const config = await loadConfig();
@@ -347,6 +348,21 @@ async function handleTestChannel(rowState: ChannelRowState): Promise<void> {
     }
 
     setStatus(rowState.statusEl, t("optionsTestSent", [label, chatId]), "success");
+}
+
+/**
+ * Applies compact layout when the options UI is shown in the toolbar popup.
+ */
+function applyToolbarPopupLayoutIfNeeded(): void {
+    if (!isExtensionToolbarPopup()) {
+        return;
+    }
+
+    document.documentElement.classList.add("x2tg-options--popup");
+}
+
+function isExtensionToolbarPopup(): boolean {
+    return window.innerWidth > 0 && window.innerWidth < 560;
 }
 
 function setStatus(

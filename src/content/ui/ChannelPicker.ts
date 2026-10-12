@@ -1,3 +1,4 @@
+import { createTelegramIconElement } from "../icons/TelegramIcon";
 import type { TelegramChannel } from "../../core/types/Config";
 import { t } from "../../core/i18n/I18n";
 import { sortChannelsForPicker } from "../../core/storage/Storage";
@@ -59,10 +60,14 @@ export function showChannelPicker(
             item.classList.add("x2tg-picker__item--recent");
         }
 
+        const destinationIcon = createTelegramIconElement(20);
+        destinationIcon.classList.add("x2tg-picker__destination-icon");
+
         const label = document.createElement("span");
         label.className = "x2tg-picker__label";
         label.textContent = channel.label;
 
+        item.appendChild(destinationIcon);
         item.appendChild(label);
 
         item.addEventListener("click", (event) => {

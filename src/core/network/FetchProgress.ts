@@ -7,7 +7,13 @@ export async function fetchBlobWithProgress(
     url: string,
     onProgress: (loaded: number, total: number | null) => void
 ): Promise<Blob> {
-    const response = await fetch(url);
+    const headers: HeadersInit = {};
+
+    if (/twimg\.com/i.test(url)) {
+        headers.Referer = "https://x.com/";
+    }
+
+    const response = await fetch(url, { headers });
 
     if (!response.ok) {
         throw new Error(`Download failed with status ${response.status}`);

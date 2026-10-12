@@ -3,6 +3,36 @@ export const INJECTED_POST_ATTR = "data-x2tg-injected";
 export const INJECTED_ACTION_BAR_ATTR = "data-x2tg-action-bar-injected";
 
 /**
+ * Finds the tweet post container for an action bar, including non-article timeline layouts.
+ */
+export function findTweetPostRootFromActionBar(actionBar: Element): Element | null {
+    const article = actionBar.closest(X_POST_ARTICLE_SELECTOR);
+
+    if (article) {
+        return article;
+    }
+
+    let node: Element | null = actionBar;
+
+    while (node) {
+        if (node.matches(X_POST_ARTICLE_SELECTOR)) {
+            return node;
+        }
+
+        const hasTweetText = node.querySelector('[data-testid="tweetText"]') !== null;
+        const hasStatusLink = node.querySelector('a[href*="/status/"]') !== null;
+
+        if (hasTweetText && hasStatusLink) {
+            return node;
+        }
+
+        node = node.parentElement;
+    }
+
+    return null;
+}
+
+/**
  * Collects tweet action bars inside a DOM subtree.
  */
 export function collectTweetActionBars(root: ParentNode): Element[] {

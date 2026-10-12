@@ -13,16 +13,23 @@ import {
     findActionBar,
     findShareButton,
     findShareInsertAnchor,
+    findTweetPostRootFromActionBar,
     INJECTED_ACTION_BAR_ATTR,
     INJECTED_POST_ATTR,
     resolveActionSlot,
     X_POST_ARTICLE_SELECTOR
 } from "./ActionBar";
+import { offloadSnapshotMediaBlobs } from "../../../content/media/BlobSnapshotTransfer";
 import { dismissProgressToast, openOptionsPage, showToast, updateProgressToast } from "../../../content/ui/Toast";
+import { SEND_TO_TELEGRAM_ICON_PATH } from "../../../content/icons/TelegramIcon";
 import { showChannelPicker } from "../../../content/ui/ChannelPicker";
+import { showTimelineMediaPicker } from "../../../content/ui/TimelineMediaPicker";
+import { buildXContentPhotoViewerSnapshot, isXContentPhotoViewerContext } from "./PhotoViewer";
+import { extractXContentTimelinePhotoUrls } from "./TimelineMedia";
+import { buildXContentArticleSnapshot } from "./XPostSnapshot";
+import type { SocialPostSnapshot } from "../../types";
 
 const SEND_DEBOUNCE_MS = 3000;
-const TELEGRAM_ICON_PATH = "M2.01 21L23 12 2.01 3 2 10l15 2-15 2z";
 const recentSends = new Map<string, number>();
 
 /**
@@ -63,7 +70,8 @@ function injectStandaloneActionBars(root: ParentNode): void {
             continue;
         }
 
-        injectIntoActionBar(actionBar, postUrl);
+        const postRoot = findTweetPostRootFromActionBar(actionBar);
+        injectIntoActionBar(actionBar, postUrl, postRoot ?? undefined);
     }
 }
 
@@ -104,7 +112,7 @@ function injectIntoActionBar(
         return false;
     }
 
-    const buttonSlot = buildSendButtonSlot(actionBar, postUrl);
+    const buttonSlot = buildSendButtonSlot(actionBar, postUrl, markContainer);
 
     if (!buttonSlot) {
         return false;
@@ -117,7 +125,11 @@ function injectIntoActionBar(
     return true;
 }
 
-function buildSendButtonSlot(actionBar: Element, postUrl: string): HTMLElement | null {
+function buildSendButtonSlot(
+    actionBar: Element,
+    postUrl: string,
+    tweetArticle?: Element
+): HTMLElement | null {
     const referenceButton = findShareButton(actionBar)
         ?? actionBar.querySelector('[data-testid="bookmark"]')
         ?? actionBar.querySelector('[data-testid="like"]')
@@ -137,7 +149,7 @@ function buildSendButtonSlot(actionBar: Element, postUrl: string): HTMLElement |
     const button = referenceButton.cloneNode(true) as HTMLButtonElement;
 
     prepareClonedActionButton(button);
-    wireSendButton(button, postUrl);
+    wireSendButton(button, postUrl, tweetArticle);
 
     slot.appendChild(button);
     slot.classList.add("x2tg-send-button-slot", "x2tg-send-button-slot--x");
@@ -178,7 +190,7 @@ function replaceButtonIcon(button: HTMLButtonElement): void {
 
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
     path.setAttribute("fill", "currentColor");
-    path.setAttribute("d", TELEGRAM_ICON_PATH);
+    path.setAttribute("d", SEND_TO_TELEGRAM_ICON_PATH);
     svg.appendChild(path);
 
     if (width) {
@@ -190,15 +202,24 @@ function replaceButtonIcon(button: HTMLButtonElement): void {
     }
 }
 
-function wireSendButton(button: HTMLButtonElement, postUrl: string): void {
+function wireSendButton(
+    button: HTMLButtonElement,
+    postUrl: string,
+    tweetArticle?: Element
+): void {
     button.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
-        void handleSendClick(button, postUrl);
+        void handleSendClick(button, postUrl, tweetArticle, button.closest('[role="group"]') ?? undefined);
     });
 }
 
-async function handleSendClick(button: HTMLButtonElement, postUrl: string): Promise<void> {
+async function handleSendClick(
+    button: HTMLButtonElement,
+    postUrl: string,
+    tweetArticle?: Element,
+    actionBar?: Element
+): Promise<void> {
     if (!isExtensionContextValid()) {
         showToast(t("extensionContextInvalidated"), "info");
         return;
@@ -212,21 +233,57 @@ async function handleSendClick(button: HTMLButtonElement, postUrl: string): Prom
         return;
     }
 
-    showChannelPicker(
-        button,
-        config.channels,
-        config.lastUsedChannelId,
-        (channel) => {
-            void sendToChannel(channel.id, channel.label, postUrl);
-        },
-        SocialPlatformId.X
-    );
+    const openChannelPicker = (pendingSnapshot?: SocialPostSnapshot) => {
+        showChannelPicker(
+            button,
+            config.channels,
+            config.lastUsedChannelId,
+            (channel) => {
+                void sendToChannel(channel.id, channel.label, postUrl, pendingSnapshot);
+            },
+            SocialPlatformId.X
+        );
+    };
+
+    const postRoot = tweetArticle ?? (actionBar ? findTweetPostRootFromActionBar(actionBar) : null);
+
+    if (isXContentPhotoViewerContext()) {
+        const viewerSnapshot = buildXContentPhotoViewerSnapshot(window.location, document, actionBar);
+        openChannelPicker(viewerSnapshot ?? undefined);
+        return;
+    }
+
+    if (postRoot instanceof Element) {
+        const timelinePhotos = extractXContentTimelinePhotoUrls(postRoot);
+
+        if (timelinePhotos.length >= 2) {
+            showTimelineMediaPicker(
+                timelinePhotos,
+                () => {
+                    openChannelPicker(buildXContentArticleSnapshot(postRoot, timelinePhotos));
+                },
+                (photoUrl) => {
+                    openChannelPicker(buildXContentArticleSnapshot(postRoot, [photoUrl]));
+                },
+                SocialPlatformId.X
+            );
+            return;
+        }
+
+        if (timelinePhotos.length === 1) {
+            openChannelPicker(buildXContentArticleSnapshot(postRoot, timelinePhotos));
+            return;
+        }
+    }
+
+    openChannelPicker();
 }
 
 async function sendToChannel(
     channelId: string,
     channelLabel: string,
-    postUrl: string
+    postUrl: string,
+    pendingSnapshot?: SocialPostSnapshot
 ): Promise<void> {
     const dedupeKey = `${channelId}:${postUrl}`;
     const lastSent = recentSends.get(dedupeKey) ?? 0;
@@ -239,12 +296,18 @@ async function sendToChannel(
     const requestId = crypto.randomUUID();
     updateProgressToast(requestId, t("preparingSend"));
 
+    const photoViewerSnapshot = pendingSnapshot ?? buildXContentPhotoViewerSnapshot(window.location, document);
+    const postSnapshot = photoViewerSnapshot
+        ? await offloadSnapshotMediaBlobs(photoViewerSnapshot, requestId)
+        : undefined;
+
     const response = await sendRuntimeMessage<{ ok?: boolean; error?: string }>({
         type: RuntimeMessageType.SEND_POST,
         platformId: SocialPlatformId.X,
         requestId,
         channelId,
-        postUrl
+        postUrl,
+        postSnapshot
     });
 
     dismissProgressToast(requestId);

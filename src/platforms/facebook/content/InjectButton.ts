@@ -29,14 +29,21 @@ import {
     isVisibleFacebookActionLabelControl,
     resolveActionSlot
 } from "./ActionBar";
+import { isFacebookPhotoViewerContext } from "./PhotoViewerMedia";
+import { extractFacebookTimelinePhotoUrls } from "./TimelineMedia";
 import { buildPostSnapshot } from "./PostDom";
+import { showTimelineMediaPicker } from "../../../content/ui/TimelineMediaPicker";
 import { offloadSnapshotMediaBlobs } from "../../../content/media/BlobSnapshotTransfer";
 import { dismissProgressToast, openOptionsPage, showToast, updateProgressToast } from "../../../content/ui/Toast";
+import { SEND_TO_TELEGRAM_ICON_PATH } from "../../../content/icons/TelegramIcon";
 import { showChannelPicker } from "../../../content/ui/ChannelPicker";
 
 const SEND_DEBOUNCE_MS = 3000;
-const TELEGRAM_ICON_PATH = "M2.01 21L23 12 2.01 3 2 10l15 2-15 2z";
 const recentSends = new Map<string, number>();
+
+interface PendingFacebookSendOptions {
+    selectedPhotoUrls?: string[];
+}
 
 /**
  * Injects Telegram send buttons for Facebook posts.
@@ -343,7 +350,7 @@ function buildFacebookTelegramIcon(
 
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
     path.setAttribute("fill", "currentColor");
-    path.setAttribute("d", TELEGRAM_ICON_PATH);
+    path.setAttribute("d", SEND_TO_TELEGRAM_ICON_PATH);
     svg.appendChild(path);
 
     return svg;
@@ -377,15 +384,39 @@ async function handleSendClick(
 
     const resolvedPostUrl = resolveSendPostUrl(button, snapshotRoot, postUrl);
 
-    showChannelPicker(
-        button,
-        config.channels,
-        config.lastUsedChannelId,
-        (channel) => {
-            void sendToChannel(channel.id, channel.label, resolvedPostUrl, snapshotRoot);
-        },
-        SocialPlatformId.FACEBOOK
-    );
+    const openChannelPicker = (pending?: PendingFacebookSendOptions) => {
+        showChannelPicker(
+            button,
+            config.channels,
+            config.lastUsedChannelId,
+            (channel) => {
+                void sendToChannel(channel.id, channel.label, resolvedPostUrl, snapshotRoot, pending);
+            },
+            SocialPlatformId.FACEBOOK
+        );
+    };
+
+    const isReelButton = button.classList.contains("x2tg-send-button--facebook-reel");
+
+    if (!isReelButton && !isFacebookPhotoViewerContext(window.location, snapshotRoot)) {
+        const timelinePhotos = extractFacebookTimelinePhotoUrls(snapshotRoot);
+
+        if (timelinePhotos.length >= 2) {
+            showTimelineMediaPicker(
+                timelinePhotos,
+                () => {
+                    openChannelPicker({ selectedPhotoUrls: timelinePhotos });
+                },
+                (photoUrl) => {
+                    openChannelPicker({ selectedPhotoUrls: [photoUrl] });
+                },
+                SocialPlatformId.FACEBOOK
+            );
+            return;
+        }
+    }
+
+    openChannelPicker();
 }
 
 function resolveSendPostUrl(
@@ -404,7 +435,8 @@ async function sendToChannel(
     channelId: string,
     channelLabel: string,
     postUrl: string,
-    snapshotRoot: Element
+    snapshotRoot: Element,
+    pending?: PendingFacebookSendOptions
 ): Promise<void> {
     const dedupeKey = `${channelId}:${postUrl}`;
     const lastSent = recentSends.get(dedupeKey) ?? 0;
@@ -419,7 +451,9 @@ async function sendToChannel(
 
     updateProgressToast(requestId, t("progressResolvingVideo"));
 
-    const postSnapshot = await buildPostSnapshot(snapshotRoot, postUrl);
+    const postSnapshot = await buildPostSnapshot(snapshotRoot, postUrl, {
+        selectedPhotoUrls: pending?.selectedPhotoUrls
+    });
     const payloadSnapshot = await offloadSnapshotMediaBlobs(postSnapshot, requestId);
 
     const response = await sendRuntimeMessage<{ ok?: boolean; error?: string }>({
