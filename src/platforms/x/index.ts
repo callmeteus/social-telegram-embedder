@@ -5,9 +5,6 @@ import { toFixupxTweetUrl } from "./url/FixupxUrl";
 import type { SocialPlatform } from "../types";
 import { SocialPlatformId } from "../types";
 import type { FetchedSocialPost } from "../types";
-import type { TelegramClient } from "../../core/telegram/TelegramClient";
-import type { SendProgressCallback } from "../../core/network/SendProgress";
-import type { SendResult } from "../../core/types/Results";
 
 /**
  * Maps FxTwitter payload to the cross-platform post shape.
@@ -37,8 +34,8 @@ export const xPlatform: SocialPlatform = {
 
         return mapFetchedTweet(tweet);
     },
-    sendPost(client, chatId, post, onProgress) {
-        return client.sendSocialPost(chatId, post, onProgress);
+    sendPost(sender, post, onProgress) {
+        return sender.sendSocialPost(post, onProgress);
     },
     progressMessages: {
         fetching: "progressFetchingPost",

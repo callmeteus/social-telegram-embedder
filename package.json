@@ -15,6 +15,7 @@
     "scripts": {
         "build": "node scripts/generate-icons.mjs && node scripts/build.mjs",
         "dev": "node scripts/dev.mjs",
+        "dev:options": "vite --config vite.options.config.ts",
         "package:zip": "yarn build && node scripts/package.mjs",
         "typecheck": "tsc --noEmit",
         "test": "vitest run"
@@ -27,6 +28,7 @@
         "lucide-static": "^1.45.0",
         "sharp": "^0.35.4",
         "typescript": "^5.7.3",
+        "vite": "^6.0.7",
         "vitest": "^2.1.8"
     }
 }

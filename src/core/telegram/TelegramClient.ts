@@ -14,6 +14,7 @@ import {
     sortDetectedChannels,
     type TelegramUpdateSnapshot
 } from "./DiscoverChannels";
+import { buildTelegramBotApiUrl } from "./TelegramApiUrl";
 import { normalizeTelegramChatId } from "./NormalizeChatId";
 
 interface TelegramApiResponse<T = unknown> {
@@ -609,7 +610,7 @@ export class TelegramClient {
 
         try {
             const response = await fetch(
-                `https://api.telegram.org/bot${this.botToken}/${method}`,
+                buildTelegramBotApiUrl(this.botToken, method),
                 {
                     method: "POST",
                     body: formData
@@ -647,7 +648,7 @@ export class TelegramClient {
 
         try {
             const response = await fetch(
-                `https://api.telegram.org/bot${this.botToken}/${method}`,
+                buildTelegramBotApiUrl(this.botToken, method),
                 {
                     method: "POST",
                     headers: {

@@ -1,0 +1,31 @@
+.x2tg-options-dev-banner {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    text-align: center;
+    color: var(--x2tg-text-secondary);
+    background: var(--x2tg-surface);
+    border-bottom: 1px solid var(--x2tg-border);
+}
+
+.x2tg-options-dev-banner a {
+    color: var(--x2tg-accent);
+    text-decoration: none;
+}
+
+.x2tg-options-dev-banner a:hover {
+    text-decoration: underline;
+}
+
+html.x2tg-options-dev--popup body {
+    margin: 0 auto;
+    background: var(--x2tg-bg);
+}
+
+html.x2tg-options-dev--popup .x2tg-options-dev-banner {
+    max-width: 400px;
+    margin: 0 auto;
+}

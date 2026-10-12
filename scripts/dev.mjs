@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { watch } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,6 +10,7 @@ import {
     staticAssetPaths
 } from "./build-lib.mjs";
 import * as esbuild from "esbuild";
+import { OPTIONS_DEV_PORT } from "./options-dev-port.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -84,4 +85,34 @@ const context = await esbuild.context({
 await context.watch();
 watchStaticAssets();
 
-console.log("[dev] watching source files; reload the extension in chrome://extensions after changes");
+const optionsDevPort = Number(process.env.OPTIONS_DEV_PORT ?? OPTIONS_DEV_PORT);
+
+startOptionsViteServer(optionsDevPort);
+
+console.log("[dev] extension: reload in chrome://extensions after changes");
+console.log(`[dev] options UI: http://localhost:${optionsDevPort}/dev.html?popup=1 (Vite hot reload)`);
+
+/**
+ * Serves the options page in the browser with chrome.* shims for layout iteration.
+ */
+function startOptionsViteServer(port) {
+    const viteCli = join(root, "node_modules", "vite", "bin", "vite.js");
+    const viteProcess = spawn(
+        process.execPath,
+        [viteCli, "--config", "vite.options.config.ts"],
+        {
+            cwd: root,
+            stdio: "inherit",
+            env: {
+                ...process.env,
+                OPTIONS_DEV_PORT: String(port)
+            }
+        }
+    );
+
+    viteProcess.on("exit", (code) => {
+        if (code && code !== 0) {
+            console.error(`[dev] Vite options server exited with code ${code}`);
+        }
+    });
+}

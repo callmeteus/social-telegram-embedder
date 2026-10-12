@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { closeChannelPicker, showChannelPicker } from "../src/content/ui/ChannelPicker";
+import { DestinationProvider, type TelegramDestinationChannel } from "../src/core/types/Config";
+
+function telegramChannel(id: string, label: string): TelegramDestinationChannel {
+    return { id, label, provider: DestinationProvider.TELEGRAM, chatId: id };
+}
 
 describe("showChannelPicker keyboard navigation", () => {
     it("moves selection with arrow keys and confirms with enter", () => {
@@ -8,9 +13,9 @@ describe("showChannelPicker keyboard navigation", () => {
         showChannelPicker(
             document.createElement("button"),
             [
-                { id: "-1001", label: "Canal A", chatId: "-1001" },
-                { id: "-1002", label: "Canal B", chatId: "-1002" },
-                { id: "-1003", label: "Canal C", chatId: "-1003" }
+                telegramChannel("-1001", "Canal A"),
+                telegramChannel("-1002", "Canal B"),
+                telegramChannel("-1003", "Canal C")
             ],
             undefined,
             onSelect
@@ -34,7 +39,7 @@ describe("showChannelPicker keyboard navigation", () => {
         document.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
 
         expect(onSelect).toHaveBeenCalledTimes(1);
-        expect(onSelect).toHaveBeenCalledWith({ id: "-1002", label: "Canal B", chatId: "-1002" });
+        expect(onSelect).toHaveBeenCalledWith(telegramChannel("-1002", "Canal B"));
         expect(document.querySelector(".x2tg-picker-overlay")).toBeNull();
     });
 
@@ -42,8 +47,8 @@ describe("showChannelPicker keyboard navigation", () => {
         showChannelPicker(
             document.createElement("button"),
             [
-                { id: "-1001", label: "Canal A", chatId: "-1001" },
-                { id: "-1002", label: "Canal B", chatId: "-1002" }
+                telegramChannel("-1001", "Canal A"),
+                telegramChannel("-1002", "Canal B")
             ],
             undefined,
             vi.fn()
@@ -54,6 +59,30 @@ describe("showChannelPicker keyboard navigation", () => {
         document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
 
         expect(items[1]?.classList.contains("x2tg-picker__item--active")).toBe(true);
+
+        closeChannelPicker();
+    });
+
+    it("lists channels from different providers together", () => {
+        showChannelPicker(
+            document.createElement("button"),
+            [
+                telegramChannel("-1001", "Canal Telegram"),
+                {
+                    id: "discord-1",
+                    label: "Canal Discord",
+                    provider: DestinationProvider.DISCORD,
+                    webhookUrl: "https://discord.com/api/webhooks/1/abc"
+                }
+            ],
+            undefined,
+            vi.fn()
+        );
+
+        const items = Array.from(document.querySelectorAll(".x2tg-picker__item"));
+
+        expect(items.map((item) => item.textContent)).toEqual(["Canal Telegram", "Canal Discord"]);
+        expect(items[1]?.querySelector(".x2tg-picker__destination-icon")).toBeNull();
 
         closeChannelPicker();
     });

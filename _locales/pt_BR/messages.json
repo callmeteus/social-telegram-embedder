@@ -9,7 +9,7 @@
         "message": "Social Telegram Embedder - Configurações"
     },
     "optionsSubtitle": {
-        "message": "Configure o bot e os canais. Funciona no X/Twitter e no Facebook. Cada envio pergunta para qual canal mandar."
+        "message": "Token do bot e canais de destino ao enviar do X ou do Facebook."
     },
     "optionsBotSection": {
         "message": "Bot do Telegram"
@@ -46,6 +46,9 @@
     },
     "optionsSaveConfig": {
         "message": "Salvar configuração"
+    },
+    "optionsPendingChanges": {
+        "message": "Você tem alterações pendentes"
     },
     "optionsChannelNameLabel": {
         "message": "Nome"
@@ -304,6 +307,9 @@
     },
     "errorChannelNotFound": {
         "message": "Canal não encontrado na configuração."
+    },
+    "errorDestinationNotSupported": {
+        "message": "O envio para este tipo de canal ainda não está disponível."
     },
     "errorInternal": {
         "message": "Erro interno da extensão."

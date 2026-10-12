@@ -1,33 +1,36 @@
-import type { ExtensionConfig, TelegramChannel } from "../types/Config";
-import { DefaultExtensionConfig } from "../types/Config";
+import {
+    DestinationProvider,
+    createDefaultExtensionConfig,
+    type DestinationChannel,
+    type ExtensionConfig,
+    type TelegramDestinationChannel
+} from "../types/Config";
+import { migrateConfig } from "./ConfigMigrations";
 import { isExtensionContextError, isExtensionContextValid } from "../extension";
 
 const STORAGE_KEY = "xToTelegramConfig";
 
 /**
- * Loads extension configuration from chrome.storage.sync.
+ * Loads extension configuration from chrome.storage.sync, upgrading older schemas in place.
  */
 export async function loadConfig(): Promise<ExtensionConfig> {
     if (!isExtensionContextValid()) {
-        return { ...DefaultExtensionConfig };
+        return createDefaultExtensionConfig();
     }
 
     try {
         const result = await chrome.storage.sync.get(STORAGE_KEY);
-        const stored = result[STORAGE_KEY] as ExtensionConfig | undefined;
+        const { config, migrated, fromVersion } = migrateConfig(result[STORAGE_KEY]);
 
-        if (!stored) {
-            return { ...DefaultExtensionConfig };
+        if (migrated) {
+            await saveConfig(config);
+            console.debug("[storage] persisted config migrated from v%d to v%d", fromVersion, config.version);
         }
 
-        return {
-            botToken: stored.botToken ?? "",
-            channels: Array.isArray(stored.channels) ? stored.channels : [],
-            lastUsedChannelId: stored.lastUsedChannelId
-        };
+        return config;
     } catch (err) {
         if (isExtensionContextError(err)) {
-            return { ...DefaultExtensionConfig };
+            return createDefaultExtensionConfig();
         }
 
         throw err;
@@ -44,30 +47,49 @@ export async function saveConfig(config: ExtensionConfig): Promise<void> {
 }
 
 /**
- * Returns true when the bot token and at least one valid channel exist.
+ * Returns true when at least one channel is valid and its provider has credentials.
  */
 export function isConfigReady(config: ExtensionConfig): boolean {
-    if (!config.botToken.trim()) {
-        return false;
-    }
-
-    return config.channels.some((channel) => isChannelValid(channel));
+    return config.channels.some((channel) => isChannelReady(config, channel));
 }
 
 /**
- * Validates a channel entry.
+ * Returns true when a channel is valid and its provider credentials are filled in.
  */
-export function isChannelValid(channel: TelegramChannel): boolean {
-    return Boolean(channel.label.trim() && channel.chatId.trim());
+export function isChannelReady(config: ExtensionConfig, channel: DestinationChannel): boolean {
+    if (!isChannelValid(channel)) {
+        return false;
+    }
+
+    if (channel.provider === DestinationProvider.TELEGRAM) {
+        return Boolean(config.providers.telegram.botToken.trim());
+    }
+
+    return true;
+}
+
+/**
+ * Validates a channel entry (label plus the provider-specific target).
+ */
+export function isChannelValid(channel: DestinationChannel): boolean {
+    if (!channel.label.trim()) {
+        return false;
+    }
+
+    if (channel.provider === DestinationProvider.TELEGRAM) {
+        return Boolean(channel.chatId.trim());
+    }
+
+    return Boolean(channel.webhookUrl.trim());
 }
 
 /**
  * Sorts channels for the picker, placing last used first.
  */
 export function sortChannelsForPicker(
-    channels: TelegramChannel[],
+    channels: DestinationChannel[],
     lastUsedChannelId?: string
-): TelegramChannel[] {
+): DestinationChannel[] {
     const valid = channels.filter(isChannelValid);
 
     if (!lastUsedChannelId) {
@@ -85,12 +107,13 @@ export function sortChannelsForPicker(
 }
 
 /**
- * Creates a new empty channel with a unique id.
+ * Creates a new empty Telegram channel with a unique id.
  */
-export function createEmptyChannel(): TelegramChannel {
+export function createEmptyTelegramChannel(): TelegramDestinationChannel {
     return {
         id: crypto.randomUUID(),
         label: "",
+        provider: DestinationProvider.TELEGRAM,
         chatId: ""
     };
 }
@@ -113,6 +136,6 @@ export async function setLastUsedChannelId(channelId: string): Promise<void> {
 export function findChannelById(
     config: ExtensionConfig,
     channelId: string
-): TelegramChannel | undefined {
+): DestinationChannel | undefined {
     return config.channels.find((channel) => channel.id === channelId);
 }

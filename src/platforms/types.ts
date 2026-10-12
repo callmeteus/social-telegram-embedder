@@ -1,6 +1,6 @@
 import type { SendProgressCallback } from "../core/network/SendProgress";
 import type { SendResult } from "../core/types/Results";
-import type { TelegramClient } from "../core/telegram/TelegramClient";
+import type { DestinationSender } from "../core/destinations";
 
 /** Supported social network identifiers. */
 export enum SocialPlatformId {
@@ -67,8 +67,7 @@ export interface SocialPlatform {
     normalizePostUrl(rawUrl: string): string | null;
     fetchPost(normalizedUrl: string): Promise<FetchedSocialPost | null>;
     sendPost(
-        client: TelegramClient,
-        chatId: string,
+        sender: DestinationSender,
         post: FetchedSocialPost,
         onProgress?: SendProgressCallback
     ): Promise<SendResult>;

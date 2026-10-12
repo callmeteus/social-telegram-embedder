@@ -5,7 +5,7 @@ import { normalizeFacebookPostUrl } from "./url/FacebookUrl";
 import type { SocialPlatform } from "../types";
 import { SocialPlatformId } from "../types";
 import type { FetchedSocialPost } from "../types";
-import type { TelegramClient } from "../../core/telegram/TelegramClient";
+import type { DestinationSender } from "../../core/destinations";
 import type { SendProgressCallback } from "../../core/network/SendProgress";
 import type { SendResult } from "../../core/types/Results";
 
@@ -31,12 +31,11 @@ export const facebookPlatform: SocialPlatform = {
         };
     },
     sendPost(
-        client: TelegramClient,
-        chatId: string,
+        sender: DestinationSender,
         post: FetchedSocialPost,
         onProgress?: SendProgressCallback
     ): Promise<SendResult> {
-        return client.sendSocialPost(chatId, post, onProgress);
+        return sender.sendSocialPost(post, onProgress);
     },
     progressMessages: {
         fetching: "progressFetchingPost",

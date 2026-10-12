@@ -1,5 +1,5 @@
 import { createTelegramIconElement } from "../icons/TelegramIcon";
-import type { TelegramChannel } from "../../core/types/Config";
+import { DestinationProvider, type DestinationChannel } from "../../core/types/Config";
 import { t } from "../../core/i18n/I18n";
 import { sortChannelsForPicker } from "../../core/storage/Storage";
 import { SocialPlatformId } from "../../platforms/types";
@@ -9,7 +9,7 @@ let outsideClickHandler: ((event: MouseEvent) => void) | null = null;
 let keyboardHandler: ((event: KeyboardEvent) => void) | null = null;
 
 interface PickerItemState {
-    channel: TelegramChannel;
+    channel: DestinationChannel;
     element: HTMLButtonElement;
 }
 
@@ -18,9 +18,9 @@ interface PickerItemState {
  */
 export function showChannelPicker(
     _anchor: HTMLElement,
-    channels: TelegramChannel[],
+    channels: DestinationChannel[],
     lastUsedChannelId: string | undefined,
-    onSelect: (channel: TelegramChannel) => void,
+    onSelect: (channel: DestinationChannel) => void,
     platformId: SocialPlatformId = SocialPlatformId.X
 ): void {
     closeChannelPicker();
@@ -60,14 +60,16 @@ export function showChannelPicker(
             item.classList.add("x2tg-picker__item--recent");
         }
 
-        const destinationIcon = createTelegramIconElement(20);
-        destinationIcon.classList.add("x2tg-picker__destination-icon");
+        if (channel.provider === DestinationProvider.TELEGRAM) {
+            const destinationIcon = createTelegramIconElement(20);
+            destinationIcon.classList.add("x2tg-picker__destination-icon");
+            item.appendChild(destinationIcon);
+        }
 
         const label = document.createElement("span");
         label.className = "x2tg-picker__label";
         label.textContent = channel.label;
 
-        item.appendChild(destinationIcon);
         item.appendChild(label);
 
         item.addEventListener("click", (event) => {

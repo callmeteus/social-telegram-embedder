@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Keep markup in sync with dev.html when changing the options layout. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -9,56 +10,60 @@
 <body>
     <main class="page">
         <header class="page__header">
-            <h1 data-i18n="extName">Social Telegram Embedder</h1>
+            <h1 class="page__title" data-i18n="extName">Social Telegram Embedder</h1>
             <p class="page__subtitle" data-i18n="optionsSubtitle">
                 Configure your bot and channels.
             </p>
         </header>
 
-        <section class="card">
-            <h2 data-i18n="optionsBotSection">Telegram bot</h2>
-            <label class="field" for="bot-token">
-                <span class="field__label" data-i18n="optionsBotTokenLabel">@BotFather token</span>
-                <input id="bot-token" class="field__input" type="password" autocomplete="off" data-i18n-placeholder="optionsBotTokenPlaceholder" placeholder="123456789:ABC...">
-            </label>
-            <div class="actions">
-                <button id="test-bot" type="button" class="btn btn--secondary" data-i18n="optionsValidateToken">Validate token</button>
+        <section class="card card--bot" aria-labelledby="bot-section-title">
+            <h2 id="bot-section-title" class="card__title" data-i18n="optionsBotSection">Telegram bot</h2>
+            <div class="bot-token-row">
+                <label class="field field--grow" for="bot-token">
+                    <span class="field__label" data-i18n="optionsBotTokenLabel">@BotFather token</span>
+                    <input id="bot-token" class="field__input" type="password" autocomplete="off" data-i18n-placeholder="optionsBotTokenPlaceholder" placeholder="123456789:ABC...">
+                </label>
+                <button id="test-bot" type="button" class="btn btn--secondary btn--sm bot-token-row__action" data-i18n="optionsValidateToken">Validate token</button>
             </div>
             <p id="bot-status" class="status" aria-live="polite"></p>
         </section>
 
-        <section class="card card--channels">
+        <section id="channels-section" class="card card--channels" aria-labelledby="channels-section-title" hidden>
             <div class="card__header-row">
-                <h2 data-i18n="optionsChannelsSection">Channels</h2>
-                <button id="add-channel" type="button" class="btn btn--primary" data-i18n="optionsAddChannel">Add channel</button>
+                <h2 id="channels-section-title" class="card__title" data-i18n="optionsChannelsSection">Channels</h2>
+                <button id="add-channel" type="button" class="btn btn--primary btn--sm" data-i18n="optionsAddChannel">Add channel</button>
             </div>
 
-            <div class="detected-section">
+            <div class="channels-block">
+                <h3 class="subsection-title" data-i18n="optionsSavedChannelsTitle">Your saved channels</h3>
+                <p class="hint hint--compact" data-i18n="optionsSavedChannelsHint">
+                    Use @channelName for public channels or the -100... ID for private channels.
+                </p>
+                <div id="channels-list" class="channels-list"></div>
+            </div>
+
+            <div class="panel panel--discover">
                 <div class="detected-section__header">
                     <h3 class="subsection-title" data-i18n="optionsDetectedChannelsTitle">Channels detected from the bot</h3>
-                    <button id="discover-channels" type="button" class="btn btn--secondary" data-i18n="optionsDiscoverChannels">Discover channels</button>
+                    <button id="discover-channels" type="button" class="btn btn--secondary btn--sm" data-i18n="optionsDiscoverChannels">Discover channels</button>
                 </div>
-                <p class="hint" data-i18n="optionsDiscoverHint">
+                <p class="hint hint--discover" data-i18n="optionsDiscoverHint">
                     The extension reads your bot updates.
                 </p>
                 <p id="discover-status" class="status" aria-live="polite"></p>
                 <div id="discovered-channels" class="discovered-list"></div>
             </div>
-
-            <div class="section-divider"></div>
-
-            <h3 class="subsection-title" data-i18n="optionsSavedChannelsTitle">Your saved channels</h3>
-            <p class="hint hint--compact" data-i18n="optionsSavedChannelsHint">
-                Use @channelName for public channels or the -100... ID for private channels.
-            </p>
-            <div id="channels-list" class="channels-list"></div>
         </section>
 
-        <footer class="page__footer">
-            <button id="save-config" type="button" class="btn btn--primary" data-i18n="optionsSaveConfig">Save settings</button>
-            <p id="save-status" class="status" aria-live="polite"></p>
-        </footer>
     </main>
+
+    <footer class="save-dock" id="save-dock" hidden>
+        <div class="save-dock__inner">
+            <p class="save-dock__message" data-i18n="optionsPendingChanges">You have unsaved changes</p>
+            <button id="save-config" type="button" class="btn btn--primary btn--sm" data-i18n="optionsSaveConfig">Save settings</button>
+        </div>
+        <p id="save-status" class="status save-dock__status" aria-live="polite"></p>
+    </footer>
 
     <template id="channel-row-template">
         <article class="channel-row">
@@ -73,10 +78,14 @@
                 </label>
             </div>
             <div class="channel-row__actions">
-                <button type="button" class="btn btn--secondary btn--icon btn-move-up" data-i18n-title="optionsMoveUpTitle" title="Move up"></button>
-                <button type="button" class="btn btn--secondary btn--icon btn-move-down" data-i18n-title="optionsMoveDownTitle" title="Move down"></button>
-                <button type="button" class="btn btn--secondary btn-test-channel" data-i18n="optionsTestChannel">Test channel</button>
-                <button type="button" class="btn btn--danger btn-remove-channel" data-i18n="optionsRemoveChannel">Remove</button>
+                <div class="channel-row__actions-primary">
+                    <button type="button" class="btn btn--secondary btn--sm btn-test-channel" data-i18n="optionsTestChannel">Test channel</button>
+                    <button type="button" class="btn btn--danger btn--sm btn-remove-channel" data-i18n="optionsRemoveChannel">Remove</button>
+                </div>
+                <div class="channel-row__actions-reorder" aria-label="Reorder">
+                    <button type="button" class="btn btn--secondary btn--icon btn-move-up" data-i18n-title="optionsMoveUpTitle" title="Move up"></button>
+                    <button type="button" class="btn btn--secondary btn--icon btn-move-down" data-i18n-title="optionsMoveDownTitle" title="Move down"></button>
+                </div>
             </div>
             <p class="channel-row__status status" aria-live="polite"></p>
         </article>

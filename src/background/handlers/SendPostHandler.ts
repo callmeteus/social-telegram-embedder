@@ -2,13 +2,13 @@ import { createTabProgressReporter } from "../ProgressReporter";
 import { hydrateSnapshotMediaBlobs } from "../../content/media/BlobSnapshotTransfer";
 import { t } from "../../core/i18n/I18n";
 import { findChannelById, loadConfig, setLastUsedChannelId } from "../../core/storage/Storage";
-import { TelegramClient } from "../../core/telegram/TelegramClient";
+import { createDestinationSender } from "../../core/destinations";
 import type { SendPostMessage, SendResult } from "../../core/types";
 import { snapshotToFetchedPost } from "../../platforms/types";
 import { getPlatformById } from "../../platforms/registry";
 
 /**
- * Sends a social post to Telegram using the matching platform adapter.
+ * Sends a social post to the selected destination channel using the matching platform adapter.
  */
 export async function handleSendPost(
     message: SendPostMessage,
@@ -47,7 +47,14 @@ export async function handleSendPost(
         ? createTabProgressReporter(tabId, message.requestId)
         : undefined;
 
-    const client = new TelegramClient(config.botToken);
+    const destination = createDestinationSender(config, channel);
+
+    if (!destination) {
+        return {
+            ok: false,
+            error: t("errorDestinationNotSupported")
+        };
+    }
 
     onProgress?.({ message: t(platform.progressMessages.fetching) });
 
@@ -59,8 +66,8 @@ export async function handleSendPost(
         ? snapshotToFetchedPost(normalizedUrl, hydratedSnapshot)
         : await platform.fetchPost(normalizedUrl);
     const result = fetchedPost
-        ? await platform.sendPost(client, channel.chatId, fetchedPost, onProgress)
-        : await client.sendMessage(channel.chatId, normalizedUrl);
+        ? await platform.sendPost(destination, fetchedPost, onProgress)
+        : await destination.sendLink(normalizedUrl);
 
     if (result.ok) {
         await setLastUsedChannelId(channel.id);
