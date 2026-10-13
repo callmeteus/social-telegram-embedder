@@ -1,6 +1,6 @@
 {
     "name": "social-telegram-embedder",
-    "version": "1.1.0",
+    "version": "1.0.0",
     "private": true,
     "description": "Chrome extension to embed social posts in Telegram channels with rich media",
     "license": "MIT",

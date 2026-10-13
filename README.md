@@ -63,13 +63,13 @@ Under the hood it uses the public [FxTwitter Status API](https://github.com/FxEm
 ### Verify checksum (optional)
 
 ```bash
-sha256sum -c social-telegram-embedder-v1.1.0.zip.sha256
+sha256sum -c social-telegram-embedder-v1.0.0.zip.sha256
 ```
 
 On Windows (PowerShell):
 
 ```powershell
-Get-FileHash .\social-telegram-embedder-v1.1.0.zip -Algorithm SHA256
+Get-FileHash .\social-telegram-embedder-v1.0.0.zip -Algorithm SHA256
 ```
 
 Compare the output with the contents of the `.sha256` file from the release.
@@ -312,8 +312,8 @@ Version lives in [`manifest.json`](./manifest.json). GitHub Actions builds and p
 ```bash
 # 1. Bump version in manifest.json
 # 2. Commit and push
-git tag v1.1.0
-git push origin v1.1.0
+git tag v1.0.0
+git push origin v1.0.0
 ```
 
 The [Release workflow](./.github/workflows/release.yml) will:

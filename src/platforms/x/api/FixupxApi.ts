@@ -92,7 +92,7 @@ interface FxTwitterApiMosaic {
 }
 
 const FXTWITTER_API_BASE = "https://api.fxtwitter.com";
-const FXTWITTER_USER_AGENT = "social-telegram-embedder/1.1.0";
+const FXTWITTER_USER_AGENT = "social-telegram-embedder/1.0.0";
 const TELEGRAM_MEDIA_GROUP_LIMIT = 10;
 /** Retries after the first failed FxTwitter API attempt. */
 const FXTWITTER_FETCH_RETRY_COUNT = 3;
