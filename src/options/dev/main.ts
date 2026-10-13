@@ -1,5 +1,8 @@
 import { installChromeDevShim } from "./chrome-shim";
 import "../OptionsPage.css";
+import "../SendChannels.css";
+import "../TelegramAccountSection.css";
+import "../SetupWizard.css";
 import "./dev.css";
 
 installChromeDevShim();

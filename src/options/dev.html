@@ -21,45 +21,165 @@
             </p>
         </header>
 
-        <section class="card card--bot" aria-labelledby="bot-section-title">
-            <h2 id="bot-section-title" class="card__title" data-i18n="optionsBotSection">Telegram bot</h2>
+        <section id="connections-view" class="send-channels" aria-labelledby="connections-title" hidden>
+            <div class="send-channels__head">
+                <h2 id="connections-title" class="send-channels__title" data-i18n="optionsSendChannelsTitle">Send channels</h2>
+                <button id="connections-add" type="button" class="btn btn--secondary btn--sm send-channels__add">
+                    <span class="setup-add__icon" aria-hidden="true"></span>
+                    <span data-i18n="optionsAddConnection">Add</span>
+                </button>
+            </div>
+            <ul id="connections-list" class="connections-list"></ul>
+        </section>
+
+        <section id="setup-wizard" class="setup-wizard" aria-labelledby="setup-wizard-title" hidden>
+            <div class="path-head">
+                <button id="setup-back" type="button" class="path-head__back" data-i18n-title="optionsSetupBack" title="Back" hidden></button>
+                <h2 id="setup-wizard-title" class="setup-wizard__title" data-i18n="optionsSetupTitle">How do you want to send?</h2>
+            </div>
+            <p class="setup-wizard__lead" data-i18n="optionsSetupLead">Pick one path to get started. You can add more later.</p>
+            <div class="setup-paths">
+                <button type="button" id="setup-choose-account" class="setup-path">
+                    <span class="setup-path__icon" aria-hidden="true"></span>
+                    <span class="setup-path__title" data-i18n="optionsSetupAccountTitle">Your Telegram account</span>
+                    <span class="setup-path__desc" data-i18n="optionsSetupAccountDesc">Send as yourself to any chat, group or channel you can write to.</span>
+                </button>
+                <button type="button" id="setup-choose-bot" class="setup-path">
+                    <span class="setup-path__icon" aria-hidden="true"></span>
+                    <span class="setup-path__title" data-i18n="optionsSetupBotTitle">A Telegram bot</span>
+                    <span class="setup-path__desc" data-i18n="optionsSetupBotDesc">Use a bot token and a list of channels the bot can post to.</span>
+                </button>
+            </div>
+        </section>
+
+        <section id="account-section" class="card card--account" aria-labelledby="account-section-title" hidden>
+            <div class="path-head">
+                <button id="account-back" type="button" class="path-head__back" data-i18n-title="optionsSetupBack" title="Back"></button>
+                <span class="route-icon" aria-hidden="true" data-route-icon="account"></span>
+                <h3 id="account-section-title" class="card__title" data-i18n="optionsAccountSection">Your Telegram account</h3>
+            </div>
+            <div class="account-progress" aria-hidden="true"><span></span><span></span></div>
+            <p class="account-intro" data-i18n="optionsAccountIntro">Send posts as yourself to any chat, group or channel you can write to. Your login stays on this device.</p>
+
+            <div id="account-credentials" class="account-step" hidden>
+                <h4 class="subsection-title" data-i18n="optionsAccountCredentialsTitle">Step 1: create your app keys</h4>
+                <ol class="account-guide">
+                    <li data-i18n="optionsAccountGuideStep1">Open my.telegram.org and log in with your phone number.</li>
+                    <li data-i18n="optionsAccountGuideStep2">Choose "API development tools".</li>
+                    <li data-i18n="optionsAccountGuideStep3">Create an app. Any name and short name work.</li>
+                    <li data-i18n="optionsAccountGuideStep4">Copy "App api_id" and "App api_hash" into the fields below.</li>
+                </ol>
+                <a class="btn btn--secondary btn--sm account-link" href="https://my.telegram.org/apps" target="_blank" rel="noopener noreferrer" data-i18n="optionsAccountOpenSite">Open my.telegram.org</a>
+                <div class="account-fields">
+                    <label class="field" for="account-api-id">
+                        <span class="field__label" data-i18n="optionsAccountApiIdLabel">App api_id</span>
+                        <input id="account-api-id" class="field__input" type="text" inputmode="numeric" autocomplete="off" data-i18n-placeholder="optionsAccountApiIdPlaceholder" placeholder="12345678">
+                    </label>
+                    <label class="field" for="account-api-hash">
+                        <span class="field__label" data-i18n="optionsAccountApiHashLabel">App api_hash</span>
+                        <input id="account-api-hash" class="field__input" type="password" autocomplete="off" data-i18n-placeholder="optionsAccountApiHashPlaceholder" placeholder="32 letters and numbers">
+                    </label>
+                </div>
+                <button id="account-save-credentials" type="button" class="btn btn--primary btn--block" data-i18n="optionsAccountSaveCredentials">Save keys</button>
+                <p class="account-note" data-i18n="optionsAccountCredentialsWarning">Keep these values private and do not share them with anyone.</p>
+            </div>
+
+            <div id="account-login" class="account-step" hidden>
+                <h4 class="subsection-title" data-i18n="optionsAccountConnectTitle">Step 2: connect your account</h4>
+                <div id="account-qr-panel">
+                    <div id="account-qr" class="account-qr" hidden></div>
+                    <p class="hint hint--compact" data-i18n="optionsAccountQrHint">In Telegram on your phone, open Settings, then Devices, then Link Desktop Device, and scan the code.</p>
+                    <div class="account-actions">
+                        <button id="account-start-qr" type="button" class="btn btn--primary btn--sm" data-i18n="optionsAccountShowQr">Show QR code</button>
+                        <button id="account-use-phone" type="button" class="btn btn--secondary btn--sm" data-i18n="optionsAccountUsePhone">Use phone number instead</button>
+                    </div>
+                </div>
+                <div id="account-phone-panel" hidden>
+                    <div class="account-row">
+                        <label class="field field--grow" for="account-phone">
+                            <span class="field__label" data-i18n="optionsAccountPhoneLabel">Phone number</span>
+                            <input id="account-phone" class="field__input" type="tel" autocomplete="off" data-i18n-placeholder="optionsAccountPhonePlaceholder" placeholder="+55 11 91234-5678">
+                        </label>
+                        <button id="account-send-code" type="button" class="btn btn--primary btn--sm" data-i18n="optionsAccountSendCode">Send code</button>
+                    </div>
+                    <div id="account-code-row" class="account-row" hidden>
+                        <label class="field field--grow" for="account-code">
+                            <span class="field__label" data-i18n="optionsAccountCodeLabel">Code from Telegram</span>
+                            <input id="account-code" class="field__input" type="text" inputmode="numeric" autocomplete="one-time-code">
+                        </label>
+                        <button id="account-submit-code" type="button" class="btn btn--primary btn--sm" data-i18n="optionsAccountConfirm">Confirm</button>
+                    </div>
+                    <button id="account-use-qr" type="button" class="btn btn--secondary btn--sm" data-i18n="optionsAccountUseQr">Use QR code instead</button>
+                </div>
+                <div id="account-password-panel" hidden>
+                    <div class="account-row">
+                        <label class="field field--grow" for="account-password">
+                            <span class="field__label" data-i18n="optionsAccountPasswordLabel">Two-step verification password</span>
+                            <input id="account-password" class="field__input" type="password" autocomplete="current-password">
+                        </label>
+                        <button id="account-submit-password" type="button" class="btn btn--primary btn--sm" data-i18n="optionsAccountConfirm">Confirm</button>
+                    </div>
+                    <p id="account-password-hint" class="hint hint--compact"></p>
+                </div>
+                <div class="account-actions">
+                    <button id="account-cancel-login" type="button" class="btn btn--secondary btn--sm" data-i18n="optionsAccountCancel" hidden>Cancel</button>
+                    <button id="account-edit-credentials" type="button" class="btn btn--secondary btn--sm" data-i18n="optionsAccountEditCredentials">Change app keys</button>
+                </div>
+            </div>
+
+            <div id="account-connected" class="account-connected" hidden>
+                <span id="account-avatar" class="account-avatar" aria-hidden="true"></span>
+                <span id="account-name" class="account-name"></span>
+                <button id="account-logout" type="button" class="btn btn--danger btn--sm" data-i18n="optionsAccountLogout">Disconnect</button>
+            </div>
+            <p id="account-status" class="status" aria-live="polite"></p>
+        </section>
+
+        <section id="bot-section" class="card card--bot" aria-labelledby="bot-section-title" hidden>
+            <div class="path-head">
+                <button id="bot-back" type="button" class="path-head__back" data-i18n-title="optionsSetupBack" title="Back"></button>
+                <span class="route-icon" aria-hidden="true" data-route-icon="bot"></span>
+                <div class="path-head__text">
+                    <h3 id="bot-section-title" class="card__title" data-i18n="optionsBotSection">Telegram bot</h3>
+                    <span id="bot-summary" class="path-head__summary" hidden></span>
+                </div>
+            </div>
             <div class="bot-token-row">
                 <label class="field field--grow" for="bot-token">
                     <span class="field__label" data-i18n="optionsBotTokenLabel">@BotFather token</span>
                     <input id="bot-token" class="field__input" type="password" autocomplete="off" data-i18n-placeholder="optionsBotTokenPlaceholder" placeholder="123456789:ABC...">
                 </label>
-                <button id="test-bot" type="button" class="btn btn--secondary btn--sm bot-token-row__action" data-i18n="optionsValidateToken">Validate token</button>
+                <button id="test-bot" type="button" class="btn btn--primary btn--sm bot-token-row__action" data-i18n="optionsValidateToken">Validate token</button>
             </div>
             <p id="bot-status" class="status" aria-live="polite"></p>
-        </section>
 
-        <section id="channels-section" class="card card--channels" aria-labelledby="channels-section-title" hidden>
-            <div class="card__header-row">
-                <h2 id="channels-section-title" class="card__title" data-i18n="optionsChannelsSection">Channels</h2>
-                <button id="add-channel" type="button" class="btn btn--primary btn--sm" data-i18n="optionsAddChannel">Add channel</button>
-            </div>
-
-            <div class="channels-block">
-                <h3 class="subsection-title" data-i18n="optionsSavedChannelsTitle">Your saved channels</h3>
-                <p class="hint hint--compact" data-i18n="optionsSavedChannelsHint">
+            <div id="channels-section" class="destinations" hidden>
+                <div class="destinations__head">
+                    <h4 class="subsection-title" data-i18n="optionsChannelsSection">Bot destinations</h4>
+                    <button id="add-channel" type="button" class="btn btn--secondary btn--sm" data-i18n="optionsAddChannel">Add destination</button>
+                </div>
+                <p class="hint" data-i18n="optionsSavedChannelsHint">
                     Use @channelName for public channels or the -100... ID for private channels.
                 </p>
                 <div id="channels-list" class="channels-list"></div>
+
+                <div class="discover">
+                    <div class="detected-section__header">
+                        <h4 class="subsection-title" data-i18n="optionsDetectedChannelsTitle">Destinations found by the bot</h4>
+                        <button id="discover-channels" type="button" class="btn btn--secondary btn--sm" data-i18n="optionsDiscoverChannels">Find destinations</button>
+                    </div>
+                    <p class="hint hint--discover" data-i18n="optionsDiscoverHint">
+                        The extension reads your bot updates.
+                    </p>
+                    <p id="discover-status" class="status" aria-live="polite"></p>
+                    <div id="discovered-channels" class="discovered-list"></div>
+                </div>
             </div>
 
-            <div class="panel panel--discover">
-                <div class="detected-section__header">
-                    <h3 class="subsection-title" data-i18n="optionsDetectedChannelsTitle">Channels detected from the bot</h3>
-                    <button id="discover-channels" type="button" class="btn btn--secondary btn--sm" data-i18n="optionsDiscoverChannels">Discover channels</button>
-                </div>
-                <p class="hint hint--discover" data-i18n="optionsDiscoverHint">
-                    The extension reads your bot updates.
-                </p>
-                <p id="discover-status" class="status" aria-live="polite"></p>
-                <div id="discovered-channels" class="discovered-list"></div>
+            <div id="bot-danger" class="detail-danger" hidden>
+                <button id="bot-remove" type="button" class="btn btn--danger btn--sm" data-i18n="optionsRemoveBot">Remove bot</button>
             </div>
         </section>
-
     </main>
 
     <footer class="save-dock" id="save-dock" hidden>

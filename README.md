@@ -115,6 +115,9 @@ Compare the output with the contents of the `.sha256` file from the release.
 - **Rich Telegram posts** - native attachments instead of link-only previews when media exists
 - **Upload fallback** - if Telegram cannot fetch a media URL, the extension downloads and re-uploads it
 - **Local-only secrets** - bot token stays in `chrome.storage.sync` on your machine
+- **Telegram account mode** - log in as yourself (QR or phone, with two-step verification) and send to any chat, group or channel you can write in; see [Telegram Account Mode](#telegram-account-mode)
+- **Searchable live picker** - search bar, recent destinations, live chat list with avatars
+- **Send to several destinations at once** - up to 10 per click, across bot channels and account chats
 
 ---
 
@@ -139,6 +142,49 @@ Telegram does not expose a "list all my channels" API. **Buscar canais** reads `
 3. Click **Buscar canais** again
 
 Bots with an active **webhook** must remove it (`deleteWebhook`) before discovery works from the extension.
+
+---
+
+## Telegram Account Mode
+
+Account mode logs the extension in as **your own Telegram user**, so you can send a post to any contact, group or channel you are allowed to write in, without adding a bot anywhere. It is send-only: the extension never reads, replies to or archives your messages.
+
+### Create your app keys
+
+Telegram requires every app that logs in as a user to use its own `api_id` and `api_hash`. The extension ships none; you create yours once:
+
+1. Open [my.telegram.org](https://my.telegram.org/apps) and log in with your phone number
+2. Choose **API development tools**
+3. Create an app (any name and short name work)
+4. Copy **App api_id** and **App api_hash** into the **Your Telegram account** card in the extension options and click **Save keys**
+
+Treat the `api_hash` like a password: do not share it, paste it in issues, or commit it.
+
+### Connect
+
+1. Click **Show QR code**
+2. On your phone, open Telegram, then **Settings**, **Devices**, **Link Desktop Device**, and scan the code
+3. If your account has two-step verification, type the password (the hint is shown)
+
+Prefer a code? Click **Use phone number instead**, type the number with the country code, and enter the code Telegram sends you.
+
+### Sending
+
+The destination picker opens with a search bar and three sections: **Recent**, **Bot channels** and **Your Telegram**. Your chats load live and reorder as new messages arrive. Typing filters instantly; after a short pause the extension also searches Telegram for chats and `@usernames` not loaded yet.
+
+- Click or press Enter to send to one destination
+- Press Space, Ctrl+click (Cmd+click on macOS) or tick the circle to select several, then **Send to N** (up to 10 per send)
+- Media is downloaded once and reused for every destination; the toast shows progress per destination and a summary if any failed
+
+### Privacy and account safety
+
+- The login session lives only in this browser profile (IndexedDB) and never syncs to other devices. The app keys are stored on this device only (`chrome.storage.local`).
+- **Disconnect** in the options ends the session on Telegram's side and deletes the local session data. You can also end it from Telegram under **Settings**, **Devices**.
+- Sends are always started by you. Several destinations are sent one after another with a pause between account sends, and if Telegram asks to slow down, the remaining account sends are skipped and the wait time is shown. Avoid using this to mass-message people; Telegram can limit accounts that look automated.
+
+### Bot mode and account mode together
+
+Both modes can be active. Bot channels keep working as before and appear under **Bot channels**; account chats appear under **Your Telegram**. With the account connected, the bot setup is optional.
 
 ---
 
@@ -198,6 +244,10 @@ With Portuguese (`pt-BR`) as the browser language, the same controls appear in B
 | Button not visible on tweets | Reload the extension; X DOM changes may require an update |
 | Invalid token | Re-copy the token from @BotFather |
 | Broken link preview only | Tweet may be private or API unavailable; link-only fallback is used |
+| "Telegram rejected these app keys" | Re-copy `api_id` and `api_hash` from [my.telegram.org](https://my.telegram.org/apps); use keys from an app you created, not someone else's |
+| Account chats missing in the picker | Chats where you cannot post (for example channels where you are not an admin) are hidden on purpose |
+| "Your Telegram session ended" | The session was ended from another device; connect again in the options |
+| "Telegram asked to wait" | You hit a rate limit; wait the time shown before sending from the account again |
 
 ---
 
@@ -206,6 +256,7 @@ With Portuguese (`pt-BR`) as the browser language, the same controls appear in B
 - The bot token is stored **only in your browser** (`chrome.storage.sync`)
 - Intended for **personal use** - do not share builds or screenshots of the options page
 - Do not commit tokens to git or publish them in issue trackers
+- Account mode: the Telegram session and app keys stay on this device (IndexedDB and `chrome.storage.local`); only the connected flag and display name sync. Only the extension's own pages can drive the login.
 
 ---
 
@@ -244,6 +295,8 @@ Load the `dist/` folder via **Load unpacked** while developing. After changes, c
 | `src/platforms/facebook/` | Facebook: DOM snapshot, action bar injection, Open Graph fallback |
 | `src/content/` | Content script orchestrator and shared UI (picker, toasts) |
 | `src/background/` | Service worker and send handler |
+| `src/background/telegram-user/` | Telegram account session (mtcute), login and dialogs ports; the only place mtcute is imported |
+| `src/core/telegram-user/` | Account types shared by background, picker and options (errors, dialog list reducer, port protocol) |
 | `src/options/` | Settings page |
 | `manifest.json` | Extension version source of truth |
 | `dist/` | Built loadable extension |

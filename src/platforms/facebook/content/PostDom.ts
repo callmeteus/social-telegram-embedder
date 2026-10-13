@@ -15,6 +15,8 @@ import { resolveFacebookPostBody } from "./PostTextResolve";
 import { filterMediaToSelectedPhotos, narrowMediaForPhotoViewer } from "./PhotoViewerMedia";
 import { resolveFacebookPostMedia } from "./VideoMediaResolve";
 
+const STORY_MESSAGE_SELECTOR = '[data-ad-rendering-role="story_message"]';
+
 /**
  * Options for building a Facebook post snapshot at send time.
  */
@@ -84,14 +86,25 @@ export function extractPostBody(root: Element): string {
         return finalizeTextParts([reelCaption]);
     }
 
-    const storyMessage = extractStoryMessageText(root);
+    const storyMessages = extractStoryMessageTexts(root);
+    const storyMessage = storyMessages[0] ?? "";
+
+    if (storyMessages.length > 1) {
+        const sharedParts = storyMessages
+            .filter((text) => !isOnlyFacebookExpandLink(text))
+            .map(stripFacebookExpandSuffix);
+
+        if (sharedParts.length > 0) {
+            return finalizeTextParts(sharedParts);
+        }
+    }
 
     if (storyMessage && !isOnlyFacebookExpandLink(storyMessage) && !isFacebookTruncatedText(storyMessage)) {
         return finalizeTextParts([stripFacebookExpandSuffix(storyMessage)]);
     }
 
     const description = extractRenderingRoleText(root, "description");
-    const title = extractRenderingRoleText(root, "title");
+    const title = isMessengerLinkCard(root) ? "" : extractRenderingRoleText(root, "title");
 
     if (storyMessage && isFacebookTruncatedText(storyMessage)) {
         if (description && !isFacebookTruncatedText(description)) {
@@ -201,22 +214,27 @@ function isReelContentRoot(root: Element): boolean {
     return true;
 }
 
-function extractStoryMessageText(root: Element): string {
-    const storyMessage = root.querySelector('[data-ad-rendering-role="story_message"]');
+/**
+ * Reads every top-level story message: a shared post has the sharer's comment first and the
+ * original post's text second.
+ */
+function extractStoryMessageTexts(root: Element): string[] {
+    const texts: string[] = [];
 
-    if (!storyMessage) {
-        return "";
+    for (const storyMessage of Array.from(root.querySelectorAll(STORY_MESSAGE_SELECTOR))) {
+        if (storyMessage.parentElement?.closest(STORY_MESSAGE_SELECTOR)) {
+            continue;
+        }
+
+        const previewMessage = storyMessage.querySelector('[data-ad-comet-preview="message"]');
+        const richText = extractFacebookRichText(previewMessage ?? storyMessage);
+
+        if (richText) {
+            texts.push(richText);
+        }
     }
 
-    const previewMessage = storyMessage.querySelector('[data-ad-comet-preview="message"]');
-    const richTextRoot = previewMessage ?? storyMessage;
-    const richText = extractFacebookRichText(richTextRoot);
-
-    if (richText) {
-        return richText;
-    }
-
-    return "";
+    return texts;
 }
 
 function finalizeTextParts(parts: string[]): string {
@@ -271,11 +289,33 @@ function isJunkFacebookText(text: string): boolean {
         return true;
     }
 
+    if (isObfuscatedCardToken(normalized)) {
+        return true;
+    }
+
     if (/^(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?$/i.test(normalized)) {
         return true;
     }
 
     return false;
+}
+
+/**
+ * Link cards pointing to `m.me` are "send message" buttons whose title is a contact name, not post text.
+ */
+function isMessengerLinkCard(root: Element): boolean {
+    return /^m\.me$/i.test(extractRenderingRoleText(root, "meta"));
+}
+
+/**
+ * Facebook fills obfuscated link cards with a random single-word token (e.g.
+ * "ZKnBF3l2NyBoHIghW8gAVt26WDr05SDMZRfl9T") that is never real post text.
+ */
+function isObfuscatedCardToken(text: string): boolean {
+    return /^[A-Za-z0-9_-]{20,}$/.test(text)
+        && /[A-Z]/.test(text)
+        && /[a-z]/.test(text)
+        && /\d/.test(text);
 }
 
 function extractRenderingRoleText(root: Element, role: string): string {

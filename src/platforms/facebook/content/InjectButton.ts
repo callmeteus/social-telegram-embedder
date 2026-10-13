@@ -36,7 +36,13 @@ import { showTimelineMediaPicker } from "../../../content/ui/TimelineMediaPicker
 import { offloadSnapshotMediaBlobs } from "../../../content/media/BlobSnapshotTransfer";
 import { dismissProgressToast, openOptionsPage, showToast, updateProgressToast } from "../../../content/ui/Toast";
 import { SEND_TO_TELEGRAM_ICON_PATH } from "../../../content/icons/TelegramIcon";
-import { showChannelPicker } from "../../../content/ui/ChannelPicker";
+import {
+    getDestinationsKey,
+    showDestinationPicker,
+    showSendResultToast,
+    type PickedDestination
+} from "../../../content/ui/picker";
+import type { SendPostResult } from "../../../core/types/Results";
 
 const SEND_DEBOUNCE_MS = 3000;
 const recentSends = new Map<string, number>();
@@ -385,15 +391,13 @@ async function handleSendClick(
     const resolvedPostUrl = resolveSendPostUrl(button, snapshotRoot, postUrl);
 
     const openChannelPicker = (pending?: PendingFacebookSendOptions) => {
-        showChannelPicker(
-            button,
-            config.channels,
-            config.lastUsedChannelId,
-            (channel) => {
-                void sendToChannel(channel.id, channel.label, resolvedPostUrl, snapshotRoot, pending);
-            },
-            SocialPlatformId.FACEBOOK
-        );
+        showDestinationPicker({
+            config,
+            platformId: SocialPlatformId.FACEBOOK,
+            onSend: (destinations) => {
+                void sendToDestinations(destinations, resolvedPostUrl, snapshotRoot, pending);
+            }
+        });
     };
 
     const isReelButton = button.classList.contains("x2tg-send-button--facebook-reel");
@@ -431,14 +435,13 @@ function resolveSendPostUrl(
     return resolveFeedPostUrl(snapshotRoot, button) ?? wiredPostUrl;
 }
 
-async function sendToChannel(
-    channelId: string,
-    channelLabel: string,
+async function sendToDestinations(
+    destinations: PickedDestination[],
     postUrl: string,
     snapshotRoot: Element,
     pending?: PendingFacebookSendOptions
 ): Promise<void> {
-    const dedupeKey = `${channelId}:${postUrl}`;
+    const dedupeKey = `${getDestinationsKey(destinations)}:${postUrl}`;
     const lastSent = recentSends.get(dedupeKey) ?? 0;
 
     if (Date.now() - lastSent < SEND_DEBOUNCE_MS) {
@@ -456,11 +459,11 @@ async function sendToChannel(
     });
     const payloadSnapshot = await offloadSnapshotMediaBlobs(postSnapshot, requestId);
 
-    const response = await sendRuntimeMessage<{ ok?: boolean; error?: string }>({
+    const response = await sendRuntimeMessage<SendPostResult>({
         type: RuntimeMessageType.SEND_POST,
         platformId: SocialPlatformId.FACEBOOK,
         requestId,
-        channelId,
+        destinations: destinations.map((destination) => destination.ref),
         postUrl,
         postSnapshot: payloadSnapshot
     });
@@ -472,13 +475,11 @@ async function sendToChannel(
         return;
     }
 
-    if (!response?.ok) {
-        showToast(response?.error ?? t("sendFailed"), "error");
-        return;
+    if (response?.ok) {
+        recentSends.set(dedupeKey, Date.now());
     }
 
-    recentSends.set(dedupeKey, Date.now());
-    showToast(t("sentToChannel", channelLabel), "success");
+    showSendResultToast(response, destinations);
 }
 
 function insertActionButtonSlot(actionBar: Element, buttonSlot: HTMLElement): void {

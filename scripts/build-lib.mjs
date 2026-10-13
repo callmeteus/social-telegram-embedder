@@ -18,14 +18,27 @@ export const entries = [
     { in: "src/options/OptionsPage.ts", out: "options" }
 ];
 
+/**
+ * mtcute crypto WASM. The IIFE bundle cannot resolve it through import.meta.url,
+ * so it ships as a file and the background loads it via chrome.runtime.getURL.
+ */
+const MTCUTE_WASM_SOURCE = "node_modules/@mtcute/wasm/mtcute-simd.wasm";
+
+/** File name of the mtcute WASM inside dist. */
+export const MtcuteWasmFileName = "mtcute.wasm";
+
 /** Static assets copied into dist on every build. */
 export const staticAssetPaths = [
     join(root, "manifest.json"),
     join(root, "_locales"),
     join(root, "src/options/OptionsPage.html"),
     join(root, "src/options/OptionsPage.css"),
+    join(root, "src/options/SendChannels.css"),
+    join(root, "src/options/TelegramAccountSection.css"),
+    join(root, "src/options/SetupWizard.css"),
     join(root, "src/content/styles/content.css"),
-    join(root, "icons")
+    join(root, "icons"),
+    join(root, MTCUTE_WASM_SOURCE)
 ];
 
 let staticCopyChain = Promise.resolve();
@@ -51,8 +64,12 @@ async function copyStaticAssetsOnce() {
     await copyDirectoryWithRetry(join(root, "_locales"), join(dist, "_locales"));
     await copyFileWithRetry(join(root, "src/options/OptionsPage.html"), join(dist, "options.html"));
     await copyFileWithRetry(join(root, "src/options/OptionsPage.css"), join(dist, "options.css"));
+    await copyFileWithRetry(join(root, "src/options/SendChannels.css"), join(dist, "send-channels.css"));
+    await copyFileWithRetry(join(root, "src/options/TelegramAccountSection.css"), join(dist, "account.css"));
+    await copyFileWithRetry(join(root, "src/options/SetupWizard.css"), join(dist, "setup.css"));
     await copyFileWithRetry(join(root, "src/content/styles/content.css"), join(dist, "content.css"));
     await copyDirectoryWithRetry(join(root, "icons"), join(dist, "icons"));
+    await copyFileWithRetry(join(root, MTCUTE_WASM_SOURCE), join(dist, MtcuteWasmFileName));
 }
 
 async function copyFileWithRetry(sourcePath, destinationPath, maxAttempts = 5) {

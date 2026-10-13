@@ -27,6 +27,8 @@ export interface SocialMediaItem {
     inlineBlob?: SocialMediaInlineBlob;
     /** Session storage key when inline bytes are offloaded from the runtime message. */
     inlineBlobStorageKey?: string;
+    /** Background only: bytes downloaded once and reused when sending to several destinations. */
+    prefetchedBlob?: Blob;
 }
 
 /** Normalized post payload used to build Telegram messages. */

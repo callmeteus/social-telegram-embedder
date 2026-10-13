@@ -18,7 +18,12 @@ export function extractFacebookAttribution(root: Element, postUrl?: string | nul
     const feedProfileName = extractFeedProfileName(root);
     const innerAuthorName = extractEmbeddedAuthorName(root);
     const pageNameFromUrl = resolvePageNameFromPostUrl(root, postUrl);
+    const sharedAuthorName = innerAuthorName && feedProfileName
+        && normalizeAttributionName(innerAuthorName) !== normalizeAttributionName(feedProfileName)
+        ? innerAuthorName
+        : null;
     const pageName = reelAuthorName
+        ?? sharedAuthorName
         ?? pageNameFromUrl
         ?? innerAuthorName
         ?? feedProfileName
@@ -158,10 +163,19 @@ function extractFeedProfileName(root: Element): string | null {
 }
 
 function extractEmbeddedAuthorName(root: Element): string | null {
-    const storyMessage = root.querySelector('[data-ad-rendering-role="story_message"]');
+    const storyMessages = Array.from(root.querySelectorAll('[data-ad-rendering-role="story_message"]'));
+    const storyMessage = storyMessages[0];
 
     if (!storyMessage) {
-        return null;
+        return extractSharedCardAuthorName(root);
+    }
+
+    if (storyMessages.length > 1) {
+        const sharedAuthors = findHeadingAuthorsAbove(root, storyMessages[storyMessages.length - 1]);
+
+        if (sharedAuthors) {
+            return sharedAuthors;
+        }
     }
 
     let node: Element | null = storyMessage;
@@ -178,6 +192,65 @@ function extractEmbeddedAuthorName(root: Element): string | null {
         }
 
         node = node.parentElement;
+    }
+
+    return null;
+}
+
+/**
+ * Walks up from the original post's text to its own header, skipping the sharer's header, and
+ * joins every author in it (co-authored posts list several pages in one heading).
+ */
+function findHeadingAuthorsAbove(root: Element, storyMessage: Element): string | null {
+    const sharerHeader = root.querySelector(FB_PROFILE_NAME_SELECTOR);
+    let node: Element | null = storyMessage.parentElement;
+
+    while (node && node !== root) {
+        for (const heading of Array.from(node.querySelectorAll("h5, h4"))) {
+            if (sharerHeader?.contains(heading)) {
+                continue;
+            }
+
+            const names = Array.from(heading.querySelectorAll("a[href*='facebook.com/']"))
+                .filter((anchor): anchor is HTMLAnchorElement => anchor instanceof HTMLAnchorElement)
+                .map(readAnchorProfileName)
+                .filter((name): name is string => Boolean(name));
+            const unique = [...new Set(names)];
+
+            if (unique.length > 0) {
+                return unique.join(" & ");
+            }
+        }
+
+        node = node.parentElement;
+    }
+
+    return null;
+}
+
+/**
+ * Reads the original author of a shared post without its own text: Facebook renders it as a
+ * second profile header (or a bold `h5` profile link) inside the shared card.
+ */
+function extractSharedCardAuthorName(root: Element): string | null {
+    const sharerHeader = root.querySelector(FB_PROFILE_NAME_SELECTOR);
+
+    for (const anchor of Array.from(root.querySelectorAll(
+        `${FB_PROFILE_NAME_SELECTOR} a[href*='facebook.com/'], h5 a[href*='facebook.com/']`
+    ))) {
+        if (!(anchor instanceof HTMLAnchorElement) || sharerHeader?.contains(anchor) || !anchor.querySelector("b")) {
+            continue;
+        }
+
+        if (anchor.closest('[role="article"]')) {
+            continue;
+        }
+
+        const name = readAnchorProfileName(anchor);
+
+        if (name) {
+            return name;
+        }
     }
 
     return null;
@@ -214,7 +287,9 @@ function readAnchorProfileName(anchor: HTMLAnchorElement): string | null {
         return normalizeWhitespace(boldText);
     }
 
-    const text = anchor.textContent?.trim();
+    // Avatar links only carry accessibility text such as the online status indicator.
+    const isAvatarLink = Boolean(anchor.querySelector("svg, img"));
+    const text = isAvatarLink ? undefined : anchor.textContent?.trim();
 
     if (text && !isFacebookProfileNavigationText(text)) {
         return normalizeWhitespace(text);

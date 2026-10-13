@@ -16,6 +16,7 @@ import {
 } from "./DiscoverChannels";
 import { buildTelegramBotApiUrl } from "./TelegramApiUrl";
 import { normalizeTelegramChatId } from "./NormalizeChatId";
+import { getMediaDownloadUrl, guessFileExtension, resolveLocalMediaBlob } from "./TelegramFileUtils";
 
 interface TelegramApiResponse<T = unknown> {
     ok: boolean;
@@ -129,10 +130,16 @@ export class TelegramClient {
     }
 
     /**
-     * Validates the bot token via getMe.
+     * Validates the bot token via getMe; on success also returns the bot username.
      */
-    public async getMe(): Promise<SendResult> {
-        return this.request("getMe", {});
+    public async getMe(): Promise<SendResult & { username?: string }> {
+        const data = await this.requestRaw<{ username?: string }>("getMe", {});
+
+        if (!data.ok) {
+            return { ok: false, error: translateTelegramError(data.description ?? t("errorTelegramUnknown")) };
+        }
+
+        return { ok: true, username: data.result?.username };
     }
 
     /**
@@ -238,12 +245,15 @@ export class TelegramClient {
         itemTotal: number,
         onProgress?: SendProgressCallback
     ): Promise<SendResult> {
-        if (media.inlineBlob) {
-            return this.uploadMediaFromInlineBlob(
+        const localBlob = resolveLocalMediaBlob(media);
+
+        if (localBlob) {
+            return this.uploadMediaBlob(
                 media.kind === "photo" ? "sendPhoto" : "sendVideo",
                 chatId,
                 media.kind === "photo" ? "photo" : "video",
-                media.inlineBlob,
+                localBlob,
+                localBlob.type || media.url,
                 caption,
                 itemIndex,
                 itemTotal,
@@ -298,8 +308,9 @@ export class TelegramClient {
         const shouldUploadTwitterPhotos = mediaItems.some(
             (item) => item.kind === "photo" && isTwitterTimelinePhotoUrl(item.url)
         );
+        const hasLocalBlobs = mediaItems.some((item) => item.prefetchedBlob || item.inlineBlob);
 
-        if (shouldUploadTwitterPhotos) {
+        if (shouldUploadTwitterPhotos || hasLocalBlobs) {
             const uploaded = await this.sendMediaBatchByUpload(
                 chatId,
                 mediaItems,
@@ -376,9 +387,7 @@ export class TelegramClient {
         for (let index = 0; index < mediaItems.length; index++) {
             const item = mediaItems[index];
             const attachName = `file${index}`;
-            const downloadUrl = item.kind === "photo"
-                ? preferTwitterLargeMediaUrl(item.url)
-                : item.url;
+            const downloadUrl = getMediaDownloadUrl(item);
 
             onProgress?.({
                 message: itemTotal > 1
@@ -387,7 +396,7 @@ export class TelegramClient {
             });
 
             try {
-                const blob = await fetchBlobWithProgress(downloadUrl, (loaded, total) => {
+                const blob = resolveLocalMediaBlob(item) ?? await fetchBlobWithProgress(downloadUrl, (loaded, total) => {
                     const progress = formatDownloadProgressMessage(startIndex + index + 1, itemTotal, loaded, total);
                     onProgress?.(progress);
                 });
@@ -527,38 +536,6 @@ export class TelegramClient {
                 };
             }
 
-            return {
-                ok: false,
-                error: err instanceof Error ? err.message : t("errorMediaUploadFailed")
-            };
-        }
-    }
-
-    private async uploadMediaFromInlineBlob(
-        method: "sendPhoto" | "sendVideo" | "sendAnimation",
-        chatId: string,
-        fieldName: "photo" | "video" | "animation",
-        inlineBlob: NonNullable<SocialMediaItem["inlineBlob"]>,
-        caption: string | undefined,
-        itemIndex: number,
-        itemTotal: number,
-        onProgress?: SendProgressCallback
-    ): Promise<SendResult> {
-        try {
-            const blob = base64ToBlob(inlineBlob.base64, inlineBlob.mimeType);
-
-            return this.uploadMediaBlob(
-                method,
-                chatId,
-                fieldName,
-                blob,
-                inlineBlob.mimeType,
-                caption,
-                itemIndex,
-                itemTotal,
-                onProgress
-            );
-        } catch (err) {
             return {
                 ok: false,
                 error: err instanceof Error ? err.message : t("errorMediaUploadFailed")
@@ -711,39 +688,4 @@ function translateTelegramError(description: string): string {
     }
 
     return description;
-}
-
-function guessFileExtension(mediaUrl: string, mimeType: string): string {
-    if (mimeType.includes("jpeg") || mimeType.includes("jpg")) {
-        return "jpg";
-    }
-
-    if (mimeType.includes("png")) {
-        return "png";
-    }
-
-    if (mimeType.includes("webp")) {
-        return "webp";
-    }
-
-    if (mimeType.includes("gif")) {
-        return "gif";
-    }
-
-    if (mimeType.includes("mp4") || mediaUrl.includes(".mp4")) {
-        return "mp4";
-    }
-
-    return "bin";
-}
-
-function base64ToBlob(base64: string, mimeType: string): Blob {
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
-
-    for (let index = 0; index < binary.length; index++) {
-        bytes[index] = binary.charCodeAt(index);
-    }
-
-    return new Blob([bytes], { type: mimeType });
 }

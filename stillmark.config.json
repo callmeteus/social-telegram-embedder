@@ -1,0 +1,14 @@
+{
+    "git": {
+        "autoCommit": false,
+        "autoPush": false
+    },
+    "sharing": {
+        "firstRunPrompted": true,
+        "shareDesignSystem": true
+    },
+    "learned": {
+        "designDir": ".stillmark/learnings/design",
+        "codeStyleDir": ".stillmark/learnings/code-style"
+    }
+}

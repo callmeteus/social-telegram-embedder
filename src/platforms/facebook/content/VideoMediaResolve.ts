@@ -4,7 +4,7 @@ import {
 } from "../api/OpenGraphFetch";
 import { facebookReelUrlFromVideoId } from "../url/FacebookUrl";
 import type { SocialMediaItem } from "../../types";
-import { extractPostMedia, isFacebookVideoPlaceholderPoster } from "./PostMedia";
+import { extractPostMedia, findPostVideos, isFacebookVideoPlaceholderPoster } from "./PostMedia";
 
 const VIDEO_RESOLVE_TIMEOUT_MS = 4000;
 const VIDEO_POLL_INTERVAL_MS = 100;
@@ -49,7 +49,17 @@ export async function resolveFacebookPostMedia(
 }
 
 function hasFacebookVideoContainer(root: Element): boolean {
-    return root.querySelector("[data-video-id], video") !== null;
+    if (root.querySelector("[data-video-id]")) {
+        return true;
+    }
+
+    const hasVideo = findPostVideos(root).length > 0;
+
+    if (!hasVideo && root.querySelector("video")) {
+        console.debug("[facebook] post has only a background music player, keeping its photos");
+    }
+
+    return hasVideo;
 }
 
 function isPlaceholderMediaUrl(url: string): boolean {
@@ -229,8 +239,7 @@ function findReelVideos(root: Element): HTMLVideoElement[] {
         return [scopedVideo];
     }
 
-    return Array.from(root.querySelectorAll("video"))
-        .filter((video): video is HTMLVideoElement => video instanceof HTMLVideoElement);
+    return findPostVideos(root);
 }
 
 async function buildBlobVideoMediaItem(blobUrl: string): Promise<SocialMediaItem | null> {

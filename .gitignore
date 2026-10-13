@@ -5,3 +5,7 @@ release/
 *.log
 .DS_Store
 Thumbs.db
+telegram-api.local.json
+
+# Stillmark
+.stillmark/plans/

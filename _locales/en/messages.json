@@ -9,7 +9,7 @@
         "message": "Social Telegram Embedder - Settings"
     },
     "optionsSubtitle": {
-        "message": "Bot token and destination channels when you send from X or Facebook."
+        "message": "Where the posts you send from X and Facebook go."
     },
     "optionsBotSection": {
         "message": "Telegram bot"
@@ -24,22 +24,19 @@
         "message": "Validate token"
     },
     "optionsChannelsSection": {
-        "message": "Channels"
+        "message": "Bot destinations"
     },
     "optionsAddChannel": {
-        "message": "Add channel"
+        "message": "Add destination"
     },
     "optionsDetectedChannelsTitle": {
-        "message": "Channels detected from the bot"
+        "message": "Destinations found by the bot"
     },
     "optionsDiscoverChannels": {
-        "message": "Discover channels"
+        "message": "Find destinations"
     },
     "optionsDiscoverHint": {
-        "message": "The extension reads your bot updates. If a channel is missing, add the bot as admin, post in the channel, then click Discover channels again."
-    },
-    "optionsSavedChannelsTitle": {
-        "message": "Your saved channels"
+        "message": "The extension reads your bot updates. If a channel or group is missing, add the bot as admin, post a message there, then click Find destinations again."
     },
     "optionsSavedChannelsHint": {
         "message": "Use @channelName, the -100... ID, or the channel profile id from Telegram (e.g. 1.194.845.578)."
@@ -69,7 +66,7 @@
         "message": "Move down"
     },
     "optionsTestChannel": {
-        "message": "Test channel"
+        "message": "Test destination"
     },
     "optionsRemoveChannel": {
         "message": "Remove"
@@ -90,7 +87,7 @@
         "message": "Enter the bot token before saving."
     },
     "optionsNeedChannelBeforeSave": {
-        "message": "Add at least one channel with a name and chat ID."
+        "message": "Add at least one destination with a name and chat ID."
     },
     "optionsSavedSuccess": {
         "message": "Settings saved successfully."
@@ -284,6 +281,15 @@
             }
         }
     },
+    "progressElapsedSeconds": {
+        "message": "$1 s",
+        "placeholders": {
+            "seconds": {
+                "content": "$1",
+                "example": "12"
+            }
+        }
+    },
     "progressDownloadPercent": {
         "message": "$1%",
         "placeholders": {
@@ -379,5 +385,470 @@
     },
     "telegramErrorFileTooLarge": {
         "message": "The video is too large for Telegram bots (50 MB max). The extension now picks a smaller quality when possible; try again after reloading the extension."
+    },
+    "durationSeconds": {
+        "message": "$1 s",
+        "placeholders": {
+            "seconds": {
+                "content": "$1"
+            }
+        }
+    },
+    "durationMinutes": {
+        "message": "$1 min",
+        "placeholders": {
+            "minutes": {
+                "content": "$1"
+            }
+        }
+    },
+    "errorTooManyDestinations": {
+        "message": "Pick at most $1 destinations per send.",
+        "placeholders": {
+            "max": {
+                "content": "$1"
+            }
+        }
+    },
+    "sentToDestinations": {
+        "message": "Sent to $1 destinations",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "sentPartialSummary": {
+        "message": "Sent to $1 of $2 destinations. Failed: $3",
+        "placeholders": {
+            "sent": {
+                "content": "$1"
+            },
+            "total": {
+                "content": "$2"
+            },
+            "failures": {
+                "content": "$3"
+            }
+        }
+    },
+    "progressDestinationPrefix": {
+        "message": "[$1/$2] $3: $4",
+        "placeholders": {
+            "index": {
+                "content": "$1"
+            },
+            "total": {
+                "content": "$2"
+            },
+            "label": {
+                "content": "$3"
+            },
+            "message": {
+                "content": "$4"
+            }
+        }
+    },
+    "pickerSearchPlaceholder": {
+        "message": "Search chats, groups and channels"
+    },
+    "pickerSectionRecent": {
+        "message": "Recent"
+    },
+    "pickerSectionBotChannels": {
+        "message": "Bot channels"
+    },
+    "pickerSectionTelegramAccount": {
+        "message": "Your Telegram"
+    },
+    "pickerConnecting": {
+        "message": "Connecting to your Telegram..."
+    },
+    "pickerSignInHint": {
+        "message": "Connect your Telegram account in the extension settings to see your chats."
+    },
+    "pickerSearching": {
+        "message": "Searching..."
+    },
+    "pickerOffline": {
+        "message": "You are offline. Showing what was already loaded."
+    },
+    "pickerLoadingChats": {
+        "message": "Loading your chats..."
+    },
+    "pickerNoResults": {
+        "message": "Nothing found."
+    },
+    "pickerEmpty": {
+        "message": "No destinations yet. Add one in the extension settings."
+    },
+    "pickerSelectionLimit": {
+        "message": "You can pick up to $1 destinations.",
+        "placeholders": {
+            "max": {
+                "content": "$1"
+            }
+        }
+    },
+    "pickerSelectedCount": {
+        "message": "$1 selected",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "pickerSendToSelected": {
+        "message": "Send ($1)",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "pickerToggleSelection": {
+        "message": "Select destination"
+    },
+    "pickerPinned": {
+        "message": "Pinned in Telegram"
+    },
+    "pickerPinnedShort": {
+        "message": "Pinned"
+    },
+    "pickerKindGroup": {
+        "message": "Group"
+    },
+    "pickerKindChannel": {
+        "message": "Channel"
+    },
+    "pickerKindBot": {
+        "message": "Bot"
+    },
+    "pickerFolderTag": {
+        "message": "In the $1 Telegram folder",
+        "placeholders": {
+            "folder": {
+                "content": "$1"
+            }
+        }
+    },
+    "pickerTelegramBadge": {
+        "message": "Telegram"
+    },
+    "tgUserSavedMessages": {
+        "message": "Saved Messages"
+    },
+    "tgUserErrorInvalidAppCredentials": {
+        "message": "Telegram rejected these app keys. Check the api_id and api_hash on my.telegram.org."
+    },
+    "tgUserErrorInvalidCredentialsFormat": {
+        "message": "The api_id must be a number and the api_hash must have 32 letters and numbers."
+    },
+    "tgUserErrorCredentialsLocked": {
+        "message": "Disconnect your account before changing the app keys."
+    },
+    "tgUserErrorMissingCredentials": {
+        "message": "Add your app keys first."
+    },
+    "tgUserErrorFloodWait": {
+        "message": "Telegram asked to wait $1 before trying again.",
+        "placeholders": {
+            "wait": {
+                "content": "$1"
+            }
+        }
+    },
+    "tgUserErrorSlowMode": {
+        "message": "This chat has slow mode on. Try again in $1.",
+        "placeholders": {
+            "wait": {
+                "content": "$1"
+            }
+        }
+    },
+    "tgUserErrorInvalidPhone": {
+        "message": "This phone number is not valid. Include the country code, like +55."
+    },
+    "tgUserErrorWrongCode": {
+        "message": "Wrong code. Check the message from Telegram and try again."
+    },
+    "tgUserErrorCodeExpired": {
+        "message": "The code expired. Ask for a new one."
+    },
+    "tgUserErrorWrongPassword": {
+        "message": "Wrong password. Try again."
+    },
+    "tgUserErrorSessionRevoked": {
+        "message": "Your Telegram session ended. Connect your account again in the settings."
+    },
+    "tgUserErrorNoRights": {
+        "message": "You cannot post in this chat."
+    },
+    "tgUserErrorPeerNotFound": {
+        "message": "This chat is no longer available."
+    },
+    "tgUserErrorNotConnected": {
+        "message": "Your Telegram account is not connected."
+    },
+    "tgUserErrorNetwork": {
+        "message": "Could not reach Telegram. Check your connection."
+    },
+    "tgUserErrorSendStalled": {
+        "message": "Telegram stopped responding while sending. Try again."
+    },
+    "tgUserErrorUnknown": {
+        "message": "Something went wrong with Telegram. Try again."
+    },
+    "optionsAccountSection": {
+        "message": "Your Telegram account"
+    },
+    "optionsAccountIntro": {
+        "message": "Send posts as yourself to any chat, group or channel you can write to. Your login stays on this device."
+    },
+    "optionsAccountCredentialsTitle": {
+        "message": "Step 1: create your app keys"
+    },
+    "optionsAccountGuideStep1": {
+        "message": "Open my.telegram.org and log in with your phone number."
+    },
+    "optionsAccountGuideStep2": {
+        "message": "Choose \"API development tools\"."
+    },
+    "optionsAccountGuideStep3": {
+        "message": "Create an app. Any name and short name work."
+    },
+    "optionsAccountGuideStep4": {
+        "message": "Copy \"App api_id\" and \"App api_hash\" into the fields below."
+    },
+    "optionsAccountOpenSite": {
+        "message": "Open my.telegram.org"
+    },
+    "optionsAccountApiIdLabel": {
+        "message": "App api_id"
+    },
+    "optionsAccountApiIdPlaceholder": {
+        "message": "12345678"
+    },
+    "optionsAccountApiHashLabel": {
+        "message": "App api_hash"
+    },
+    "optionsAccountApiHashPlaceholder": {
+        "message": "32 letters and numbers"
+    },
+    "optionsAccountSaveCredentials": {
+        "message": "Save keys"
+    },
+    "optionsAccountCredentialsWarning": {
+        "message": "Keep these values private and do not share them with anyone."
+    },
+    "optionsAccountConnectTitle": {
+        "message": "Step 2: connect your account"
+    },
+    "optionsAccountQrHint": {
+        "message": "In Telegram on your phone, open Settings, then Devices, then Link Desktop Device, and scan the code."
+    },
+    "optionsAccountShowQr": {
+        "message": "Show QR code"
+    },
+    "optionsAccountUsePhone": {
+        "message": "Use phone number instead"
+    },
+    "optionsAccountUseQr": {
+        "message": "Use QR code instead"
+    },
+    "optionsAccountPhoneLabel": {
+        "message": "Phone number"
+    },
+    "optionsAccountPhonePlaceholder": {
+        "message": "+1 555 123 4567"
+    },
+    "optionsAccountSendCode": {
+        "message": "Send code"
+    },
+    "optionsAccountCodeLabel": {
+        "message": "Code from Telegram"
+    },
+    "optionsAccountCodeSent": {
+        "message": "Telegram sent you a code. Type it below."
+    },
+    "optionsAccountConfirm": {
+        "message": "Confirm"
+    },
+    "optionsAccountPasswordLabel": {
+        "message": "Two-step verification password"
+    },
+    "optionsAccountPasswordHint": {
+        "message": "Hint: $1",
+        "placeholders": {
+            "hint": {
+                "content": "$1"
+            }
+        }
+    },
+    "optionsAccountCancel": {
+        "message": "Cancel"
+    },
+    "optionsAccountEditCredentials": {
+        "message": "Change app keys"
+    },
+    "optionsAccountConnecting": {
+        "message": "Connecting..."
+    },
+    "optionsAccountQrScanned": {
+        "message": "Code scanned. Confirm on your phone."
+    },
+    "optionsAccountReady": {
+        "message": "Ready to send from your account."
+    },
+    "optionsAccountConnected": {
+        "message": "Connected"
+    },
+    "optionsAccountConnectedAs": {
+        "message": "Connected as $1",
+        "placeholders": {
+            "name": {
+                "content": "$1"
+            }
+        }
+    },
+    "optionsAccountLogout": {
+        "message": "Disconnect"
+    },
+    "optionsAccountLogoutConfirm": {
+        "message": "Disconnect your Telegram account from this extension?"
+    },
+    "optionsSetupTitle": {
+        "message": "Choose your send channel"
+    },
+    "optionsSetupLead": {
+        "message": "Start with one. You can add more later."
+    },
+    "optionsSetupSubtitle": {
+        "message": "Choose how posts go from X or Facebook to Telegram."
+    },
+    "optionsSetupAccountTitle": {
+        "message": "Your Telegram account"
+    },
+    "optionsSetupAccountDesc": {
+        "message": "Send as yourself to any chat, group or channel you can write to."
+    },
+    "optionsSetupBotTitle": {
+        "message": "A Telegram bot"
+    },
+    "optionsSetupBotDesc": {
+        "message": "Use a bot token and the destinations it can post to."
+    },
+    "optionsSetupBack": {
+        "message": "Back"
+    },
+    "optionsSendChannelsTitle": {
+        "message": "Send channels"
+    },
+    "optionsBotDestinationsOne": {
+        "message": "1 destination"
+    },
+    "optionsBotDestinationsMany": {
+        "message": "$1 destinations",
+        "placeholders": {
+            "count": {
+                "content": "$1",
+                "example": "3"
+            }
+        }
+    },
+    "optionsBotNoDestinations": {
+        "message": "No destinations yet"
+    },
+    "pickerSend": {
+        "message": "Send"
+    },
+    "pickerSelectHint": {
+        "message": "Enter selects, $1 sends",
+        "placeholders": {
+            "shortcut": {
+                "content": "$1",
+                "example": "Ctrl+Enter"
+            }
+        }
+    },
+    "pickerSelectedOne": {
+        "message": "1 selected"
+    },
+    "connectionUnnamedBot": {
+        "message": "Bot without a name"
+    },
+    "connectionUnnamedAccount": {
+        "message": "Telegram account"
+    },
+    "tgUserErrorAccountAlreadyConnected": {
+        "message": "This Telegram account is already connected."
+    },
+    "optionsAddConnection": {
+        "message": "Add"
+    },
+    "optionsConnectionKindBot": {
+        "message": "Bot"
+    },
+    "optionsConnectionKindAccount": {
+        "message": "Telegram account"
+    },
+    "optionsNewBotTitle": {
+        "message": "New bot"
+    },
+    "optionsBotAlreadyAdded": {
+        "message": "This bot is already in your list."
+    },
+    "optionsValidateBeforeSave": {
+        "message": "Validate the token before saving."
+    },
+    "optionsRemoveBot": {
+        "message": "Remove bot"
+    },
+    "optionsRemoveBotConfirm": {
+        "message": "Remove $1 and its destinations?",
+        "placeholders": {
+            "name": {
+                "content": "$1",
+                "example": "@my_bot"
+            }
+        }
+    },
+    "optionsDiscardChanges": {
+        "message": "Discard your unsaved changes?"
+    },
+    "pickerRouteAccount": {
+        "message": "Telegram account"
+    },
+    "pickerRouteBot": {
+        "message": "Telegram bot"
+    },
+    "pickerSectionPinned": {
+        "message": "Pinned"
+    },
+    "pickerPinToTop": {
+        "message": "Pin to top"
+    },
+    "pickerUnpinFromTop": {
+        "message": "Unpin from top"
+    },
+    "pickerPinLimit": {
+        "message": "You can pin up to $1 destinations.",
+        "placeholders": {
+            "max": {
+                "content": "$1"
+            }
+        }
+    },
+    "pickerSendShortcut": {
+        "message": "$1 sends",
+        "placeholders": {
+            "shortcut": {
+                "content": "$1",
+                "example": "Ctrl+Enter"
+            }
+        }
+    },
+    "pickerClose": {
+        "message": "Close"
     }
 }

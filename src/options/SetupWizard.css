@@ -1,0 +1,167 @@
+/* First-run send-path chooser on the options page */
+
+.setup-wizard {
+    margin-top: 0;
+    padding: var(--x2tg-space-5);
+    border: 1px solid var(--x2tg-border);
+    border-radius: var(--x2tg-radius-lg);
+    background: var(--x2tg-surface);
+}
+
+.setup-wizard[hidden] {
+    display: none;
+}
+
+.setup-wizard__title {
+    margin: 0 0 var(--x2tg-space-2);
+    font-size: 1.125rem;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+}
+
+.setup-wizard__lead {
+    margin: 0 0 var(--x2tg-space-4);
+    color: var(--x2tg-text-secondary);
+    font-size: 0.875rem;
+    line-height: 1.55;
+    max-width: 46ch;
+}
+
+.setup-paths {
+    display: flex;
+    flex-direction: column;
+    gap: var(--x2tg-space-3);
+}
+
+.setup-path {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    column-gap: var(--x2tg-space-3);
+    row-gap: 2px;
+    align-items: center;
+    width: 100%;
+    padding: var(--x2tg-space-4);
+    border: 1px solid var(--x2tg-border);
+    border-radius: var(--x2tg-radius-md);
+    background: var(--x2tg-surface-raised);
+    color: var(--x2tg-text);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition:
+        border-color 160ms ease-out,
+        background-color 160ms ease-out,
+        transform 160ms ease-out;
+}
+
+.setup-path:hover {
+    border-color: color-mix(in srgb, var(--x2tg-accent) 55%, var(--x2tg-border));
+    background: color-mix(in srgb, var(--x2tg-accent) 8%, var(--x2tg-surface-raised));
+}
+
+.setup-path:focus-visible {
+    outline: none;
+    box-shadow: var(--x2tg-focus-ring);
+}
+
+.setup-path:active {
+    transform: translateY(1px);
+}
+
+.setup-path__icon {
+    grid-row: 1 / span 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--x2tg-radius-sm);
+    background: color-mix(in srgb, var(--x2tg-accent) 16%, var(--x2tg-inset));
+    color: var(--x2tg-accent);
+}
+
+.setup-path__icon svg {
+    display: block;
+}
+
+.setup-path__title {
+    font-size: 1rem;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+    line-height: 1.3;
+}
+
+.setup-path__desc {
+    color: var(--x2tg-text-secondary);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+}
+
+/* Card header with an optional back control while a path is being set up */
+.path-head {
+    display: flex;
+    align-items: center;
+    gap: var(--x2tg-space-3);
+    margin-bottom: var(--x2tg-space-4);
+}
+
+.path-head .card__title {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.path-head__back {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    margin-left: -6px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--x2tg-text-secondary);
+    cursor: pointer;
+    transition: background-color 160ms ease-out, color 160ms ease-out;
+}
+
+.path-head__back[hidden] {
+    display: none;
+}
+
+.path-head__back:hover {
+    background: var(--x2tg-surface-raised);
+    color: var(--x2tg-text);
+}
+
+.path-head__back:focus-visible {
+    outline: none;
+    box-shadow: var(--x2tg-focus-ring);
+}
+
+.setup-wizard .path-head {
+    margin-bottom: var(--x2tg-space-2);
+}
+
+.setup-wizard .path-head .setup-wizard__title {
+    margin: 0;
+}
+
+.page__subtitle[hidden] {
+    display: none;
+}
+
+html.x2tg-options--popup .setup-wizard {
+    padding: var(--x2tg-space-4);
+}
+
+#connections-view[hidden],
+#account-section[hidden],
+#bot-section[hidden],
+#setup-wizard[hidden] {
+    display: none !important;
+}

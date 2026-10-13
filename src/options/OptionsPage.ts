@@ -1,50 +1,25 @@
-import type { DetectedTelegramChannel } from "../core/telegram/DiscoverChannels";
-import { applyChannelRowI18n, applyOptionsPageI18n } from "../core/i18n/ApplyOptionsPageI18n";
+import { initBotConnectionEditor, type BotConnectionEditor } from "./BotConnectionEditor";
+import { renderConnectionsList } from "./ConnectionsList";
+import { formatOptionsRoute, OptionsView, parseOptionsRoute, type OptionsRoute } from "./OptionsRoute";
+import { initSetupWizard, SetupPath, type SetupWizardControls } from "./SetupWizard";
+import { initTelegramAccountSection, type TelegramAccountSectionControls } from "./TelegramAccountSection";
+import { applyOptionsPageI18n } from "../core/i18n/ApplyOptionsPageI18n";
 import { t } from "../core/i18n/I18n";
-import { setButtonLucideIcon } from "../core/ui/LucideIcon";
-import { ArrowDown, ArrowUp } from "lucide-static";
-import {
-    createEmptyTelegramChannel,
-    isChannelValid,
-    loadConfig,
-    saveConfig
-} from "../core/storage/Storage";
-import { normalizeTelegramChatId } from "../core/telegram/NormalizeChatId";
-import { TelegramClient } from "../core/telegram/TelegramClient";
-import {
-    CurrentConfigVersion,
-    DestinationProvider,
-    type DestinationChannel,
-    type ExtensionConfig,
-    type TelegramDestinationChannel
-} from "../core/types/Config";
+import { createConnectionId } from "../core/storage/Connections";
+import { loadConfig } from "../core/storage/Storage";
+import { SendConnectionType, type ExtensionConfig } from "../core/types/Config";
 
-interface ChannelRowState {
-    id: string;
-    element: HTMLElement;
-    labelInput: HTMLInputElement;
-    chatIdInput: HTMLInputElement;
-    statusEl: HTMLElement;
-}
+const connectionsView = document.getElementById("connections-view") as HTMLElement;
+const connectionsList = document.getElementById("connections-list") as HTMLElement;
+const accountSection = document.getElementById("account-section") as HTMLElement;
+const botSection = document.getElementById("bot-section") as HTMLElement;
+const subtitle = document.querySelector<HTMLElement>(".page__subtitle");
 
-const botTokenInput = document.getElementById("bot-token") as HTMLInputElement;
-const botStatusEl = document.getElementById("bot-status") as HTMLElement;
-const channelsSectionEl = document.getElementById("channels-section") as HTMLElement;
-const channelsListEl = document.getElementById("channels-list") as HTMLElement;
-const saveStatusEl = document.getElementById("save-status") as HTMLElement;
-const discoverStatusEl = document.getElementById("discover-status") as HTMLElement;
-const discoveredChannelsEl = document.getElementById("discovered-channels") as HTMLElement;
-const channelTemplate = document.getElementById("channel-row-template") as HTMLTemplateElement;
-
-const channelRows: ChannelRowState[] = [];
-const saveDockEl = document.getElementById("save-dock") as HTMLElement;
-
-/** Channels of providers this page cannot edit yet; kept untouched on save. */
-let otherProviderChannels: DestinationChannel[] = [];
-
-let savedConfigSnapshot = "";
-let dirtyTrackingEnabled = false;
-let verifiedBotToken = "";
+let config: ExtensionConfig | null = null;
+let current: OptionsRoute = { view: OptionsView.LIST };
+let setupWizard: SetupWizardControls | null = null;
+let botEditor: BotConnectionEditor | null = null;
+let accountSectionControls: TelegramAccountSectionControls | null = null;
 
 void init();
 
@@ -52,455 +27,127 @@ async function init(): Promise<void> {
     applyToolbarPopupLayoutIfNeeded();
     applyOptionsPageI18n();
 
-    const config = await loadConfig();
-    const botToken = config.providers.telegram.botToken;
-    botTokenInput.value = botToken;
-    setChannelsSectionVisible(false);
+    setupWizard = initSetupWizard({
+        onChoose: (path) => navigate({
+            view: path === SetupPath.BOT ? OptionsView.BOT : OptionsView.ACCOUNT,
+            connectionId: createConnectionId()
+        }),
+        onBack: () => navigate({ view: OptionsView.LIST })
+    });
+    botEditor = initBotConnectionEditor({ onRemoved: () => navigate({ view: OptionsView.LIST }, { force: true }) });
+    accountSectionControls = initTelegramAccountSection({ onLoggedOut: () => navigate({ view: OptionsView.LIST }, { force: true }) });
 
-    const telegramChannels = config.channels.filter(isTelegramChannel);
-    otherProviderChannels = config.channels.filter((channel) => !isTelegramChannel(channel));
+    document.getElementById("connections-add")?.addEventListener("click", () => navigate({ view: OptionsView.ADD }));
+    document.getElementById("bot-back")?.addEventListener("click", () => navigate({ view: OptionsView.LIST }));
+    document.getElementById("account-back")?.addEventListener("click", () => navigate({ view: OptionsView.LIST }));
 
-    if (telegramChannels.length === 0) {
-        addChannelRow(createEmptyTelegramChannel());
-    } else {
-        for (const channel of telegramChannels) {
-            addChannelRow(channel);
+    window.addEventListener("popstate", () => {
+        const route = parseOptionsRoute(window.location.hash);
+
+        if (!show(route)) {
+            history.pushState(null, "", formatOptionsRoute(current));
         }
-    }
-
-    document.getElementById("add-channel")?.addEventListener("click", () => {
-        addChannelRow(createEmptyTelegramChannel());
     });
 
-    document.getElementById("save-config")?.addEventListener("click", () => {
-        void handleSave();
+    window.addEventListener("beforeunload", (event) => {
+        if (botEditor?.isDirty()) {
+            event.preventDefault();
+            event.returnValue = "";
+        }
     });
 
-    document.getElementById("test-bot")?.addEventListener("click", () => {
-        void handleTestBot();
+    chrome.storage.onChanged.addListener((_changes, area) => {
+        if (area === "sync") {
+            void refreshConfig();
+        }
     });
 
-    document.getElementById("discover-channels")?.addEventListener("click", () => {
-        void handleDiscoverChannels();
-    });
-
-    botTokenInput.addEventListener("input", () => {
-        syncBotTokenVerificationGate();
-    });
-
-    if (botToken.trim()) {
-        void verifyBotToken(botToken.trim(), { persistToken: false });
-    }
-
-    savedConfigSnapshot = serializeConfigSnapshot(readConfigFromForm());
-    wireDirtyStateTracking();
-    dirtyTrackingEnabled = true;
-    syncDirtyState();
+    await refreshConfig();
+    show(parseOptionsRoute(window.location.hash), { force: true });
 }
 
-function isTelegramChannel(channel: DestinationChannel): channel is TelegramDestinationChannel {
-    return channel.provider === DestinationProvider.TELEGRAM;
-}
+async function refreshConfig(): Promise<void> {
+    config = await loadConfig();
+    renderConnectionsList(connectionsList, config, (connection) => navigate({
+        view: connection.type === SendConnectionType.TELEGRAM_BOT ? OptionsView.BOT : OptionsView.ACCOUNT,
+        connectionId: connection.id
+    }));
 
-function addChannelRow(channel: TelegramDestinationChannel): void {
-    const fragment = channelTemplate.content.cloneNode(true) as DocumentFragment;
-    applyChannelRowI18n(fragment);
-    wireChannelRowIcons(fragment);
-
-    const element = fragment.querySelector(".channel-row") as HTMLElement;
-    const labelInput = fragment.querySelector(".channel-label") as HTMLInputElement;
-    const chatIdInput = fragment.querySelector(".channel-chat-id") as HTMLInputElement;
-    const statusEl = fragment.querySelector(".channel-row__status") as HTMLElement;
-
-    labelInput.value = channel.label;
-    chatIdInput.value = channel.chatId;
-
-    const rowState: ChannelRowState = {
-        id: channel.id,
-        element,
-        labelInput,
-        chatIdInput,
-        statusEl
-    };
-
-    fragment.querySelector(".btn-remove-channel")?.addEventListener("click", () => {
-        removeChannelRow(rowState);
-    });
-
-    fragment.querySelector(".btn-move-up")?.addEventListener("click", () => {
-        moveChannelRow(rowState, -1);
-    });
-
-    fragment.querySelector(".btn-move-down")?.addEventListener("click", () => {
-        moveChannelRow(rowState, 1);
-    });
-
-    fragment.querySelector(".btn-test-channel")?.addEventListener("click", () => {
-        void handleTestChannel(rowState);
-    });
-
-    channelRows.push(rowState);
-    channelsListEl.appendChild(fragment);
-}
-
-function wireChannelRowIcons(root: ParentNode): void {
-    const moveUpButton = root.querySelector(".btn-move-up");
-
-    if (moveUpButton instanceof HTMLButtonElement) {
-        setButtonLucideIcon(moveUpButton, ArrowUp);
-    }
-
-    const moveDownButton = root.querySelector(".btn-move-down");
-
-    if (moveDownButton instanceof HTMLButtonElement) {
-        setButtonLucideIcon(moveDownButton, ArrowDown);
+    if (current.view === OptionsView.LIST || current.view === OptionsView.ADD) {
+        applyVisibility();
     }
 }
 
-function removeChannelRow(rowState: ChannelRowState): void {
-    const index = channelRows.indexOf(rowState);
-
-    if (index === -1) {
-        return;
+/**
+ * Moves to a screen and records it in the history so the browser Back button returns here.
+ */
+function navigate(route: OptionsRoute, options: { force?: boolean } = {}): void {
+    if (show(route, options)) {
+        history.pushState(null, "", formatOptionsRoute(route));
     }
-
-    channelRows.splice(index, 1);
-    rowState.element.remove();
-
-    if (channelRows.length === 0) {
-        addChannelRow(createEmptyTelegramChannel());
-    }
-
-    syncDirtyState();
 }
 
-function moveChannelRow(rowState: ChannelRowState, direction: -1 | 1): void {
-    const index = channelRows.indexOf(rowState);
-    const targetIndex = index + direction;
+/**
+ * Switches screens. Leaving a bot with unsaved edits asks first; returns false when the user stays.
+ */
+function show(route: OptionsRoute, options: { force?: boolean } = {}): boolean {
+    const sameScreen = route.view === current.view && route.connectionId === current.connectionId;
 
-    if (index === -1 || targetIndex < 0 || targetIndex >= channelRows.length) {
-        return;
-    }
-
-    const [removed] = channelRows.splice(index, 1);
-    channelRows.splice(targetIndex, 0, removed);
-
-    channelsListEl.innerHTML = "";
-
-    for (const row of channelRows) {
-        channelsListEl.appendChild(row.element);
-    }
-
-    syncDirtyState();
-}
-
-async function handleTestBot(): Promise<void> {
-    const token = botTokenInput.value.trim();
-
-    if (!token) {
-        setStatus(botStatusEl, t("optionsEnterBotToken"), "error");
-        setChannelsSectionVisible(false);
-        verifiedBotToken = "";
-        return;
-    }
-
-    await saveTelegramBotToken(token);
-
-    await verifyBotToken(token, { persistToken: true });
-}
-
-async function verifyBotToken(
-    token: string,
-    options: { persistToken: boolean }
-): Promise<boolean> {
-    setStatus(botStatusEl, t("optionsValidatingToken"), "info");
-
-    const client = new TelegramClient(token);
-    const response = await client.getMe();
-
-    if (!response?.ok) {
-        setStatus(botStatusEl, response?.error ?? t("optionsInvalidToken"), "error");
-        setChannelsSectionVisible(false);
-        verifiedBotToken = "";
+    if (!options.force && sameScreen) {
         return false;
     }
 
-    if (options.persistToken) {
-        await saveTelegramBotToken(token);
+    if (!options.force && current.view === OptionsView.BOT && botEditor?.isDirty() && !window.confirm(t("optionsDiscardChanges"))) {
+        return false;
     }
 
-    verifiedBotToken = token;
-    setChannelsSectionVisible(true);
-    setStatus(botStatusEl, t("optionsValidToken"), "success");
+    if (current.view === OptionsView.BOT && (route.view !== OptionsView.BOT || !sameScreen)) {
+        botEditor?.close();
+    }
+
+    if (current.view === OptionsView.ACCOUNT && (route.view !== OptionsView.ACCOUNT || !sameScreen)) {
+        accountSectionControls?.close();
+    }
+
+    console.debug("[options] view %s %s", route.view, route.connectionId ?? "");
+    current = route;
+    applyVisibility();
+
+    if (route.view === OptionsView.BOT && route.connectionId) {
+        void botEditor?.open(route.connectionId);
+    } else
+    if (route.view === OptionsView.ACCOUNT && route.connectionId) {
+        accountSectionControls?.open(route.connectionId);
+    }
+
+    window.scrollTo?.({ top: 0 });
     return true;
 }
 
-function syncBotTokenVerificationGate(): void {
-    const token = botTokenInput.value.trim();
+/**
+ * Shows the section of the current screen. With no connections yet, the list is replaced
+ * by the chooser (first run).
+ */
+function applyVisibility(): void {
+    const hasConnections = (config?.connections.length ?? 0) > 0;
+    const onList = current.view === OptionsView.LIST && hasConnections;
+    const onChooser = current.view === OptionsView.ADD || (current.view === OptionsView.LIST && !hasConnections);
 
-    if (!token) {
-        verifiedBotToken = "";
-        setChannelsSectionVisible(false);
-        return;
+    connectionsView.hidden = !onList;
+    setupWizard?.setVisible(onChooser, hasConnections);
+    botSection.hidden = current.view !== OptionsView.BOT;
+    accountSection.hidden = current.view !== OptionsView.ACCOUNT;
+
+    // A detail screen explains itself, so the subtitle steps aside.
+    if (subtitle) {
+        subtitle.textContent = onChooser && !hasConnections ? t("optionsSetupSubtitle") : t("optionsSubtitle");
+        subtitle.hidden = !onList && !onChooser;
     }
-
-    if (token === verifiedBotToken) {
-        setChannelsSectionVisible(true);
-        return;
-    }
-
-    setChannelsSectionVisible(false);
-}
-
-function setChannelsSectionVisible(visible: boolean): void {
-    channelsSectionEl.hidden = !visible;
-
-    if (!visible) {
-        setStatus(discoverStatusEl, "", "info");
-        discoveredChannelsEl.innerHTML = "";
-    }
-}
-
-async function saveTelegramBotToken(botToken: string): Promise<void> {
-    const config = await loadConfig();
-
-    await saveConfig({
-        ...config,
-
-        providers: {
-            ...config.providers,
-            telegram: { botToken }
-        }
-    });
-}
-
-function readTelegramChannelsFromForm(): TelegramDestinationChannel[] {
-    return channelRows.map((row) => ({
-        id: row.id,
-        label: row.labelInput.value.trim(),
-        provider: DestinationProvider.TELEGRAM,
-        chatId: normalizeTelegramChatId(row.chatIdInput.value)
-    }));
-}
-
-function readConfigFromForm(): ExtensionConfig {
-    return {
-        version: CurrentConfigVersion,
-
-        providers: {
-            telegram: {
-                botToken: botTokenInput.value.trim()
-            }
-        },
-
-        channels: [...readTelegramChannelsFromForm(), ...otherProviderChannels]
-    };
-}
-
-async function handleSave(): Promise<void> {
-    const config = readConfigFromForm();
-    const telegramChannels = readTelegramChannelsFromForm();
-    const validChannels = telegramChannels.filter(isChannelValid);
-
-    if (!config.providers.telegram.botToken) {
-        setStatus(saveStatusEl, t("optionsEnterTokenBeforeSave"), "error");
-        return;
-    }
-
-    if (validChannels.length === 0) {
-        setStatus(saveStatusEl, t("optionsNeedChannelBeforeSave"), "error");
-        return;
-    }
-
-    const existing = await loadConfig();
-
-    await saveConfig({
-        ...config,
-        channels: [
-            ...telegramChannels.filter((channel) => channel.label || channel.chatId || isChannelValid(channel)),
-            ...otherProviderChannels
-        ],
-        lastUsedChannelId: existing.lastUsedChannelId
-    });
-
-    setStatus(saveStatusEl, t("optionsSavedSuccess"), "success");
-    savedConfigSnapshot = serializeConfigSnapshot(readConfigFromForm());
-    syncDirtyState();
-}
-
-async function handleDiscoverChannels(): Promise<void> {
-    const token = botTokenInput.value.trim();
-
-    if (!token) {
-        setStatus(discoverStatusEl, t("optionsEnterTokenBeforeDiscover"), "error");
-        return;
-    }
-
-    await saveTelegramBotToken(token);
-
-    discoveredChannelsEl.innerHTML = "";
-    setStatus(discoverStatusEl, t("optionsDiscoveringChannels"), "info");
-
-    const client = new TelegramClient(token);
-    const response = await client.discoverChannels();
-
-    if (!response?.ok) {
-        setStatus(discoverStatusEl, response?.error ?? t("optionsDiscoverFailed"), "error");
-        return;
-    }
-
-    if (response.warning) {
-        setStatus(discoverStatusEl, response.warning, "info");
-    } else {
-        setStatus(
-            discoverStatusEl,
-            t("optionsChannelsFound", String(response.channels?.length ?? 0)),
-            "success"
-        );
-    }
-
-    renderDiscoveredChannels(response.channels ?? []);
-}
-
-function renderDiscoveredChannels(channels: DetectedTelegramChannel[]): void {
-    discoveredChannelsEl.innerHTML = "";
-
-    for (const channel of channels) {
-        const item = document.createElement("div");
-        item.className = "discovered-item";
-
-        const info = document.createElement("div");
-        info.className = "discovered-item__info";
-
-        const title = document.createElement("span");
-        title.className = "discovered-item__title";
-        title.textContent = channel.title;
-
-        const chatId = document.createElement("span");
-        chatId.className = "discovered-item__chat-id";
-        chatId.textContent = channel.chatId;
-
-        info.appendChild(title);
-        info.appendChild(chatId);
-
-        const addButton = document.createElement("button");
-        addButton.type = "button";
-        addButton.className = "btn btn--secondary";
-        addButton.textContent = isChannelAlreadyListed(channel.chatId)
-            ? t("optionsAlreadyAdded")
-            : t("optionsAddDetectedChannel");
-        addButton.disabled = isChannelAlreadyListed(channel.chatId);
-
-        addButton.addEventListener("click", () => {
-            addDetectedChannel(channel);
-            addButton.disabled = true;
-            addButton.textContent = t("optionsAlreadyAdded");
-            setStatus(discoverStatusEl, t("optionsChannelAdded", channel.title), "success");
-        });
-
-        item.appendChild(info);
-        item.appendChild(addButton);
-        discoveredChannelsEl.appendChild(item);
-    }
-}
-
-function isChannelAlreadyListed(chatId: string): boolean {
-    const normalized = chatId.trim().toLowerCase();
-
-    return channelRows.some((row) => row.chatIdInput.value.trim().toLowerCase() === normalized);
-}
-
-function addDetectedChannel(channel: DetectedTelegramChannel): void {
-    if (isChannelAlreadyListed(channel.chatId)) {
-        return;
-    }
-
-    const emptyRow = channelRows.find((row) => !row.labelInput.value.trim() && !row.chatIdInput.value.trim());
-
-    if (emptyRow) {
-        emptyRow.labelInput.value = channel.title;
-        emptyRow.chatIdInput.value = channel.chatId;
-        syncDirtyState();
-        return;
-    }
-
-    addChannelRow({
-        id: crypto.randomUUID(),
-        label: channel.title,
-        provider: DestinationProvider.TELEGRAM,
-        chatId: channel.chatId
-    });
-
-    syncDirtyState();
-}
-
-async function handleTestChannel(rowState: ChannelRowState): Promise<void> {
-    const label = rowState.labelInput.value.trim();
-    const chatId = normalizeTelegramChatId(rowState.chatIdInput.value);
-
-    rowState.chatIdInput.value = chatId;
-
-    if (!label || !chatId) {
-        setStatus(rowState.statusEl, t("optionsFillBeforeTest"), "error");
-        return;
-    }
-
-    const config = readConfigFromForm();
-    await saveConfig({
-        ...config,
-        lastUsedChannelId: (await loadConfig()).lastUsedChannelId
-    });
-
-    setStatus(rowState.statusEl, t("optionsSendingTest"), "info");
-
-    const client = new TelegramClient(config.providers.telegram.botToken);
-    const response = await client.sendTestMessage(chatId);
-
-    if (!response?.ok) {
-        setStatus(rowState.statusEl, response?.error ?? t("optionsTestFailed"), "error");
-        return;
-    }
-
-    setStatus(rowState.statusEl, t("optionsTestSent", [label, chatId]), "success");
 }
 
 /**
  * Applies compact layout when the options UI is shown in the toolbar popup.
  */
-function wireDirtyStateTracking(): void {
-    const page = document.querySelector(".page");
-
-    page?.addEventListener("input", () => {
-        syncDirtyState();
-    });
-
-    page?.addEventListener("change", () => {
-        syncDirtyState();
-    });
-}
-
-function serializeConfigSnapshot(config: ExtensionConfig): string {
-    return JSON.stringify({
-        botToken: config.providers.telegram.botToken.trim(),
-        channels: config.channels.filter(isTelegramChannel).map((channel) => ({
-            id: channel.id,
-            label: channel.label.trim(),
-            chatId: normalizeTelegramChatId(channel.chatId)
-        }))
-    });
-}
-
-function syncDirtyState(): void {
-    if (!dirtyTrackingEnabled) {
-        return;
-    }
-
-    const isDirty = serializeConfigSnapshot(readConfigFromForm()) !== savedConfigSnapshot;
-
-    saveDockEl.hidden = !isDirty;
-    document.body.classList.toggle("x2tg-options--dirty", isDirty);
-}
-
 function applyToolbarPopupLayoutIfNeeded(): void {
     if (!isExtensionToolbarPopup()) {
         return;
@@ -521,20 +168,4 @@ function isExtensionToolbarPopup(): boolean {
     }
 
     return window.innerWidth > 0 && window.innerWidth < 560;
-}
-
-function setStatus(
-    element: HTMLElement,
-    message: string,
-    variant: "success" | "error" | "info"
-): void {
-    element.textContent = message;
-    element.classList.remove("status--success", "status--error");
-
-    if (variant === "success") {
-        element.classList.add("status--success");
-    } else
-    if (variant === "error") {
-        element.classList.add("status--error");
-    }
 }

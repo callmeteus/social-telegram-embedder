@@ -22,7 +22,13 @@ import {
 import { offloadSnapshotMediaBlobs } from "../../../content/media/BlobSnapshotTransfer";
 import { dismissProgressToast, openOptionsPage, showToast, updateProgressToast } from "../../../content/ui/Toast";
 import { SEND_TO_TELEGRAM_ICON_PATH } from "../../../content/icons/TelegramIcon";
-import { showChannelPicker } from "../../../content/ui/ChannelPicker";
+import {
+    getDestinationsKey,
+    showDestinationPicker,
+    showSendResultToast,
+    type PickedDestination
+} from "../../../content/ui/picker";
+import type { SendPostResult } from "../../../core/types/Results";
 import { showTimelineMediaPicker } from "../../../content/ui/TimelineMediaPicker";
 import { buildXContentPhotoViewerSnapshot, isXContentPhotoViewerContext } from "./PhotoViewer";
 import { extractXContentTimelinePhotoUrls } from "./TimelineMedia";
@@ -234,15 +240,13 @@ async function handleSendClick(
     }
 
     const openChannelPicker = (pendingSnapshot?: SocialPostSnapshot) => {
-        showChannelPicker(
-            button,
-            config.channels,
-            config.lastUsedChannelId,
-            (channel) => {
-                void sendToChannel(channel.id, channel.label, postUrl, pendingSnapshot);
-            },
-            SocialPlatformId.X
-        );
+        showDestinationPicker({
+            config,
+            platformId: SocialPlatformId.X,
+            onSend: (destinations) => {
+                void sendToDestinations(destinations, postUrl, pendingSnapshot);
+            }
+        });
     };
 
     const postRoot = tweetArticle ?? (actionBar ? findTweetPostRootFromActionBar(actionBar) : null);
@@ -279,13 +283,12 @@ async function handleSendClick(
     openChannelPicker();
 }
 
-async function sendToChannel(
-    channelId: string,
-    channelLabel: string,
+async function sendToDestinations(
+    destinations: PickedDestination[],
     postUrl: string,
     pendingSnapshot?: SocialPostSnapshot
 ): Promise<void> {
-    const dedupeKey = `${channelId}:${postUrl}`;
+    const dedupeKey = `${getDestinationsKey(destinations)}:${postUrl}`;
     const lastSent = recentSends.get(dedupeKey) ?? 0;
 
     if (Date.now() - lastSent < SEND_DEBOUNCE_MS) {
@@ -301,11 +304,11 @@ async function sendToChannel(
         ? await offloadSnapshotMediaBlobs(photoViewerSnapshot, requestId)
         : undefined;
 
-    const response = await sendRuntimeMessage<{ ok?: boolean; error?: string }>({
+    const response = await sendRuntimeMessage<SendPostResult>({
         type: RuntimeMessageType.SEND_POST,
         platformId: SocialPlatformId.X,
         requestId,
-        channelId,
+        destinations: destinations.map((destination) => destination.ref),
         postUrl,
         postSnapshot
     });
@@ -317,13 +320,11 @@ async function sendToChannel(
         return;
     }
 
-    if (!response?.ok) {
-        showToast(response?.error ?? t("sendFailed"), "error");
-        return;
+    if (response?.ok) {
+        recentSends.set(dedupeKey, Date.now());
     }
 
-    recentSends.set(dedupeKey, Date.now());
-    showToast(t("sentToChannel", channelLabel), "success");
+    showSendResultToast(response, destinations);
 }
 
 function insertActionButtonSlot(actionBar: Element, buttonSlot: HTMLElement): void {

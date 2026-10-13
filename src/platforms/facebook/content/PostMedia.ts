@@ -9,6 +9,26 @@ export function isFacebookVideoPlaceholderPoster(url: string): boolean {
 }
 
 /**
+ * Returns true for the hidden player Facebook adds to photo posts with music: it only plays the
+ * song, so it is not post media. Real players are visible or sit inside a `[data-video-id]` host.
+ */
+export function isBackgroundMusicVideo(video: HTMLVideoElement): boolean {
+    if (video.closest("[data-video-id]")) {
+        return false;
+    }
+
+    return video.style.display === "none" || getComputedStyle(video).display === "none";
+}
+
+/**
+ * Returns the post's real video elements, skipping background music players.
+ */
+export function findPostVideos(root: Element): HTMLVideoElement[] {
+    return Array.from(root.querySelectorAll("video"))
+        .filter((video): video is HTMLVideoElement => video instanceof HTMLVideoElement && !isBackgroundMusicVideo(video));
+}
+
+/**
  * Extracts photo and direct video URLs from a Facebook post container.
  */
 export function extractPostMedia(root: Element): SocialPostSnapshot["media"] {
@@ -40,11 +60,7 @@ export function extractPostMedia(root: Element): SocialPostSnapshot["media"] {
         });
     }
 
-    for (const video of Array.from(root.querySelectorAll("video"))) {
-        if (!(video instanceof HTMLVideoElement)) {
-            continue;
-        }
-
+    for (const video of findPostVideos(root)) {
         const videoUrl = resolveVideoMediaUrl(video);
 
         if (!videoUrl || urls.has(videoUrl) || isFacebookVideoPlaceholderPoster(videoUrl)) {

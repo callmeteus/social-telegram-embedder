@@ -1,0 +1,249 @@
+/* Telegram account card on the options page */
+.card--account {
+    margin-top: 0;
+    padding: var(--x2tg-space-5);
+}
+
+.card--account [hidden],
+.card--account .hint:empty {
+    display: none;
+}
+
+/* Two-step progress: app keys, then login */
+.account-progress {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--x2tg-space-1);
+    margin: 0 0 var(--x2tg-space-4);
+}
+
+.account-progress span {
+    height: 3px;
+    border-radius: 9999px;
+    background: var(--x2tg-border);
+    transition: background-color 220ms ease-out;
+}
+
+.card--account[data-step="keys"] .account-progress span:first-child,
+.card--account[data-step="login"] .account-progress span {
+    background: var(--x2tg-accent);
+}
+
+.card--account[data-step="ready"] .account-progress {
+    display: none;
+}
+
+.card--account[data-step="login"] .account-intro,
+.card--account[data-step="ready"] .account-intro {
+    display: none;
+}
+
+#account-login > .account-actions {
+    justify-content: center;
+}
+
+.account-intro {
+    margin: 0 0 var(--x2tg-space-5);
+    color: var(--x2tg-text-secondary);
+    font-size: 0.8125rem;
+    line-height: 1.55;
+}
+
+.card--account .subsection-title {
+    margin-bottom: var(--x2tg-space-3);
+    color: var(--x2tg-text);
+    font-size: 0.875rem;
+}
+
+.account-guide {
+    display: grid;
+    gap: var(--x2tg-space-3);
+    margin: 0 0 var(--x2tg-space-3);
+    padding: var(--x2tg-space-4);
+    border: 1px solid var(--x2tg-border-subtle);
+    border-radius: var(--x2tg-radius-md);
+    background: var(--x2tg-inset);
+    list-style: none;
+    counter-reset: guide;
+}
+
+.account-guide li {
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: var(--x2tg-space-3);
+    align-items: start;
+    color: var(--x2tg-text-secondary);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    counter-increment: guide;
+}
+
+.account-guide li::before {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    margin-top: -1px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--x2tg-accent) 16%, transparent);
+    color: var(--x2tg-accent);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    content: counter(guide);
+}
+
+.account-link {
+    gap: var(--x2tg-space-2);
+    margin-bottom: var(--x2tg-space-5);
+    text-decoration: none;
+}
+
+.account-link::after {
+    width: 14px;
+    height: 14px;
+    background: currentColor;
+    content: "";
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 3h6v6'/%3E%3Cpath d='M10 14 21 3'/%3E%3Cpath d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 3h6v6'/%3E%3Cpath d='M10 14 21 3'/%3E%3Cpath d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.account-fields {
+    display: grid;
+    gap: var(--x2tg-space-3);
+    margin-bottom: var(--x2tg-space-4);
+}
+
+.account-fields .field {
+    margin-bottom: 0;
+}
+
+.card--account .field__input[aria-invalid="true"] {
+    border-color: var(--x2tg-danger);
+}
+
+.account-note {
+    display: flex;
+    gap: var(--x2tg-space-2);
+    align-items: flex-start;
+    margin: var(--x2tg-space-3) 0 0;
+    color: var(--x2tg-text-muted);
+    font-size: 0.75rem;
+    line-height: 1.5;
+}
+
+.account-note::before {
+    flex-shrink: 0;
+    width: 13px;
+    height: 13px;
+    margin-top: 2px;
+    background: currentColor;
+    content: "";
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='18' height='11' x='3' y='11' rx='2' ry='2'/%3E%3Cpath d='M7 11V7a5 5 0 0 1 10 0v4'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='18' height='11' x='3' y='11' rx='2' ry='2'/%3E%3Cpath d='M7 11V7a5 5 0 0 1 10 0v4'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.account-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--x2tg-space-2) var(--x2tg-space-3);
+    margin-bottom: var(--x2tg-space-3);
+}
+
+.account-row .field {
+    margin-bottom: 0;
+}
+
+.account-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--x2tg-space-2);
+}
+
+.account-step > .account-actions {
+    margin-top: var(--x2tg-space-3);
+}
+
+#account-qr-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+#account-qr-panel[hidden] {
+    display: none;
+}
+
+#account-qr-panel .hint {
+    max-width: 34ch;
+    color: var(--x2tg-text-secondary);
+    font-size: 0.8125rem;
+}
+
+#account-qr-panel .account-actions {
+    justify-content: center;
+}
+
+.account-qr {
+    width: 200px;
+    margin-bottom: var(--x2tg-space-4);
+    padding: var(--x2tg-space-2);
+    border-radius: var(--x2tg-radius-md);
+    background: #ffffff;
+    box-shadow: 0 6px 20px var(--x2tg-shadow);
+}
+
+.account-qr svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.account-connected {
+    display: flex;
+    align-items: center;
+    gap: var(--x2tg-space-3);
+    padding: var(--x2tg-space-3);
+    border: 1px solid var(--x2tg-border-subtle);
+    border-radius: var(--x2tg-radius-md);
+    background: var(--x2tg-inset);
+}
+
+.account-avatar {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    overflow: hidden;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--x2tg-accent) 22%, var(--x2tg-surface-raised));
+    color: var(--x2tg-text);
+    font-weight: 700;
+}
+
+.account-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.account-name {
+    display: -webkit-box;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+html.x2tg-options--popup .card--account {
+    padding: var(--x2tg-space-4);
+}

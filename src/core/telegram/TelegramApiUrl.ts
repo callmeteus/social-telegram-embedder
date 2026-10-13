@@ -2,9 +2,18 @@
  * Builds the Bot API URL for the current runtime (extension vs local Vite preview).
  */
 export function buildTelegramBotApiUrl(botToken: string, method: string): string {
-    const apiRoot = isOptionsDevPreviewHost() ? "/tg" : "https://api.telegram.org";
+    return `${getApiRoot()}/bot${botToken}/${method}`;
+}
 
-    return `${apiRoot}/bot${botToken}/${method}`;
+/**
+ * Builds the download URL for a file path returned by getFile.
+ */
+export function buildTelegramBotFileUrl(botToken: string, filePath: string): string {
+    return `${getApiRoot()}/file/bot${botToken}/${filePath}`;
+}
+
+function getApiRoot(): string {
+    return isOptionsDevPreviewHost() ? "/tg" : "https://api.telegram.org";
 }
 
 function isOptionsDevPreviewHost(): boolean {

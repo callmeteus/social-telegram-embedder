@@ -3,14 +3,21 @@
  */
 
 import { isExtensionContextValid } from "../../core/extension";
+import { t } from "../../core/i18n/I18n";
 
 let toastContainer: HTMLElement | null = null;
+
+/** Quick sends never show the elapsed counter; slow ones show it so the toast never looks frozen. */
+const ELAPSED_VISIBLE_AFTER_MS = 3000;
 
 interface ProgressToastEntry {
     root: HTMLElement;
     messageEl: HTMLElement;
+    elapsedEl: HTMLElement;
     trackEl: HTMLElement;
     barEl: HTMLElement;
+    startedAt: number;
+    elapsedTimer: number;
 }
 
 const progressToasts = new Map<string, ProgressToastEntry>();
@@ -61,8 +68,14 @@ export function updateProgressToast(requestId: string, message: string, percent?
         const root = document.createElement("div");
         root.className = "x2tg-toast x2tg-toast--info x2tg-toast--progress";
 
+        const header = document.createElement("div");
+        header.className = "x2tg-toast__header";
+
         const messageEl = document.createElement("div");
         messageEl.className = "x2tg-toast__message";
+
+        const elapsedEl = document.createElement("div");
+        elapsedEl.className = "x2tg-toast__elapsed";
 
         const trackEl = document.createElement("div");
         trackEl.className = "x2tg-toast__progress-track";
@@ -71,29 +84,44 @@ export function updateProgressToast(requestId: string, message: string, percent?
         barEl.className = "x2tg-toast__progress-bar";
         trackEl.appendChild(barEl);
 
-        root.appendChild(messageEl);
+        header.appendChild(messageEl);
+        header.appendChild(elapsedEl);
+        root.appendChild(header);
         root.appendChild(trackEl);
         container.appendChild(root);
 
-        entry = {
+        const created: ProgressToastEntry = {
             root,
             messageEl,
+            elapsedEl,
             trackEl,
-            barEl
+            barEl,
+            startedAt: Date.now(),
+            elapsedTimer: 0
         };
 
+        created.elapsedTimer = window.setInterval(() => renderElapsed(created), 1000);
+        entry = created;
         progressToasts.set(requestId, entry);
     }
 
     entry.messageEl.textContent = message;
 
     if (percent !== undefined) {
-        entry.trackEl.style.display = "block";
+        entry.trackEl.classList.remove("x2tg-toast__progress-track--indeterminate");
         entry.barEl.style.width = `${Math.min(100, Math.max(0, percent))}%`;
     } else {
-        entry.trackEl.style.display = "none";
-        entry.barEl.style.width = "0%";
+        entry.trackEl.classList.add("x2tg-toast__progress-track--indeterminate");
+        entry.barEl.style.removeProperty("width");
     }
+}
+
+function renderElapsed(entry: ProgressToastEntry): void {
+    const elapsedMs = Date.now() - entry.startedAt;
+
+    entry.elapsedEl.textContent = elapsedMs >= ELAPSED_VISIBLE_AFTER_MS
+        ? t("progressElapsedSeconds", String(Math.floor(elapsedMs / 1000)))
+        : "";
 }
 
 /**
@@ -106,6 +134,7 @@ export function dismissProgressToast(requestId: string): void {
         return;
     }
 
+    window.clearInterval(entry.elapsedTimer);
     entry.root.classList.add("x2tg-toast--hide");
 
     window.setTimeout(() => {
