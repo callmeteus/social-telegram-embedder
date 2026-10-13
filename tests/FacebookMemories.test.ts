@@ -10,7 +10,7 @@ import {
 import { injectFacebookContent } from "../src/platforms/facebook/content/InjectButton";
 
 const fixturesDir = join(dirname(fileURLToPath(import.meta.url)), "fixtures");
-const memoriesFixturePath = "C:/Users/Gio/.cursor/projects/c-Users-Gio-Documents-Projetos/uploads/Untitled-1-L1-L1-0.txt";
+const memoriesFixturePath = join(fixturesDir, "FacebookMemories.html");
 
 describe("facebook memories layout", () => {
     it("does not style the send button as a reel control", () => {
