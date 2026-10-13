@@ -11,6 +11,7 @@ import {
 } from "./PickerModel";
 import { applyAvatar, applyPickerRowState, createPickerRow, PickerPinToggleClass } from "./PickerRow";
 import { PickerPinnedRowClass, PinnedReorder } from "./PinnedReorder";
+import { capturePickerSendGhost } from "./SendMorph";
 import { sendRuntimeMessage } from "../../../core/extension/ExtensionContext";
 import { t } from "../../../core/i18n/I18n";
 import { createLucideSvgElement } from "../../../core/ui/LucideIcon";
@@ -469,9 +470,12 @@ class DestinationPickerView {
 
     private send(destinations: PickedDestination[]): void {
         const onSend = this.options.onSend;
+        const ghost = capturePickerSendGhost(this.overlay, this.picker);
 
         closeDestinationPicker();
+        // onSend creates the progress toast synchronously, so the ghost can land on it right away.
         onSend(destinations);
+        ghost?.land();
     }
 
     private moveActive(delta: number): void {
