@@ -24,6 +24,34 @@ import { snapshotToFetchedPost } from "../../platforms/types";
 import { getPlatformById } from "../../platforms/registry";
 
 /**
+ * Cheap validation of a SEND_POST payload, done before the job is queued so obvious mistakes are
+ * reported to the tab instead of ending up in a notification.
+ */
+export function validateSendPostRequest(message: SendPostMessage): string | null {
+    const platform = getPlatformById(message.platformId);
+
+    if (!platform) {
+        return t("errorUnsupportedPlatform");
+    }
+
+    const destinations = dedupeDestinationRefs(message.destinations);
+
+    if (destinations.length === 0) {
+        return t("errorChannelNotFound");
+    }
+
+    if (destinations.length > MaxDestinationsPerSend) {
+        return t("errorTooManyDestinations", String(MaxDestinationsPerSend));
+    }
+
+    if (!platform.normalizePostUrl(message.postUrl)) {
+        return t(platform.progressMessages.invalidUrl);
+    }
+
+    return null;
+}
+
+/**
  * Sends a social post to one or more destinations using the matching platform adapter.
  * The post is fetched once and reused for every destination.
  */
@@ -31,39 +59,18 @@ export async function handleSendPost(
     message: SendPostMessage,
     sender: chrome.runtime.MessageSender
 ): Promise<SendPostResult> {
-    const platform = getPlatformById(message.platformId);
+    const invalid = validateSendPostRequest(message);
 
-    if (!platform) {
+    if (invalid) {
         return {
             ok: false,
-            error: t("errorUnsupportedPlatform")
+            error: invalid
         };
     }
 
+    const platform = getPlatformById(message.platformId)!;
     const destinations = dedupeDestinationRefs(message.destinations);
-
-    if (destinations.length === 0) {
-        return {
-            ok: false,
-            error: t("errorChannelNotFound")
-        };
-    }
-
-    if (destinations.length > MaxDestinationsPerSend) {
-        return {
-            ok: false,
-            error: t("errorTooManyDestinations", String(MaxDestinationsPerSend))
-        };
-    }
-
-    const normalizedUrl = platform.normalizePostUrl(message.postUrl);
-
-    if (!normalizedUrl) {
-        return {
-            ok: false,
-            error: t(platform.progressMessages.invalidUrl)
-        };
-    }
+    const normalizedUrl = platform.normalizePostUrl(message.postUrl)!;
 
     const config = await loadConfig();
     const tabId = sender.tab?.id;
@@ -88,7 +95,14 @@ export async function handleSendPost(
             : await platform.fetchPost(normalizedUrl);
 
         const { result, succeeded } = await sendToDestinations(
-            { platform, post: fetchedPost, normalizedUrl, destinations, onProgress },
+            {
+                platform,
+                post: fetchedPost,
+                normalizedUrl,
+                destinations,
+                onProgress,
+                captionHtml: typeof message.captionHtml === "string" ? message.captionHtml : undefined
+            },
             {
                 resolveDestination: (ref) => resolveDestination(config, ref),
                 prefetchMedia: prefetchPostMedia,

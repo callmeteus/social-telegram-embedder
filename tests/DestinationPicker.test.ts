@@ -113,7 +113,7 @@ describe("showDestinationPicker keyboard navigation", () => {
 
         press("Enter", { ctrlKey: true });
 
-        expect(onSend).toHaveBeenCalledWith([{ ref: { type: DestinationRefType.CHANNEL, channelId: "c2" }, label: "Canal B" }]);
+        expect(onSend).toHaveBeenCalledWith([{ ref: { type: DestinationRefType.CHANNEL, channelId: "c2" }, label: "Canal B" }], "");
         expect(document.querySelector(".x2tg-picker-overlay")).toBeNull();
     });
 
@@ -124,7 +124,7 @@ describe("showDestinationPicker keyboard navigation", () => {
         press("ArrowDown");
         press("Enter", { metaKey: true });
 
-        expect(onSend).toHaveBeenCalledWith([{ ref: { type: DestinationRefType.CHANNEL, channelId: "c2" }, label: "Canal B" }]);
+        expect(onSend).toHaveBeenCalledWith([{ ref: { type: DestinationRefType.CHANNEL, channelId: "c2" }, label: "Canal B" }], "");
     });
 
     it("closes on Escape without sending and keeps keys away from the page", () => {
@@ -162,7 +162,7 @@ describe("showDestinationPicker keyboard navigation", () => {
 
         sendButton.click();
 
-        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal B" })]);
+        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal B" })], "");
     });
 
     it("closes from the close button without sending", () => {
@@ -493,7 +493,7 @@ describe("showDestinationPicker with several accounts", () => {
         expect(onSend).toHaveBeenCalledWith([{
             ref: { type: DestinationRefType.TELEGRAM_PEER, connectionId: "acc-2", peerId: 1, kind: TelegramPeerKind.USER, title: "Grupo" },
             label: "Grupo"
-        }]);
+        }], "");
     });
 
     it("asks the owning account for each chat photo and closes every port", () => {
@@ -579,7 +579,7 @@ describe("showDestinationPicker multi-select", () => {
         expect(onSend).toHaveBeenCalledWith([
             expect.objectContaining({ label: "Canal A" }),
             expect.objectContaining({ label: "Canal C" })
-        ]);
+        ], "");
     });
 
     it("toggles from the checkbox or the row, and unselects again", () => {
@@ -595,7 +595,7 @@ describe("showDestinationPicker multi-select", () => {
         expect(rows()[1]?.getAttribute("aria-selected")).toBe("false");
 
         document.querySelector<HTMLButtonElement>(".x2tg-picker__send")?.click();
-        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal A" })]);
+        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal A" })], "");
     });
 
     it("stops at the selection limit and tells the user", () => {
@@ -650,6 +650,35 @@ describe("showDestinationPicker pin to top", () => {
 
         expect(labels()).toEqual(["Canal A", "Canal B"]);
         expect(savePinToggle).toHaveBeenCalledTimes(2);
+    });
+
+    it("hides the Telegram pin badge on a row already grouped under Pinned", () => {
+        const config = configWith(["Notícias"], true);
+
+        config.pinnedDestinations = [{
+            type: DestinationRefType.TELEGRAM_PEER,
+            connectionId: "acc",
+            peerId: 1,
+            kind: TelegramPeerKind.USER,
+            title: "Ana"
+        }];
+
+        const fake = createFakePort("telegram-user-dialogs");
+
+        showDestinationPicker({ config, onSend: vi.fn(), connectDialogs: () => fake.port });
+        fake.emit({ type: DialogsPortMessageType.SESSION, snapshot: { state: TelegramUserSessionState.READY, hasCredentials: true } });
+        fake.emit({
+            type: DialogsPortMessageType.PAGE,
+            entries: [dialog(1, "Ana", { isPinned: true, pinnedRank: 0 }), dialog(2, "Bruno", { isPinned: true, pinnedRank: 1 })],
+            done: true
+        });
+
+        const rowFor = (label: string): HTMLElement | undefined =>
+            rows().find((row) => row.querySelector(".x2tg-picker__label")?.textContent === label);
+
+        expect(labels()[0]).toBe("Ana");
+        expect(rowFor("Ana")?.querySelector(".x2tg-picker__badge--tg-pin")).toBeNull();
+        expect(rowFor("Bruno")?.querySelector(".x2tg-picker__badge--tg-pin")).toBeTruthy();
     });
 
     it("shows saved pins first and refuses pins past the limit", () => {
@@ -744,6 +773,81 @@ describe("showDestinationPicker reorder pinned", () => {
         press("ArrowUp", { altKey: true });
         expect(labels()).toEqual(["A", "B", "C"]);
         expect(savePinOrder).toHaveBeenCalledTimes(2);
+    });
+});
+
+describe("showDestinationPicker caption editor", () => {
+    function quoteRow(label: string): HTMLElement | undefined {
+        return rows().find((row) => row.querySelector(".x2tg-picker__label")?.textContent === label);
+    }
+
+    function editorSurface(): HTMLElement {
+        return document.querySelector<HTMLElement>(".x2tg-caption__editor")!;
+    }
+
+    function pressInEditor(key: string, modifiers: KeyboardEventInit = {}): KeyboardEvent {
+        const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...modifiers });
+
+        editorSurface().dispatchEvent(event);
+        return event;
+    }
+
+    it("does not toggle the destination when typing Enter or Space in the editor", () => {
+        showDestinationPicker({ config: configWith(["Canal A", "Canal B"]), onSend: vi.fn() });
+
+        const surface = editorSurface();
+
+        surface.focus();
+        pressInEditor("Enter");
+        pressInEditor(" ");
+
+        expect(rows()[0]?.getAttribute("aria-selected")).toBe("false");
+        expect(activeLabel()).toBe("Canal A");
+    });
+
+    it("keeps the picker navigation keys inside the editor", () => {
+        showDestinationPicker({ config: configWith(["Canal A", "Canal B"]), onSend: vi.fn() });
+
+        editorSurface().focus();
+
+        const event = pressInEditor("ArrowDown");
+
+        expect(event.defaultPrevented).toBe(false);
+        expect(activeLabel()).toBe("Canal A");
+    });
+
+    it("sends the selection with Ctrl/Cmd+Enter from inside the editor", () => {
+        const onSend = vi.fn();
+
+        showDestinationPicker({ config: configWith(["Canal A", "Canal B"]), onSend });
+        rows()[1]?.click();
+        editorSurface().focus();
+        pressInEditor("Enter", { ctrlKey: true });
+
+        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal B" })], "");
+        expect(document.querySelector(".x2tg-picker-overlay")).toBeNull();
+    });
+
+    it("passes the sanitized caption HTML to onSend", () => {
+        const onSend = vi.fn();
+
+        showDestinationPicker({ config: configWith(["Canal A"]), onSend });
+
+        editorSurface().innerHTML = "<b>Oi</b><script>bad()</script><img src=\"x\">";
+        editorSurface().focus();
+        pressInEditor("Enter", { ctrlKey: true });
+
+        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal A" })], "<b>Oi</b>");
+    });
+
+    it("prefills the editor with the draft caption", () => {
+        showDestinationPicker({
+            config: configWith(["Canal A"]),
+            onSend: vi.fn(),
+            initialCaptionHtml: "@<b>user</b>\n\nhttps://x.com/a/status/1"
+        });
+
+        expect(editorSurface().querySelector("b")?.textContent).toBe("user");
     });
 });
 

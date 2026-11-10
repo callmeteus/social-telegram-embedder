@@ -1,4 +1,5 @@
-import { handleSendPost } from "./handlers/SendPostHandler";
+import { validateSendPostRequest } from "./handlers/SendPostHandler";
+import { startSendJob } from "./SendJobRunner";
 import { routeTelegramUserPort, telegramUserSessions } from "./telegram-user";
 import { createDestinationSender } from "../core/destinations";
 import { t } from "../core/i18n/I18n";
@@ -13,6 +14,7 @@ import {
     type ChannelPhotoResponse,
     type DiscoverChannelsResponse,
     type RuntimeMessage,
+    type SendPostAccepted,
     type SendResult
 } from "../core/types";
 
@@ -39,13 +41,27 @@ chrome.runtime.onConnect.addListener((port) => {
 
 /**
  * Handles runtime messages from content script and options page.
+ * SEND_POST is answered right away (the job runs in the worker) so the tab can close.
  */
 chrome.runtime.onMessage.addListener((
     message: RuntimeMessage,
     sender,
     sendResponse
 ) => {
-    handleMessage(message, sender)
+    if (message.type === RuntimeMessageType.SEND_POST) {
+        const invalid = validateSendPostRequest(message);
+
+        if (invalid) {
+            sendResponse({ ok: false, error: invalid } satisfies SendResult);
+            return false;
+        }
+
+        startSendJob(message, sender);
+        sendResponse({ accepted: true, requestId: message.requestId } satisfies SendPostAccepted);
+        return false;
+    }
+
+    handleMessage(message)
         .then(sendResponse)
         .catch((err: unknown) => {
             console.error("[background] message %s failed: %O", (message as { type?: string })?.type, err);
@@ -59,8 +75,7 @@ chrome.runtime.onMessage.addListener((
 });
 
 async function handleMessage(
-    message: RuntimeMessage,
-    sender: chrome.runtime.MessageSender
+    message: RuntimeMessage
 ): Promise<SendResult | DiscoverChannelsResponse | ChannelPhotoResponse> {
     const config = await loadConfig();
 
@@ -101,10 +116,6 @@ async function handleMessage(
         }
 
         return destination.sendTestMessage();
-    }
-
-    if (message.type === RuntimeMessageType.SEND_POST) {
-        return handleSendPost(message, sender);
     }
 
     return {

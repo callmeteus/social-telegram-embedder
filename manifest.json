@@ -18,7 +18,8 @@
         "default_popup": "options.html"
     },
     "permissions": [
-        "storage"
+        "storage",
+        "notifications"
     ],
     "host_permissions": [
         "https://x.com/*",

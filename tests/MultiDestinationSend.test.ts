@@ -179,6 +179,25 @@ describe("sendToDestinations", () => {
         expect(deps.sleep).not.toHaveBeenCalled();
     });
 
+    it("passes the edited caption to every destination", async () => {
+        const { deps, sendPost } = setup();
+
+        await sendToDestinations(
+            {
+                platform: { sendPost },
+                post: Post,
+                normalizedUrl: "u",
+                destinations: [channel("a"), peer(1, "Ana")],
+                captionHtml: "<b>edited</b>"
+            },
+            deps
+        );
+
+        for (const call of sendPost.mock.calls) {
+            expect(call[3]).toBe("<b>edited</b>");
+        }
+    });
+
     it("sends only the link when the post could not be fetched", async () => {
         const { deps, sendPost, senders } = setup();
 

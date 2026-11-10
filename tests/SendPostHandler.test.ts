@@ -5,7 +5,7 @@ vi.mock("../src/background/telegram-user", () => ({
     TelegramUserSessionError: class extends Error {}
 }));
 
-import { handleSendPost } from "../src/background/handlers/SendPostHandler";
+import { handleSendPost, validateSendPostRequest } from "../src/background/handlers/SendPostHandler";
 import { RuntimeMessageType, type SendPostMessage } from "../src/core/types";
 import { DestinationRefType, MaxDestinationsPerSend, TelegramPeerKind } from "../src/core/types/DestinationRef";
 import { SocialPlatformId } from "../src/platforms/types";
@@ -19,6 +19,29 @@ function message(destinations: unknown[]): SendPostMessage {
         destinations
     } as unknown as SendPostMessage;
 }
+
+describe("validateSendPostRequest", () => {
+    const destination = {
+        type: DestinationRefType.TELEGRAM_PEER,
+        connectionId: "acc",
+        peerId: 1,
+        kind: TelegramPeerKind.USER,
+        title: "P"
+    };
+
+    it("accepts a well-formed request", () => {
+        expect(validateSendPostRequest(message([destination]))).toBeNull();
+    });
+
+    it("reports the same errors the handler returns", () => {
+        expect(validateSendPostRequest({ ...message([destination]), platformId: "NOPE" as SocialPlatformId }))
+            .toBe(`Unsupported platform.`);
+        expect(validateSendPostRequest(message([]))).toBe("Channel not found in settings.");
+        expect(validateSendPostRequest(message([{ type: "BOGUS" }]))).toBe("Channel not found in settings.");
+        expect(validateSendPostRequest({ ...message([destination]), postUrl: "not a url" }))
+            .toBe("Invalid post URL.");
+    });
+});
 
 describe("handleSendPost destination checks", () => {
     it("refuses more destinations than the per-send cap", async () => {

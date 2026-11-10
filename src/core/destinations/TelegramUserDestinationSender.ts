@@ -2,7 +2,7 @@ import type { DestinationSender } from "./DestinationSender";
 import { t } from "../i18n/I18n";
 import { fetchBlobWithProgress, formatDownloadProgressMessage } from "../network/FetchProgress";
 import type { SendProgressCallback } from "../network/SendProgress";
-import { buildTelegramCaption } from "../telegram/Caption";
+import { resolveTelegramCaption } from "../telegram/Caption";
 import { chunkSocialMedia } from "../telegram/MediaBatch";
 import { getMediaDownloadUrl, guessFileExtension, resolveLocalMediaBlob } from "../telegram/TelegramFileUtils";
 import { classifyTelegramUserError, formatTelegramUserError } from "../telegram-user/Errors";
@@ -29,8 +29,13 @@ export class TelegramUserDestinationSender implements DestinationSender {
         private readonly ref: TelegramPeerDestinationRef
     ) {}
 
-    public async sendSocialPost(post: FetchedSocialPost, onProgress?: SendProgressCallback): Promise<SendResult> {
-        const caption = telegramHtmlToFormattedText(buildTelegramCaption(post.embedUrl, post.text));
+    public async sendSocialPost(
+        post: FetchedSocialPost,
+        onProgress?: SendProgressCallback,
+        captionHtml?: string
+    ): Promise<SendResult> {
+        const captionHtmlResolved = resolveTelegramCaption(captionHtml, post.embedUrl, post.text);
+        const caption = telegramHtmlToFormattedText(captionHtmlResolved);
         const mediaTotal = post.media.length;
 
         try {

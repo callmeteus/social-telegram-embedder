@@ -17,8 +17,12 @@ export class TelegramDestinationSender implements DestinationSender {
         private readonly chatId: string
     ) {}
 
-    public sendSocialPost(post: FetchedSocialPost, onProgress?: SendProgressCallback): Promise<SendResult> {
-        return this.client.sendSocialPost(this.chatId, post, onProgress);
+    public sendSocialPost(
+        post: FetchedSocialPost,
+        onProgress?: SendProgressCallback,
+        captionHtml?: string
+    ): Promise<SendResult> {
+        return this.client.sendSocialPost(this.chatId, post, onProgress, captionHtml);
     }
 
     public sendLink(url: string): Promise<SendResult> {

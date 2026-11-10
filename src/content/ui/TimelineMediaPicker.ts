@@ -6,10 +6,16 @@ let outsideClickHandler: ((event: MouseEvent) => void) | null = null;
 let keyboardHandler: ((event: KeyboardEvent) => void) | null = null;
 
 /**
+ * An image offered by the media picker: a plain URL, or the preview shown in the post paired with
+ * the high-resolution URL used for the send.
+ */
+export type TimelineMediaChoice = string | { previewUrl: string; sendUrl: string };
+
+/**
  * Asks whether to send every timeline photo or a single selected image.
  */
 export function showTimelineMediaPicker(
-    photoUrls: string[],
+    photoUrls: TimelineMediaChoice[],
     onAll: () => void,
     onOne: (photoUrl: string) => void,
     platformId: SocialPlatformId = SocialPlatformId.X
@@ -19,6 +25,8 @@ export function showTimelineMediaPicker(
     if (photoUrls.length < 2) {
         return;
     }
+
+    const photos = photoUrls.map(toChoice);
 
     const overlay = document.createElement("div");
     overlay.className = "x2tg-picker-overlay";
@@ -46,9 +54,9 @@ export function showTimelineMediaPicker(
     const allButton = document.createElement("button");
     allButton.type = "button";
     allButton.className = "x2tg-picker__item";
-    allButton.textContent = photoUrls.length === 2
+    allButton.textContent = photos.length === 2
         ? t("xMediaChoiceBothTwo")
-        : t("xMediaChoiceAll", String(photoUrls.length));
+        : t("xMediaChoiceAll", String(photos.length));
     allButton.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -65,23 +73,23 @@ export function showTimelineMediaPicker(
     const thumbRow = document.createElement("div");
     thumbRow.className = "x2tg-picker__thumb-row";
 
-    for (const [index, photoUrl] of photoUrls.entries()) {
+    for (const [index, photo] of photos.entries()) {
         const thumbButton = document.createElement("button");
         thumbButton.type = "button";
         thumbButton.className = "x2tg-picker__thumb";
         thumbButton.setAttribute("aria-label", t("xMediaChoiceImageLabel", String(index + 1)));
 
         const image = document.createElement("img");
-        image.src = photoUrl;
+        image.src = photo.previewUrl;
         image.alt = "";
-        image.loading = "lazy";
+        image.loading = "eager";
         thumbButton.appendChild(image);
 
         thumbButton.addEventListener("click", (event) => {
             event.preventDefault();
             event.stopPropagation();
             closeTimelineMediaPicker();
-            onOne(photoUrl);
+            onOne(photo.sendUrl);
         });
 
         thumbRow.appendChild(thumbButton);
@@ -116,6 +124,10 @@ export function showTimelineMediaPicker(
     }, 0);
 
     document.addEventListener("keydown", keyboardHandler, true);
+}
+
+function toChoice(choice: TimelineMediaChoice): { previewUrl: string; sendUrl: string } {
+    return typeof choice === "string" ? { previewUrl: choice, sendUrl: choice } : choice;
 }
 
 /**

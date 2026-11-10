@@ -35,6 +35,8 @@ export interface MultiDestinationSendParams {
     normalizedUrl: string;
     destinations: DestinationRef[];
     onProgress?: SendProgressCallback;
+    /** Caption edited in the picker (Telegram HTML); replaces the generated one when set. */
+    captionHtml?: string;
 }
 
 /** Result plus the destinations that succeeded (for recents). */
@@ -111,7 +113,7 @@ export async function sendToDestinations(
             : onProgress;
 
         const result: SendResult = post
-            ? await params.platform.sendPost(resolved.sender, post, destinationProgress)
+            ? await params.platform.sendPost(resolved.sender, post, destinationProgress, params.captionHtml)
             : await resolved.sender.sendLink(params.normalizedUrl);
 
         outcomes.push({ label: resolved.label, ok: result.ok, error: result.ok ? undefined : result.error });

@@ -515,6 +515,32 @@
     "pickerPinnedShort": {
         "message": "Fixado"
     },
+    "captionTitle": {
+        "message": "Legenda"
+    },
+    "captionPlaceholder": {
+        "message": "Escreva a legenda enviada com o post…"
+    },
+    "captionBold": {
+        "message": "Negrito"
+    },
+    "captionCharCount": {
+        "message": "$1/$2",
+        "placeholders": {
+            "used": {
+                "content": "$1"
+            },
+            "limit": {
+                "content": "$2"
+            }
+        }
+    },
+    "notificationSendSuccessTitle": {
+        "message": "Enviado para o Telegram"
+    },
+    "notificationSendFailedTitle": {
+        "message": "Falha no envio"
+    },
     "pickerKindGroup": {
         "message": "Grupo"
     },

@@ -515,6 +515,32 @@
     "pickerPinnedShort": {
         "message": "Pinned"
     },
+    "captionTitle": {
+        "message": "Caption"
+    },
+    "captionPlaceholder": {
+        "message": "Write the caption sent with the post…"
+    },
+    "captionBold": {
+        "message": "Bold"
+    },
+    "captionCharCount": {
+        "message": "$1/$2",
+        "placeholders": {
+            "used": {
+                "content": "$1"
+            },
+            "limit": {
+                "content": "$2"
+            }
+        }
+    },
+    "notificationSendSuccessTitle": {
+        "message": "Sent to Telegram"
+    },
+    "notificationSendFailedTitle": {
+        "message": "Send failed"
+    },
     "pickerKindGroup": {
         "message": "Group"
     },

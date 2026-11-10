@@ -1,0 +1,303 @@
+import { t } from "../../../core/i18n/I18n";
+import {
+    decodeCaptionText,
+    sanitizeCaptionHtml,
+    TelegramCaptionLimit
+} from "../../../core/telegram/CaptionHtml";
+import { escapeTelegramHtml } from "../../../core/telegram/SocialCaption";
+
+/** Options for {@link createCaptionEditor}. */
+export interface CaptionEditorOptions {
+    /** Caption HTML to prefill (escaped text plus `<b>`), usually {@link buildCaptionDraftHtml}. */
+    initialHtml?: string;
+    /** Visible character limit; defaults to the Telegram caption limit. */
+    maxLength?: number;
+}
+
+/** The caption editor mounted inside the destination picker. */
+export interface CaptionEditor {
+    /** Root element to place in the picker layout. */
+    element: HTMLElement;
+    /** Sanitized caption HTML, or "" when the user left it empty. */
+    getHtml(): string;
+    focus(): void;
+    destroy(): void;
+}
+
+const BLOCK_TAGS = new Set(["DIV", "P", "LI", "BLOCKQUOTE", "H1", "H2", "H3", "H4", "H5", "H6"]);
+
+/**
+ * Elements whose content is never caption text. The browser never inserts them, but a paste or a
+ * script can, so they are dropped with their content instead of being flattened into text.
+ */
+const DROPPED_TAGS = new Set([
+    "SCRIPT",
+    "STYLE",
+    "NOSCRIPT",
+    "TEMPLATE",
+    "IFRAME",
+    "OBJECT",
+    "EMBED",
+    "IMG",
+    "VIDEO",
+    "AUDIO",
+    "SVG"
+]);
+
+/**
+ * Builds the WYSIWYG caption editor: a bold toggle and a contenteditable surface whose HTML
+ * only ever contains escaped text, `<b>` and line breaks.
+ */
+export function createCaptionEditor(options: CaptionEditorOptions = {}): CaptionEditor {
+    const maxLength = options.maxLength ?? TelegramCaptionLimit;
+    const element = document.createElement("div");
+
+    element.className = "x2tg-caption";
+
+    const header = document.createElement("div");
+    const title = document.createElement("span");
+    const count = document.createElement("span");
+
+    header.className = "x2tg-caption__header";
+    title.className = "x2tg-caption__title";
+    title.textContent = t("captionTitle");
+    count.className = "x2tg-caption__count";
+    header.append(title, count);
+
+    const frame = document.createElement("div");
+    const toolbar = document.createElement("div");
+    const editor = document.createElement("div");
+
+    frame.className = "x2tg-caption__frame";
+    toolbar.className = "x2tg-caption__toolbar";
+    editor.className = "x2tg-caption__editor";
+    editor.contentEditable = "true";
+    editor.setAttribute("role", "textbox");
+    editor.setAttribute("aria-multiline", "true");
+    editor.setAttribute("aria-label", t("captionTitle"));
+    editor.dataset.placeholder = t("captionPlaceholder");
+    editor.spellcheck = false;
+
+    const bold = document.createElement("button");
+
+    bold.type = "button";
+    bold.className = "x2tg-caption__tool x2tg-caption__tool--bold";
+    bold.textContent = "B";
+    bold.title = t("captionBold");
+    bold.setAttribute("aria-label", t("captionBold"));
+    bold.setAttribute("aria-pressed", "false");
+    bold.addEventListener("mousedown", (event) => {
+        // Keep the caret (and the selection to bold) in the editor.
+        event.preventDefault();
+    });
+    bold.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleBold(editor);
+        refresh();
+    });
+    toolbar.appendChild(bold);
+    frame.append(toolbar, editor);
+
+    element.append(header, frame);
+
+    const refresh = (): void => {
+        const html = captionHtmlFromElement(editor, maxLength);
+        const length = decodeCaptionText(html.replace(/<\/?b>/g, "")).length;
+
+        count.textContent = t("captionCharCount", [String(length), String(maxLength)]);
+        count.classList.toggle("x2tg-caption__count--limit", length >= maxLength);
+        bold.setAttribute("aria-pressed", String(isBoldActive()));
+    };
+
+    const handleInput = (): void => refresh();
+    const handlePaste = (event: ClipboardEvent): void => {
+        event.preventDefault();
+        insertPlainText(editor, event.clipboardData?.getData("text/plain") ?? "");
+        refresh();
+    };
+    const handleSelectionChange = (): void => {
+        if (document.activeElement === editor || editor.contains(document.activeElement)) {
+            bold.setAttribute("aria-pressed", String(isBoldActive()));
+        }
+    };
+
+    editor.addEventListener("input", handleInput);
+    editor.addEventListener("paste", handlePaste);
+    document.addEventListener("selectionchange", handleSelectionChange);
+
+    renderCaptionHtml(editor, options.initialHtml ?? "", maxLength);
+    refresh();
+
+    return {
+        element,
+        getHtml: () => captionHtmlFromElement(editor, maxLength),
+        focus: () => focusEnd(editor),
+        destroy: () => {
+            editor.removeEventListener("input", handleInput);
+            editor.removeEventListener("paste", handlePaste);
+            document.removeEventListener("selectionchange", handleSelectionChange);
+            element.remove();
+        }
+    };
+}
+
+/**
+ * Serializes the editor DOM into the caption HTML the send pipeline understands.
+ */
+export function captionHtmlFromElement(element: Element, maxLength: number = TelegramCaptionLimit): string {
+    return sanitizeCaptionHtml(serializeChildren(element), maxLength);
+}
+
+/**
+ * Fills the editor with caption HTML, converting line breaks and bold ranges into DOM nodes.
+ */
+export function renderCaptionHtml(element: Element, html: string, maxLength: number = TelegramCaptionLimit): void {
+    const clean = sanitizeCaptionHtml(html, maxLength);
+    const fragment = document.createDocumentFragment();
+
+    clean.split("\n").forEach((line, index) => {
+        if (index > 0) {
+            fragment.appendChild(document.createElement("br"));
+        }
+
+        appendInline(fragment, line);
+    });
+
+    element.replaceChildren(fragment);
+}
+
+function appendInline(parent: Node, line: string): void {
+    let isBold = false;
+
+    for (const token of line.split(/(<b>|<\/b>)/)) {
+        if (!token) {
+            continue;
+        }
+
+        if (token === "<b>") {
+            isBold = true;
+            continue;
+        }
+
+        if (token === "</b>") {
+            isBold = false;
+            continue;
+        }
+
+        const text = document.createTextNode(decodeCaptionText(token));
+
+        if (isBold) {
+            const bold = document.createElement("b");
+
+            bold.appendChild(text);
+            parent.appendChild(bold);
+            continue;
+        }
+
+        parent.appendChild(text);
+    }
+}
+
+function serializeChildren(node: Node): string {
+    let html = "";
+
+    for (const child of Array.from(node.childNodes)) {
+        if (child instanceof HTMLElement && BLOCK_TAGS.has(child.tagName)) {
+            // Enter in a contenteditable inserts blocks; they always start on a new line.
+            if (html && !html.endsWith("\n")) {
+                html += "\n";
+            }
+
+            html += serializeChildren(child);
+
+            if (!html.endsWith("\n")) {
+                html += "\n";
+            }
+
+            continue;
+        }
+
+        html += serializeNode(child);
+    }
+
+    return html;
+}
+
+function serializeNode(node: Node): string {
+    if (node.nodeType === Node.TEXT_NODE) {
+        return escapeTelegramHtml((node.nodeValue ?? "").replace(/\u00a0/g, " "));
+    }
+
+    if (!(node instanceof HTMLElement)) {
+        return "";
+    }
+
+    if (DROPPED_TAGS.has(node.tagName)) {
+        return "";
+    }
+
+    if (node.tagName === "BR") {
+        return "\n";
+    }
+
+    const inner = serializeChildren(node);
+
+    if (node.tagName === "B" || node.tagName === "STRONG") {
+        return inner.trim() ? `<b>${inner}</b>` : inner;
+    }
+
+    return inner;
+}
+
+function toggleBold(editor: HTMLElement): void {
+    editor.focus();
+
+    if (typeof document.execCommand !== "function") {
+        return;
+    }
+
+    try {
+        document.execCommand("bold");
+    } catch (err) {
+        console.debug("[caption] bold command failed: %O", err);
+    }
+}
+
+function isBoldActive(): boolean {
+    if (typeof document.execCommand !== "function") {
+        return false;
+    }
+
+    try {
+        return document.queryCommandState("bold");
+    } catch {
+        return false;
+    }
+}
+
+function insertPlainText(editor: HTMLElement, text: string): void {
+    if (typeof document.execCommand === "function") {
+        try {
+            document.execCommand("insertText", false, text);
+            return;
+        } catch (err) {
+            console.debug("[caption] paste fallback: %O", err);
+        }
+    }
+
+    editor.appendChild(document.createTextNode(text));
+    focusEnd(editor);
+}
+
+function focusEnd(editor: HTMLElement): void {
+    editor.focus();
+
+    const selection = window.getSelection();
+    const range = document.createRange();
+
+    range.selectNodeContents(editor);
+    range.collapse(false);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+}

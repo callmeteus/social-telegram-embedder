@@ -20,6 +20,8 @@ export interface SendPostMessage {
     postUrl: string;
     /** Optional DOM snapshot from the content script (photo viewer, Facebook, etc.). */
     postSnapshot?: SocialPostSnapshot;
+    /** Optional caption edited in the picker (Telegram HTML: escaped text plus `<b>`); replaces the generated one. */
+    captionHtml?: string;
 }
 
 /** Payload to test a single channel. */

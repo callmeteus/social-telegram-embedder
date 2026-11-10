@@ -1,5 +1,11 @@
 import { isExtensionContextError, isExtensionContextValid } from "../core/extension";
-import { ContentMessageType, type SendProgressPayload } from "../core/network/SendProgress";
+import {
+    ContentMessageType,
+    type ContentMessage,
+    type SendPostDonePayload,
+    type SendProgressPayload
+} from "../core/network/SendProgress";
+import { handleSendPostDone } from "./send/SendResultHandler";
 import { socialPlatforms } from "../platforms/registry";
 import { updateProgressToast } from "./ui/Toast";
 
@@ -7,17 +13,22 @@ let domObserver: MutationObserver | null = null;
 let contentScriptStopped = false;
 
 try {
-    chrome.runtime.onMessage.addListener((message: SendProgressPayload) => {
+    chrome.runtime.onMessage.addListener((message: ContentMessage) => {
         if (!isExtensionContextValid()) {
             stopContentScript();
             return;
         }
 
-        if (message.type !== ContentMessageType.SEND_PROGRESS) {
+        if (message.type === ContentMessageType.SEND_PROGRESS) {
+            const progress = message as SendProgressPayload;
+
+            updateProgressToast(progress.requestId, progress.message, progress.percent);
             return;
         }
 
-        updateProgressToast(message.requestId, message.message, message.percent);
+        if (message.type === ContentMessageType.SEND_POST_DONE) {
+            handleSendPostDone(message as SendPostDonePayload);
+        }
     });
 } catch (err) {
     if (isExtensionContextError(err)) {

@@ -7,7 +7,11 @@ import type { FetchedSocialPost } from "../../platforms/types";
  */
 export interface DestinationSender {
     /** Sends a post with its media and caption. */
-    sendSocialPost(post: FetchedSocialPost, onProgress?: SendProgressCallback): Promise<SendResult>;
+    sendSocialPost(
+        post: FetchedSocialPost,
+        onProgress?: SendProgressCallback,
+        captionHtml?: string
+    ): Promise<SendResult>;
     /** Sends only the post link, used when post details could not be fetched. */
     sendLink(url: string): Promise<SendResult>;
     /** Sends a test message to confirm the channel is reachable. */

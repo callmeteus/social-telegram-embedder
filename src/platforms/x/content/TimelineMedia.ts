@@ -3,12 +3,21 @@ import { preferTwitterLargeMediaUrl } from "./TwitterMediaUrl";
 
 const X_TIMELINE_PHOTO_SELECTOR = '[data-testid="tweetPhoto"] img';
 
+/** One timeline photo: the image the tweet already loaded, and the variant to download and send. */
+export interface TimelinePhoto {
+    /** URL of the image visible in the tweet; used for the picker thumbnails. */
+    previewUrl: string;
+    /** Highest-quality CDN variant; used for the send. */
+    sendUrl: string;
+}
+
 /**
- * Collects distinct tweet photo URLs from a timeline post, in DOM order.
+ * Collects distinct tweet photos from a timeline post, in DOM order, keeping both the preview
+ * the browser already loaded and the high-resolution URL used when sending.
  */
-export function extractXContentTimelinePhotoUrls(tweetArticle: Element): string[] {
+export function extractXContentTimelinePhotos(tweetArticle: Element): TimelinePhoto[] {
     const seenKeys = new Set<string>();
-    const urls: string[] = [];
+    const photos: TimelinePhoto[] = [];
 
     for (const node of Array.from(tweetArticle.querySelectorAll(X_TIMELINE_PHOTO_SELECTOR))) {
         if (!(node instanceof HTMLImageElement)) {
@@ -23,10 +32,17 @@ export function extractXContentTimelinePhotoUrls(tweetArticle: Element): string[
         }
 
         seenKeys.add(mediaKey);
-        urls.push(preferTwitterLargeMediaUrl(url));
+        photos.push({ previewUrl: url, sendUrl: preferTwitterLargeMediaUrl(url) });
     }
 
-    return urls;
+    return photos;
+}
+
+/**
+ * Collects distinct tweet photo URLs from a timeline post, in DOM order.
+ */
+export function extractXContentTimelinePhotoUrls(tweetArticle: Element): string[] {
+    return extractXContentTimelinePhotos(tweetArticle).map((photo) => photo.sendUrl);
 }
 
 function normalizeTwitterMediaKey(url: string | null): string | null {

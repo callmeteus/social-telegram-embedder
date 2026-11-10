@@ -31,7 +31,7 @@ import {
 } from "./ActionBar";
 import { isFacebookPhotoViewerContext } from "./PhotoViewerMedia";
 import { extractFacebookTimelinePhotoUrls } from "./TimelineMedia";
-import { buildPostSnapshot } from "./PostDom";
+import { buildPostSnapshot, extractPostSnapshot } from "./PostDom";
 import { showTimelineMediaPicker } from "../../../content/ui/TimelineMediaPicker";
 import { offloadSnapshotMediaBlobs } from "../../../content/media/BlobSnapshotTransfer";
 import { dismissProgressToast, openOptionsPage, showToast, updateProgressToast } from "../../../content/ui/Toast";
@@ -42,10 +42,9 @@ import {
     showSendResultToast,
     type PickedDestination
 } from "../../../content/ui/picker";
-import type { SendPostResult } from "../../../core/types/Results";
-
-const SEND_DEBOUNCE_MS = 3000;
-const recentSends = new Map<string, number>();
+import { buildCaptionDraftHtml } from "../../../core/telegram/Caption";
+import { registerPendingSend, takePendingSend, wasRecentlySent } from "../../../content/send/PendingSend";
+import { isSendPostAccepted, type SendPostResponse } from "../../../core/types/Results";
 
 interface PendingFacebookSendOptions {
     selectedPhotoUrls?: string[];
@@ -389,13 +388,16 @@ async function handleSendClick(
     }
 
     const resolvedPostUrl = resolveSendPostUrl(button, snapshotRoot, postUrl);
+    // Synchronous prefill: the full snapshot (video resolution) is only built when sending.
+    const draftText = extractPostSnapshot(snapshotRoot, resolvedPostUrl).text;
 
     const openChannelPicker = (pending?: PendingFacebookSendOptions) => {
         showDestinationPicker({
             config,
             platformId: SocialPlatformId.FACEBOOK,
-            onSend: (destinations) => {
-                void sendToDestinations(destinations, resolvedPostUrl, snapshotRoot, pending);
+            initialCaptionHtml: buildCaptionDraftHtml(draftText, resolvedPostUrl),
+            onSend: (destinations, captionHtml) => {
+                void sendToDestinations(destinations, resolvedPostUrl, captionHtml, snapshotRoot, pending);
             }
         });
     };
@@ -438,13 +440,13 @@ function resolveSendPostUrl(
 async function sendToDestinations(
     destinations: PickedDestination[],
     postUrl: string,
+    captionHtml: string,
     snapshotRoot: Element,
     pending?: PendingFacebookSendOptions
 ): Promise<void> {
     const dedupeKey = `${getDestinationsKey(destinations)}:${postUrl}`;
-    const lastSent = recentSends.get(dedupeKey) ?? 0;
 
-    if (Date.now() - lastSent < SEND_DEBOUNCE_MS) {
+    if (wasRecentlySent(dedupeKey)) {
         showToast(t("waitBeforeResend"), "info");
         return;
     }
@@ -459,27 +461,31 @@ async function sendToDestinations(
     });
     const payloadSnapshot = await offloadSnapshotMediaBlobs(postSnapshot, requestId);
 
-    const response = await sendRuntimeMessage<SendPostResult>({
+    // The worker answers right away and pushes the outcome later as SEND_POST_DONE.
+    registerPendingSend(requestId, { dedupeKey, destinations });
+
+    const response = await sendRuntimeMessage<SendPostResponse>({
         type: RuntimeMessageType.SEND_POST,
         platformId: SocialPlatformId.FACEBOOK,
         requestId,
         destinations: destinations.map((destination) => destination.ref),
         postUrl,
-        postSnapshot: payloadSnapshot
+        postSnapshot: payloadSnapshot,
+        captionHtml
     });
 
-    dismissProgressToast(requestId);
-
     if (response === undefined) {
+        takePendingSend(requestId);
+        dismissProgressToast(requestId);
         showToast(t("extensionContextInvalidated"), "info");
         return;
     }
 
-    if (response?.ok) {
-        recentSends.set(dedupeKey, Date.now());
+    if (!isSendPostAccepted(response)) {
+        takePendingSend(requestId);
+        dismissProgressToast(requestId);
+        showSendResultToast(response, destinations);
     }
-
-    showSendResultToast(response, destinations);
 }
 
 function insertActionButtonSlot(actionBar: Element, buttonSlot: HTMLElement): void {

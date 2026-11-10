@@ -19,7 +19,15 @@ export {
     type RecentDestination,
     type TelegramPeerDestinationRef
 } from "./DestinationRef";
-export type { DestinationSendOutcome, DiscoverChannelsResponse, SendPostResult, SendResult } from "./Results";
+export type {
+    DestinationSendOutcome,
+    DiscoverChannelsResponse,
+    SendPostAccepted,
+    SendPostResponse,
+    SendPostResult,
+    SendResult
+} from "./Results";
+export { isSendPostAccepted } from "./Results";
 export {
     RuntimeMessageType,
     type ChannelPhotoResponse,

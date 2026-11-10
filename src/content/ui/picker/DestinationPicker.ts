@@ -11,6 +11,7 @@ import {
 } from "./PickerModel";
 import { applyAvatar, applyPickerRowState, createPickerRow, PickerPinToggleClass } from "./PickerRow";
 import { PickerPinnedRowClass, PinnedReorder } from "./PinnedReorder";
+import { createCaptionEditor, type CaptionEditor } from "./CaptionEditor";
 import { capturePickerSendGhost } from "./SendMorph";
 import { sendRuntimeMessage } from "../../../core/extension/ExtensionContext";
 import { t } from "../../../core/i18n/I18n";
@@ -50,8 +51,13 @@ export interface PickedDestination {
 export interface DestinationPickerOptions {
     config: ExtensionConfig;
     platformId?: SocialPlatformId;
-    /** Called once with one or more destinations (in selection order). */
-    onSend(destinations: PickedDestination[]): void;
+    /**
+     * Called once with one or more destinations (in selection order) and the caption edited in the
+     * picker (Telegram HTML; "" when the user left the editor empty).
+     */
+    onSend(destinations: PickedDestination[], captionHtml: string): void;
+    /** Draft caption shown in the editor, usually built with `buildCaptionDraftHtml`. */
+    initialCaptionHtml?: string;
     /** Overrides the dialogs port of each Telegram account (tests). */
     connectDialogs?: DialogsPortFactory;
     /** Overrides how bot channel photos are loaded (tests). */
@@ -94,6 +100,7 @@ class DestinationPickerView {
     private readonly footer: HTMLElement;
     private readonly footerCount: HTMLElement;
     private readonly sendButton: HTMLButtonElement;
+    private readonly caption: CaptionEditor;
     private readonly accounts: AccountFeeds;
     private readonly reorder: PinnedReorder;
     /** Keys of the visible Pinned rows, in order (for Alt+Arrow moves). */
@@ -118,7 +125,7 @@ class DestinationPickerView {
         this.overlay.className = "x2tg-picker-overlay";
 
         this.picker = document.createElement("div");
-        this.picker.className = "x2tg-picker x2tg-picker--destinations";
+        this.picker.className = "x2tg-picker x2tg-picker--destinations x2tg-picker--with-caption";
         this.picker.setAttribute("role", "dialog");
         this.picker.setAttribute("aria-modal", "true");
         this.picker.setAttribute("aria-label", t("pickerTitle"));
@@ -177,7 +184,17 @@ class DestinationPickerView {
         });
         this.footer.append(this.footerCount, this.sendButton);
 
-        this.picker.append(header, this.searchInput, this.list, this.footer);
+        this.caption = createCaptionEditor({ initialHtml: options.initialCaptionHtml ?? "" });
+
+        const destinationsColumn = document.createElement("div");
+        const body = document.createElement("div");
+
+        destinationsColumn.className = "x2tg-picker__destinations-col";
+        destinationsColumn.append(this.searchInput, this.list);
+        body.className = "x2tg-picker__body";
+        body.append(destinationsColumn, this.caption.element);
+
+        this.picker.append(header, body, this.footer);
         this.overlay.appendChild(this.picker);
         document.body.appendChild(this.overlay);
 
@@ -223,6 +240,7 @@ class DestinationPickerView {
     public destroy(): void {
         this.accounts.close();
         this.reorder.destroy();
+        this.caption.destroy();
         this.overlay.remove();
 
         if (this.searchTimer) {
@@ -470,11 +488,12 @@ class DestinationPickerView {
 
     private send(destinations: PickedDestination[]): void {
         const onSend = this.options.onSend;
+        const captionHtml = this.caption.getHtml();
         const ghost = capturePickerSendGhost(this.overlay, this.picker);
 
         closeDestinationPicker();
         // onSend creates the progress toast synchronously, so the ghost can land on it right away.
-        onSend(destinations);
+        onSend(destinations, captionHtml);
         ghost?.land();
     }
 
@@ -491,6 +510,12 @@ class DestinationPickerView {
     }
 
     private handleKey(event: KeyboardEvent): void {
+        // The caption editor keeps its keys: typing, caret movement and paste must reach it untouched.
+        if (this.isCaptionTarget(event.target)) {
+            this.handleCaptionKey(event);
+            return;
+        }
+
         event.stopPropagation();
 
         if (event.type !== "keydown") {
@@ -519,13 +544,7 @@ class DestinationPickerView {
         } else
         if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
             event.preventDefault();
-
-            if (this.selection.size > 0) {
-                this.sendSelection();
-            } else
-            if (activeItem) {
-                this.send([toPicked(activeItem)]);
-            }
+            this.sendShortcut(activeItem);
         } else
         if (event.key === "Enter" && !event.isComposing) {
             event.preventDefault();
@@ -537,6 +556,41 @@ class DestinationPickerView {
         if (event.key === " " && activeItem && (!this.query || event.target !== this.searchInput)) {
             event.preventDefault();
             this.toggle(activeItem);
+        }
+    }
+
+    private isCaptionTarget(target: EventTarget | null): boolean {
+        return target instanceof Node && this.caption.element.contains(target);
+    }
+
+    /**
+     * Keys pressed inside the editor only keep the picker shortcuts: Escape closes, Ctrl/Cmd+Enter sends.
+     */
+    private handleCaptionKey(event: KeyboardEvent): void {
+        if (event.type !== "keydown") {
+            return;
+        }
+
+        if (event.key === "Escape") {
+            event.preventDefault();
+            closeDestinationPicker();
+            return;
+        }
+
+        if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+            event.preventDefault();
+            this.sendShortcut(this.flatItems.find((item) => item.key === this.activeKey));
+        }
+    }
+
+    private sendShortcut(activeItem: PickerItem | undefined): void {
+        if (this.selection.size > 0) {
+            this.sendSelection();
+            return;
+        }
+
+        if (activeItem) {
+            this.send([toPicked(activeItem)]);
         }
     }
 

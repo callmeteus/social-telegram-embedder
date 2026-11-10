@@ -52,8 +52,13 @@ export function createPickerRow(item: PickerItem, state: PickerRowState): HTMLBu
         text.appendChild(createMeta(item.route));
     }
 
-    if (item.pinnedInTelegram || (item.folderTags?.length ?? 0) > 0) {
-        text.appendChild(createBadges(Boolean(item.pinnedInTelegram), item.folderTags ?? []));
+    // A row already grouped under "Pinned" does not need the pin badge: it only adds a line and
+    // makes the list jump when the Telegram chat list finally arrives.
+    const folderTags = item.folderTags ?? [];
+    const showTelegramPin = Boolean(item.pinnedInTelegram) && !state.pinnedToTop;
+
+    if (showTelegramPin || folderTags.length > 0) {
+        text.appendChild(createBadges(showTelegramPin, folderTags));
     }
 
     row.appendChild(text);

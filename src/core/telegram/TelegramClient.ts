@@ -1,5 +1,5 @@
 import { isTwitterTimelinePhotoUrl, preferTwitterLargeMediaUrl } from "../media/TwitterMediaUrl";
-import { buildTelegramCaption } from "./Caption";
+import { resolveTelegramCaption } from "./Caption";
 import { chunkSocialMedia } from "./MediaBatch";
 import type { FetchedSocialPost, SocialMediaItem } from "../../platforms/types";
 import { t } from "../i18n/I18n";
@@ -76,10 +76,11 @@ export class TelegramClient {
     public async sendSocialPost(
         chatId: string,
         post: FetchedSocialPost,
-        onProgress?: SendProgressCallback
+        onProgress?: SendProgressCallback,
+        captionHtml?: string
     ): Promise<SendResult> {
         const normalizedChatId = normalizeTelegramChatId(chatId);
-        const caption = buildTelegramCaption(post.embedUrl, post.text);
+        const caption = resolveTelegramCaption(captionHtml, post.embedUrl, post.text);
         const mediaTotal = post.media.length;
 
         if (post.media.length === 0) {

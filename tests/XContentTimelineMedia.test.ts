@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { showTimelineMediaPicker } from "../src/content/ui/TimelineMediaPicker";
-import { extractXContentTimelinePhotoUrls } from "../src/platforms/x/content/TimelineMedia";
+import {
+    extractXContentTimelinePhotoUrls,
+    extractXContentTimelinePhotos
+} from "../src/platforms/x/content/TimelineMedia";
 import { buildXContentArticleSnapshot } from "../src/platforms/x/content/XPostSnapshot";
 
 describe("extractXContentTimelinePhotoUrls", () => {
@@ -23,6 +26,25 @@ describe("extractXContentTimelinePhotoUrls", () => {
             "https://pbs.twimg.com/media/photo-a.jpg?name=orig",
             "https://pbs.twimg.com/media/photo-b.jpg?name=orig"
         ]);
+    });
+});
+
+describe("extractXContentTimelinePhotos", () => {
+    it("keeps the URL the tweet already loaded and upgrades only the send URL", () => {
+        document.body.innerHTML = `
+            <article data-testid="tweet">
+                <div data-testid="tweetPhoto">
+                    <img src="https://pbs.twimg.com/media/photo-a.jpg?name=small" />
+                </div>
+            </article>
+        `;
+
+        const photos = extractXContentTimelinePhotos(document.querySelector("article")!);
+
+        expect(photos).toEqual([{
+            previewUrl: "https://pbs.twimg.com/media/photo-a.jpg?name=small",
+            sendUrl: "https://pbs.twimg.com/media/photo-a.jpg?name=orig"
+        }]);
     });
 });
 
@@ -59,6 +81,31 @@ describe("showTimelineMediaPicker", () => {
 
         expect(onOne).toHaveBeenCalledTimes(1);
         expect(onOne).toHaveBeenCalledWith("https://pbs.twimg.com/media/photo-b.jpg");
+    });
+
+    it("shows the tweet preview eagerly and sends the high-resolution URL", () => {
+        const onOne = vi.fn();
+
+        showTimelineMediaPicker(
+            [
+                { previewUrl: "https://pbs.twimg.com/media/photo-a.jpg?name=small", sendUrl: "https://pbs.twimg.com/media/photo-a.jpg?name=orig" },
+                { previewUrl: "https://pbs.twimg.com/media/photo-b.jpg?name=small", sendUrl: "https://pbs.twimg.com/media/photo-b.jpg?name=orig" }
+            ],
+            vi.fn(),
+            onOne
+        );
+
+        const images = Array.from(document.querySelectorAll<HTMLImageElement>(".x2tg-picker__thumb img"));
+
+        expect(images.map((image) => image.src)).toEqual([
+            "https://pbs.twimg.com/media/photo-a.jpg?name=small",
+            "https://pbs.twimg.com/media/photo-b.jpg?name=small"
+        ]);
+        expect(images.every((image) => image.loading === "eager")).toBe(true);
+
+        (document.querySelectorAll(".x2tg-picker__thumb")[1] as HTMLButtonElement).click();
+
+        expect(onOne).toHaveBeenCalledWith("https://pbs.twimg.com/media/photo-b.jpg?name=orig");
     });
 });
 

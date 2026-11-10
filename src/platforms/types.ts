@@ -71,7 +71,8 @@ export interface SocialPlatform {
     sendPost(
         sender: DestinationSender,
         post: FetchedSocialPost,
-        onProgress?: SendProgressCallback
+        onProgress?: SendProgressCallback,
+        captionHtml?: string
     ): Promise<SendResult>;
     progressMessages: {
         /** i18n message keys resolved via chrome.i18n at runtime. */

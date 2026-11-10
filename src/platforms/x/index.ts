@@ -34,8 +34,8 @@ export const xPlatform: SocialPlatform = {
 
         return mapFetchedTweet(tweet);
     },
-    sendPost(sender, post, onProgress) {
-        return sender.sendSocialPost(post, onProgress);
+    sendPost(sender, post, onProgress, captionHtml) {
+        return sender.sendSocialPost(post, onProgress, captionHtml);
     },
     progressMessages: {
         fetching: "progressFetchingPost",

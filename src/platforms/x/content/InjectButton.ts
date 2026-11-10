@@ -28,15 +28,14 @@ import {
     showSendResultToast,
     type PickedDestination
 } from "../../../content/ui/picker";
-import type { SendPostResult } from "../../../core/types/Results";
+import { buildCaptionDraftHtml } from "../../../core/telegram/Caption";
+import { registerPendingSend, takePendingSend, wasRecentlySent } from "../../../content/send/PendingSend";
+import { isSendPostAccepted, type SendPostResponse } from "../../../core/types/Results";
 import { showTimelineMediaPicker } from "../../../content/ui/TimelineMediaPicker";
 import { buildXContentPhotoViewerSnapshot, isXContentPhotoViewerContext } from "./PhotoViewer";
-import { extractXContentTimelinePhotoUrls } from "./TimelineMedia";
-import { buildXContentArticleSnapshot } from "./XPostSnapshot";
+import { extractXContentTimelinePhotos } from "./TimelineMedia";
+import { buildXContentArticleSnapshot, extractXContentArticleCaption } from "./XPostSnapshot";
 import type { SocialPostSnapshot } from "../../types";
-
-const SEND_DEBOUNCE_MS = 3000;
-const recentSends = new Map<string, number>();
 
 /**
  * Injects Telegram send buttons for X/Twitter posts.
@@ -239,17 +238,19 @@ async function handleSendClick(
         return;
     }
 
+    const postRoot = tweetArticle ?? (actionBar ? findTweetPostRootFromActionBar(actionBar) : null);
+    const draftText = postRoot instanceof Element ? extractXContentArticleCaption(postRoot) : "";
+
     const openChannelPicker = (pendingSnapshot?: SocialPostSnapshot) => {
         showDestinationPicker({
             config,
             platformId: SocialPlatformId.X,
-            onSend: (destinations) => {
-                void sendToDestinations(destinations, postUrl, pendingSnapshot);
+            initialCaptionHtml: buildCaptionDraftHtml(pendingSnapshot?.text || draftText, postUrl),
+            onSend: (destinations, captionHtml) => {
+                void sendToDestinations(destinations, postUrl, captionHtml, pendingSnapshot);
             }
         });
     };
-
-    const postRoot = tweetArticle ?? (actionBar ? findTweetPostRootFromActionBar(actionBar) : null);
 
     if (isXContentPhotoViewerContext()) {
         const viewerSnapshot = buildXContentPhotoViewerSnapshot(window.location, document, actionBar);
@@ -258,13 +259,13 @@ async function handleSendClick(
     }
 
     if (postRoot instanceof Element) {
-        const timelinePhotos = extractXContentTimelinePhotoUrls(postRoot);
+        const timelinePhotos = extractXContentTimelinePhotos(postRoot);
 
         if (timelinePhotos.length >= 2) {
             showTimelineMediaPicker(
                 timelinePhotos,
                 () => {
-                    openChannelPicker(buildXContentArticleSnapshot(postRoot, timelinePhotos));
+                    openChannelPicker(buildXContentArticleSnapshot(postRoot, timelinePhotos.map((photo) => photo.sendUrl)));
                 },
                 (photoUrl) => {
                     openChannelPicker(buildXContentArticleSnapshot(postRoot, [photoUrl]));
@@ -275,7 +276,7 @@ async function handleSendClick(
         }
 
         if (timelinePhotos.length === 1) {
-            openChannelPicker(buildXContentArticleSnapshot(postRoot, timelinePhotos));
+            openChannelPicker(buildXContentArticleSnapshot(postRoot, [timelinePhotos[0].sendUrl]));
             return;
         }
     }
@@ -286,12 +287,12 @@ async function handleSendClick(
 async function sendToDestinations(
     destinations: PickedDestination[],
     postUrl: string,
+    captionHtml: string,
     pendingSnapshot?: SocialPostSnapshot
 ): Promise<void> {
     const dedupeKey = `${getDestinationsKey(destinations)}:${postUrl}`;
-    const lastSent = recentSends.get(dedupeKey) ?? 0;
 
-    if (Date.now() - lastSent < SEND_DEBOUNCE_MS) {
+    if (wasRecentlySent(dedupeKey)) {
         showToast(t("waitBeforeResend"), "info");
         return;
     }
@@ -304,27 +305,31 @@ async function sendToDestinations(
         ? await offloadSnapshotMediaBlobs(photoViewerSnapshot, requestId)
         : undefined;
 
-    const response = await sendRuntimeMessage<SendPostResult>({
+    // The worker answers right away and pushes the outcome later as SEND_POST_DONE.
+    registerPendingSend(requestId, { dedupeKey, destinations });
+
+    const response = await sendRuntimeMessage<SendPostResponse>({
         type: RuntimeMessageType.SEND_POST,
         platformId: SocialPlatformId.X,
         requestId,
         destinations: destinations.map((destination) => destination.ref),
         postUrl,
-        postSnapshot
+        postSnapshot,
+        captionHtml
     });
 
-    dismissProgressToast(requestId);
-
     if (response === undefined) {
+        takePendingSend(requestId);
+        dismissProgressToast(requestId);
         showToast(t("extensionContextInvalidated"), "info");
         return;
     }
 
-    if (response?.ok) {
-        recentSends.set(dedupeKey, Date.now());
+    if (!isSendPostAccepted(response)) {
+        takePendingSend(requestId);
+        dismissProgressToast(requestId);
+        showSendResultToast(response, destinations);
     }
-
-    showSendResultToast(response, destinations);
 }
 
 function insertActionButtonSlot(actionBar: Element, buttonSlot: HTMLElement): void {
