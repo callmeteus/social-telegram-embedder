@@ -85,7 +85,7 @@ describe("TelegramUserDestinationSender", () => {
         expect(client.sendText).not.toHaveBeenCalled();
     });
 
-    it("splits more than 10 media into albums and sends a follow-up link", async () => {
+    it("splits more than 10 media into albums without an extra link message", async () => {
         const client = createFakeTelegramUserClient();
         const media = Array.from({ length: 12 }, (_, index) => photo(index));
 
@@ -93,8 +93,7 @@ describe("TelegramUserDestinationSender", () => {
 
         expect(client.sendMediaGroup.mock.calls.map((call) => (call[1] as unknown[]).length)).toEqual([10, 2]);
         expect(client.sendMediaGroup.mock.calls[1]?.[2]).toBeUndefined();
-        expect(client.sendText).toHaveBeenCalledTimes(1);
-        expect((client.sendText.mock.calls[0]?.[1] as { text: string }).text).toContain("https://fixupx.com/a/status/1");
+        expect(client.sendText).not.toHaveBeenCalled();
     });
 
     it("maps a failed download to a friendly message", async () => {

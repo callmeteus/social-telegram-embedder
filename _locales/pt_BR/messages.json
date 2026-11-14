@@ -213,9 +213,6 @@
     "progressSendingLink": {
         "message": "Enviando link..."
     },
-    "progressComplementaryLink": {
-        "message": "Enviando link complementar..."
-    },
     "progressSendingMedia": {
         "message": "Enviando mídia..."
     },
@@ -358,15 +355,6 @@
     },
     "warningDiscoverNoChannels": {
         "message": "Nenhum canal encontrado. Adicione o bot como admin do canal e publique uma mensagem no canal (ou busque de novo depois)."
-    },
-    "followUpMoreMedia": {
-        "message": "Mais mídia do post:\n$1",
-        "placeholders": {
-            "url": {
-                "content": "$1",
-                "example": "https://fixupx.com/user/status/1"
-            }
-        }
     },
     "testChannelMessage": {
         "message": "Teste da extensão Social Telegram Embedder. Se você vê esta mensagem, o canal está configurado corretamente."

@@ -33,7 +33,11 @@ import { registerPendingSend, takePendingSend, wasRecentlySent } from "../../../
 import { isSendPostAccepted, type SendPostResponse } from "../../../core/types/Results";
 import { showTimelineMediaPicker } from "../../../content/ui/TimelineMediaPicker";
 import { buildXContentPhotoViewerSnapshot, isXContentPhotoViewerContext } from "./PhotoViewer";
-import { extractXContentTimelinePhotos } from "./TimelineMedia";
+import {
+    extractXContentTimelinePhotos,
+    hasXContentVideoMedia,
+    readXContentHiddenMediaCount
+} from "./TimelineMedia";
 import { buildXContentArticleSnapshot, extractXContentArticleCaption } from "./XPostSnapshot";
 import type { SocialPostSnapshot } from "../../types";
 
@@ -259,6 +263,13 @@ async function handleSendClick(
     }
 
     if (postRoot instanceof Element) {
+        // The DOM only carries a truncated grid ("+14") and poster frames for GIFs, so posts with
+        // more media than it shows, or any video, must be resolved by the FxTwitter API.
+        if (readXContentHiddenMediaCount(postRoot) > 0 || hasXContentVideoMedia(postRoot)) {
+            openChannelPicker();
+            return;
+        }
+
         const timelinePhotos = extractXContentTimelinePhotos(postRoot);
 
         if (timelinePhotos.length >= 2) {

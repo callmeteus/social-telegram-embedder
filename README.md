@@ -202,7 +202,7 @@ Parse media.all (photos, videos, GIFs)
          +--> 0 items  -> sendMessage (FixupX link)
          +--> 1 item   -> sendPhoto / sendVideo / sendAnimation
          +--> 2-10     -> sendMediaGroup (album)
-         +--> 11+      -> batches of 10 + follow-up link message
+         +--> 11+      -> batches of 10
 ```
 
 Each caption includes the tweet text (when available) and the FixupX link so readers can open the original post.

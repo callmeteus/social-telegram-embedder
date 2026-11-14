@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import { showTimelineMediaPicker } from "../src/content/ui/TimelineMediaPicker";
 import {
     extractXContentTimelinePhotoUrls,
-    extractXContentTimelinePhotos
+    extractXContentTimelinePhotos,
+    hasXContentVideoMedia,
+    readXContentHiddenMediaCount
 } from "../src/platforms/x/content/TimelineMedia";
 import { buildXContentArticleSnapshot } from "../src/platforms/x/content/XPostSnapshot";
 
@@ -45,6 +47,126 @@ describe("extractXContentTimelinePhotos", () => {
             previewUrl: "https://pbs.twimg.com/media/photo-a.jpg?name=small",
             sendUrl: "https://pbs.twimg.com/media/photo-a.jpg?name=orig"
         }]);
+    });
+
+    it("ignores the poster frame X renders for a GIF or video", () => {
+        document.body.innerHTML = `
+            <article data-testid="tweet">
+                <div data-testid="tweetPhoto">
+                    <div data-testid="videoComponent">
+                        <video poster="https://pbs.twimg.com/tweet_video_thumb/G7vo8z4XQAAC7Cr.jpg"></video>
+                    </div>
+                    <img src="https://pbs.twimg.com/tweet_video_thumb/G7vo8z4XQAAC7Cr.jpg" />
+                </div>
+            </article>
+        `;
+
+        expect(extractXContentTimelinePhotos(document.querySelector("article")!)).toEqual([]);
+    });
+
+    it("ignores a video poster image that is outside a video container", () => {
+        document.body.innerHTML = `
+            <article data-testid="tweet">
+                <div data-testid="tweetPhoto">
+                    <img src="https://pbs.twimg.com/amplify_video_thumb/12345/img/abc.jpg" />
+                </div>
+            </article>
+        `;
+
+        expect(extractXContentTimelinePhotos(document.querySelector("article")!)).toEqual([]);
+    });
+
+    it("keeps real photos when a video poster follows them", () => {
+        document.body.innerHTML = `
+            <article data-testid="tweet">
+                <div data-testid="tweetPhoto">
+                    <img src="https://pbs.twimg.com/media/photo-a.jpg?name=small" />
+                </div>
+                <div data-testid="tweetPhoto">
+                    <img src="https://pbs.twimg.com/tweet_video_thumb/G7vo8z4XQAAC7Cr.jpg" />
+                </div>
+            </article>
+        `;
+
+        const photos = extractXContentTimelinePhotos(document.querySelector("article")!);
+
+        expect(photos.map((photo) => photo.sendUrl)).toEqual([
+            "https://pbs.twimg.com/media/photo-a.jpg?name=orig"
+        ]);
+    });
+});
+
+describe("readXContentHiddenMediaCount", () => {
+    it("reads the +N badge X shows over a truncated media grid", () => {
+        document.body.innerHTML = `
+            <article data-testid="tweet">
+                <div data-testid="tweetPhoto"><img src="https://pbs.twimg.com/media/a?format=jpg&name=small" /></div>
+                <div data-testid="tweetPhoto"><img src="https://pbs.twimg.com/media/b?format=jpg&name=small" /></div>
+                <div data-testid="tweetPhoto">
+                    <img src="https://pbs.twimg.com/media/c?format=jpg&name=small" />
+                    <div><div><span>+14</span></div></div>
+                </div>
+            </article>
+        `;
+
+        expect(readXContentHiddenMediaCount(document.querySelector("article")!)).toBe(14);
+    });
+
+    it("returns zero when the grid shows every attachment", () => {
+        document.body.innerHTML = `
+            <article data-testid="tweet">
+                <div data-testid="tweetPhoto"><img src="https://pbs.twimg.com/media/a?format=jpg&name=small" /></div>
+                <div data-testid="tweetPhoto"><img src="https://pbs.twimg.com/media/b?format=jpg&name=small" /></div>
+            </article>
+        `;
+
+        expect(readXContentHiddenMediaCount(document.querySelector("article")!)).toBe(0);
+    });
+
+    it("ignores numeric text that is not a media overflow badge", () => {
+        document.body.innerHTML = `
+            <article data-testid="tweet">
+                <div data-testid="tweetText">+14</div>
+                <div data-testid="tweetPhoto"><img src="https://pbs.twimg.com/media/a?format=jpg&name=small" /></div>
+            </article>
+        `;
+
+        expect(readXContentHiddenMediaCount(document.querySelector("article")!)).toBe(0);
+    });
+});
+
+describe("hasXContentVideoMedia", () => {
+    it("detects a GIF or video through its video element", () => {
+        document.body.innerHTML = `
+            <article data-testid="tweet">
+                <div data-testid="tweetPhoto">
+                    <div data-testid="videoComponent"><video></video></div>
+                </div>
+            </article>
+        `;
+
+        expect(hasXContentVideoMedia(document.querySelector("article")!)).toBe(true);
+    });
+
+    it("detects a GIF from its poster even when several photos surround it", () => {
+        document.body.innerHTML = `
+            <article data-testid="tweet">
+                <div data-testid="tweetPhoto"><img src="https://pbs.twimg.com/media/a?format=jpg&name=small" /></div>
+                <div data-testid="tweetPhoto"><img src="https://pbs.twimg.com/tweet_video_thumb/abc.jpg" /></div>
+            </article>
+        `;
+
+        expect(hasXContentVideoMedia(document.querySelector("article")!)).toBe(true);
+    });
+
+    it("returns false for a photo-only post", () => {
+        document.body.innerHTML = `
+            <article data-testid="tweet">
+                <div data-testid="tweetPhoto"><img src="https://pbs.twimg.com/media/a?format=jpg&name=small" /></div>
+            </article>
+        `;
+
+        expect(hasXContentVideoMedia(document.querySelector("article")!)).toBe(false);
     });
 });
 

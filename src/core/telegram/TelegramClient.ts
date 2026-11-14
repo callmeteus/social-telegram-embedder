@@ -1,6 +1,6 @@
 import { isTwitterTimelinePhotoUrl, preferTwitterLargeMediaUrl } from "../media/TwitterMediaUrl";
 import { resolveTelegramCaption } from "./Caption";
-import { chunkSocialMedia } from "./MediaBatch";
+import { groupSocialMediaForTelegram } from "./MediaBatch";
 import type { FetchedSocialPost, SocialMediaItem } from "../../platforms/types";
 import { t } from "../i18n/I18n";
 import {
@@ -92,39 +92,35 @@ export class TelegramClient {
             return this.sendSingleMedia(normalizedChatId, post.media[0], caption, 1, mediaTotal, onProgress);
         }
 
-        const batches = chunkSocialMedia(post.media);
+        const batches = groupSocialMediaForTelegram(post.media);
         let mediaIndex = 0;
 
         for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
             const batch = batches[batchIndex];
             const batchCaption = batchIndex === 0 ? caption : undefined;
-            const result = await this.sendMediaBatch(
-                normalizedChatId,
-                batch,
-                batchCaption,
-                mediaIndex,
-                mediaTotal,
-                onProgress
-            );
+            const result = batch.length === 1
+                ? await this.sendSingleMedia(
+                    normalizedChatId,
+                    batch[0],
+                    batchCaption,
+                    mediaIndex + 1,
+                    mediaTotal,
+                    onProgress
+                )
+                : await this.sendMediaBatch(
+                    normalizedChatId,
+                    batch,
+                    batchCaption,
+                    mediaIndex,
+                    mediaTotal,
+                    onProgress
+                );
 
             if (!result.ok) {
                 return result;
             }
 
             mediaIndex += batch.length;
-        }
-
-        if (batches.length > 1) {
-            onProgress?.({ message: t("progressComplementaryLink") });
-
-            const continuation = await this.sendMessage(
-                normalizedChatId,
-                t("followUpMoreMedia", post.embedUrl)
-            );
-
-            if (!continuation.ok) {
-                return continuation;
-            }
         }
 
         return { ok: true };
@@ -250,9 +246,9 @@ export class TelegramClient {
 
         if (localBlob) {
             return this.uploadMediaBlob(
-                media.kind === "photo" ? "sendPhoto" : "sendVideo",
+                mediaMethod(media.kind),
                 chatId,
-                media.kind === "photo" ? "photo" : "video",
+                mediaField(media.kind),
                 localBlob,
                 localBlob.type || media.url,
                 caption,
@@ -660,6 +656,25 @@ export class TelegramClient {
 
         return { ok: true };
     }
+}
+
+/**
+ * Bot API method that carries a media kind, so a GIF keeps its animation instead of becoming a video.
+ */
+function mediaMethod(kind: SocialMediaItem["kind"]): "sendPhoto" | "sendVideo" | "sendAnimation" {
+    if (kind === "photo") {
+        return "sendPhoto";
+    }
+
+    return kind === "gif" ? "sendAnimation" : "sendVideo";
+}
+
+function mediaField(kind: SocialMediaItem["kind"]): "photo" | "video" | "animation" {
+    if (kind === "photo") {
+        return "photo";
+    }
+
+    return kind === "gif" ? "animation" : "video";
 }
 
 /**

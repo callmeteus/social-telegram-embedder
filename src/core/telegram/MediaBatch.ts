@@ -3,17 +3,38 @@ import type { SocialMediaItem } from "../../platforms/types";
 const TELEGRAM_MEDIA_GROUP_LIMIT = 10;
 
 /**
- * Splits media items into Telegram album batches.
+ * Splits media into the groups Telegram accepts in one send: albums hold up to ten photos and
+ * videos, while an animation cannot travel inside an album, so each GIF becomes a group of its own.
  */
-export function chunkSocialMedia(
+export function groupSocialMediaForTelegram(
     media: SocialMediaItem[],
     size = TELEGRAM_MEDIA_GROUP_LIMIT
 ): SocialMediaItem[][] {
-    const batches: SocialMediaItem[][] = [];
+    const groups: SocialMediaItem[][] = [];
+    let album: SocialMediaItem[] = [];
 
-    for (let index = 0; index < media.length; index += size) {
-        batches.push(media.slice(index, index + size));
+    const flushAlbum = () => {
+        if (album.length > 0) {
+            groups.push(album);
+            album = [];
+        }
+    };
+
+    for (const item of media) {
+        if (item.kind === "gif") {
+            flushAlbum();
+            groups.push([item]);
+            continue;
+        }
+
+        album.push(item);
+
+        if (album.length === size) {
+            flushAlbum();
+        }
     }
 
-    return batches;
+    flushAlbum();
+
+    return groups;
 }

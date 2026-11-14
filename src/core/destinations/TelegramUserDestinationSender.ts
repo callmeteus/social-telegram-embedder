@@ -3,7 +3,7 @@ import { t } from "../i18n/I18n";
 import { fetchBlobWithProgress, formatDownloadProgressMessage } from "../network/FetchProgress";
 import type { SendProgressCallback } from "../network/SendProgress";
 import { resolveTelegramCaption } from "../telegram/Caption";
-import { chunkSocialMedia } from "../telegram/MediaBatch";
+import { groupSocialMediaForTelegram } from "../telegram/MediaBatch";
 import { getMediaDownloadUrl, guessFileExtension, resolveLocalMediaBlob } from "../telegram/TelegramFileUtils";
 import { classifyTelegramUserError, formatTelegramUserError } from "../telegram-user/Errors";
 import { telegramHtmlToFormattedText, type FormattedText } from "../telegram-user/FormattedText";
@@ -75,12 +75,30 @@ export class TelegramUserDestinationSender implements DestinationSender {
         caption: FormattedText,
         onProgress?: SendProgressCallback
     ): Promise<void> {
-        const batches = chunkSocialMedia(post.media);
+        const batches = groupSocialMediaForTelegram(post.media);
         const mediaTotal = post.media.length;
         let mediaIndex = 0;
 
         for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
             const batch = batches[batchIndex];
+
+            if (batch.length === 1) {
+                const file = await downloadMedia(batch[0], mediaIndex + 1, mediaTotal, onProgress);
+
+                onProgress?.({ message: t("progressSendingToTelegramIndexed", [String(mediaIndex + 1), String(mediaTotal)]) });
+                await this.messenger.sendMedia(
+                    this.ref.peerId,
+                    file,
+                    batchIndex === 0 ? caption : undefined,
+                    (uploaded, total) => {
+                        onProgress?.(formatUploadProgress(mediaIndex + 1, mediaTotal, uploaded, total));
+                    }
+                );
+
+                mediaIndex += 1;
+                continue;
+            }
+
             const files: OutgoingMediaFile[] = [];
 
             for (let index = 0; index < batch.length; index++) {
@@ -107,11 +125,6 @@ export class TelegramUserDestinationSender implements DestinationSender {
             );
 
             mediaIndex += batch.length;
-        }
-
-        if (batches.length > 1) {
-            onProgress?.({ message: t("progressComplementaryLink") });
-            await this.messenger.sendText(this.ref.peerId, { text: t("followUpMoreMedia", post.embedUrl), bold: [] });
         }
     }
 
