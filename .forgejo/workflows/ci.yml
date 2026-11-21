@@ -1,5 +1,7 @@
 name: CI
 
+# Forgejo is a pull mirror of GitHub. Push and pull_request events fire when
+# the mirror syncs or when the workflow is dispatched from the Forgejo UI.
 on:
   push:
     branches:
@@ -9,21 +11,19 @@ on:
     branches:
       - main
       - master
+  workflow_dispatch:
 
 jobs:
   test:
     name: Test and build
-    runs-on: ubuntu-latest
+    runs-on: docker
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: yarn
+      - name: Node version
+        run: node --version
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile

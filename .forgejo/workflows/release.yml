@@ -1,0 +1,92 @@
+name: Release
+
+# Runs on Forgejo Actions. GitHub Releases remain the distribution channel;
+# the short-lived token comes from the gti-ci GitHub App whose credentials are
+# stored in Vault and injected as Forgejo secrets.
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to release, for example v1.0.0"
+        required: true
+        type: string
+
+env:
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+  REPO: callmeteus/social-telegram-embedder
+
+jobs:
+  release:
+    name: Build and publish GitHub Release
+    runs-on: docker
+
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.GTI_CI_APP_ID }}
+          private-key: ${{ secrets.GTI_CI_APP_PRIVATE_KEY }}
+          permission-contents: write
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Read version from manifest
+        run: |
+          VERSION=$(node -p "require('./manifest.json').version")
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "Manifest version: $VERSION"
+
+      - name: Verify tag matches manifest
+        shell: bash
+        run: |
+          if [ "$RELEASE_TAG" != "v$VERSION" ]; then
+            echo "Tag $RELEASE_TAG must match manifest version v$VERSION."
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Typecheck
+        run: yarn typecheck
+
+      - name: Test
+        run: yarn test
+
+      - name: Build extension
+        run: yarn build
+
+      - name: Package zip
+        run: yarn package:zip
+
+      - name: Create checksum
+        shell: bash
+        run: |
+          cd release
+          sha256sum "social-telegram-embedder-v$VERSION.zip" > "social-telegram-embedder-v$VERSION.zip.sha256"
+          cat "social-telegram-embedder-v$VERSION.zip.sha256"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(release/social-telegram-embedder-v"$VERSION".zip release/social-telegram-embedder-v"$VERSION".zip.sha256)
+          if gh release view "$RELEASE_TAG" --repo "$REPO" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG already exists, replacing assets"
+            gh release upload "$RELEASE_TAG" "${files[@]}" --repo "$REPO" --clobber
+          else
+            gh release create "$RELEASE_TAG" "${files[@]}" \
+              --repo "$REPO" \
+              --title "Social Telegram Embedder v$VERSION" \
+              --generate-notes
+          fi

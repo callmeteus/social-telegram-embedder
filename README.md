@@ -307,7 +307,7 @@ To add a new social network later: create `src/platforms/<id>/`, implement `Soci
 
 ## Releasing (maintainers)
 
-Version lives in [`manifest.json`](./manifest.json). GitHub Actions builds and publishes a release when you push a matching tag.
+Version lives in [`manifest.json`](./manifest.json). CI runs in Forgejo Actions, and releases are published to GitHub Releases.
 
 ```bash
 # 1. Bump version in manifest.json
@@ -316,14 +316,14 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-The [Release workflow](./.github/workflows/release.yml) will:
+The [Forgejo mirror](http://100.87.110.100:3010/callmeteus/social-telegram-embedder) syncs from GitHub. The [Release workflow](./.forgejo/workflows/release.yml) will:
 
 1. Run typecheck and tests
 2. Build the extension
 3. Create `social-telegram-embedder-vX.Y.Z.zip` and a SHA256 checksum
 4. Publish a GitHub Release with both files attached
 
-You can also trigger a release manually from the **Actions** tab (`workflow_dispatch`). The workflow reads the version from `manifest.json` and refuses mismatched tags on tag pushes.
+You can also dispatch the workflow from the Forgejo **Actions** tab (`workflow_dispatch`) and pass the tag. The workflow reads the version from `manifest.json` and refuses mismatched tags.
 
 ---
 
