@@ -1,7 +1,5 @@
 # Design
 
-<!-- impeccable:design-schema 1 -->
-
 ## Surfaces
 
 - Options / toolbar popup (`src/options/`): Operate mode. Dark Telegram-night settings UI for choosing and configuring a send path.
