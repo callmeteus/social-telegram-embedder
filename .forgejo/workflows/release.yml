@@ -15,7 +15,7 @@ on:
         type: string
 
 env:
-  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}
   REPO: callmeteus/social-telegram-embedder
 
 jobs:
