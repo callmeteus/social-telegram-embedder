@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Telegram Embedder</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <main class="popup">
+        <header class="popup__header">
+            <span class="popup__mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 2 11 13"></path>
+                    <path d="M22 2 15 22l-4-9-9-4Z"></path>
+                </svg>
+            </span>
+            <div class="popup__heading">
+                <h1 class="popup__title" data-i18n="extName">Social Telegram Embedder</h1>
+                <p class="popup__tagline" data-i18n="popupTagline">Send social posts to Telegram</p>
+            </div>
+        </header>
+
+        <section id="status-card" class="status-card" data-state="checking" aria-live="polite">
+            <div class="status-card__top">
+                <span class="status-card__icon" aria-hidden="true">
+                    <svg class="icon icon--check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m5 12 4 4L19 6"></path>
+                    </svg>
+                    <svg class="icon icon--setup" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 9v4"></path>
+                        <path d="M12 17h.01"></path>
+                        <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"></path>
+                    </svg>
+                    <svg class="icon icon--unsupported" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="m5.6 5.6 12.8 12.8"></path>
+                    </svg>
+                    <svg class="icon icon--checking" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12a9 9 0 1 1-6.2-8.6"></path>
+                    </svg>
+                </span>
+                <span id="status-badge" class="status-card__badge" data-i18n="popupStatusChecking">Checking</span>
+            </div>
+            <h2 id="status-title" class="status-card__title" data-i18n="popupStatusCheckingTitle">Checking this site</h2>
+            <p id="status-site" class="status-card__site" hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="M3 12h18"></path>
+                    <path d="M12 3a15 15 0 0 1 0 18"></path>
+                    <path d="M12 3a15 15 0 0 0 0 18"></path>
+                </svg>
+                <span id="status-host"></span>
+            </p>
+            <p id="status-description" class="status-card__description"></p>
+        </section>
+
+        <section class="sites" aria-labelledby="sites-title">
+            <h2 id="sites-title" class="sites__title" data-i18n="popupSupportedSites">Works on</h2>
+            <ul class="sites__list">
+                <li class="site-chip" data-site="x">
+                    <span class="site-chip__dot" aria-hidden="true"></span>
+                    <span>X</span>
+                </li>
+                <li class="site-chip" data-site="facebook">
+                    <span class="site-chip__dot" aria-hidden="true"></span>
+                    <span>Facebook</span>
+                </li>
+            </ul>
+        </section>
+
+        <footer class="popup__footer">
+            <button id="open-settings" type="button" class="settings-button">
+                <span class="settings-button__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12.2 2 13 5.1a7 7 0 0 1 1.7.7l2.9-1.3 2.2 3.8-2.2 2a7 7 0 0 1 0 2l2.2 2-2.2 3.8-2.9-1.3a7 7 0 0 1-1.7.7L13 21h-4.4l-.8-3.1a7 7 0 0 1-1.7-.7L3.2 17.5 1 13.7l2.2-2a7 7 0 0 1 0-2L1 7.7 3.2 3.9l2.9 1.3a7 7 0 0 1 1.7-.7L8.6 2Z"></path>
+                        <circle cx="10" cy="12" r="2.6"></circle>
+                    </svg>
+                </span>
+                <span class="settings-button__label" data-i18n="popupOpenSettings">Open settings</span>
+                <span class="settings-button__arrow" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        <path d="M15 3h6v6"></path>
+                        <path d="M10 14 21 3"></path>
+                    </svg>
+                </span>
+            </button>
+            <p class="popup__hint" data-i18n="popupSettingsHint">Opens in a new tab</p>
+        </footer>
+    </main>
+
+    <script src="popup.js"></script>
+</body>
+</html>

@@ -864,5 +864,53 @@
     },
     "pickerClose": {
         "message": "Fechar"
+    },
+    "popupTagline": {
+        "message": "Envie posts de redes sociais para o Telegram"
+    },
+    "popupSiteUnknown": {
+        "message": "esta página"
+    },
+    "popupStatusChecking": {
+        "message": "Verificando"
+    },
+    "popupStatusCheckingTitle": {
+        "message": "Verificando este site"
+    },
+    "popupStatusActiveBadge": {
+        "message": "Ativo aqui"
+    },
+    "popupStatusActiveTitle": {
+        "message": "Pronto no $1"
+    },
+    "popupStatusActiveDescription": {
+        "message": "Os botões de envio estão disponíveis nos posts desta página. Escolha um canal e compartilhe."
+    },
+    "popupStatusSetupBadge": {
+        "message": "Configuração pendente"
+    },
+    "popupStatusSetupTitle": {
+        "message": "Conecte um canal de envio no $1"
+    },
+    "popupStatusSetupDescription": {
+        "message": "Adicione um bot ou conta do Telegram nas configurações para começar a enviar deste site."
+    },
+    "popupStatusUnsupportedBadge": {
+        "message": "Não suportado"
+    },
+    "popupStatusUnsupportedTitle": {
+        "message": "Não disponível neste site"
+    },
+    "popupStatusUnsupportedDescription": {
+        "message": "A extensão funciona apenas no X e no Facebook."
+    },
+    "popupSupportedSites": {
+        "message": "Funciona em"
+    },
+    "popupOpenSettings": {
+        "message": "Abrir configurações"
+    },
+    "popupSettingsHint": {
+        "message": "Abre em uma nova aba"
     }
 }

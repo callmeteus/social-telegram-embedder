@@ -864,5 +864,53 @@
     },
     "pickerClose": {
         "message": "Close"
+    },
+    "popupTagline": {
+        "message": "Send social posts to Telegram"
+    },
+    "popupSiteUnknown": {
+        "message": "this page"
+    },
+    "popupStatusChecking": {
+        "message": "Checking"
+    },
+    "popupStatusCheckingTitle": {
+        "message": "Checking this site"
+    },
+    "popupStatusActiveBadge": {
+        "message": "Active here"
+    },
+    "popupStatusActiveTitle": {
+        "message": "Ready on $1"
+    },
+    "popupStatusActiveDescription": {
+        "message": "Send buttons are available on posts here. Pick a channel and share."
+    },
+    "popupStatusSetupBadge": {
+        "message": "Setup needed"
+    },
+    "popupStatusSetupTitle": {
+        "message": "Connect a send channel on $1"
+    },
+    "popupStatusSetupDescription": {
+        "message": "Add a Telegram bot or account in settings to start sending from this site."
+    },
+    "popupStatusUnsupportedBadge": {
+        "message": "Not supported"
+    },
+    "popupStatusUnsupportedTitle": {
+        "message": "Not available on this site"
+    },
+    "popupStatusUnsupportedDescription": {
+        "message": "The extension works on X and Facebook only."
+    },
+    "popupSupportedSites": {
+        "message": "Works on"
+    },
+    "popupOpenSettings": {
+        "message": "Open settings"
+    },
+    "popupSettingsHint": {
+        "message": "Opens in a new tab"
     }
 }

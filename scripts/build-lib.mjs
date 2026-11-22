@@ -15,7 +15,8 @@ export const dist = join(root, "dist");
 export const entries = [
     { in: "src/background/ServiceWorker.ts", out: "background" },
     { in: "src/content/ContentScript.ts", out: "content" },
-    { in: "src/options/OptionsPage.ts", out: "options" }
+    { in: "src/options/OptionsPage.ts", out: "options" },
+    { in: "src/popup/Popup.ts", out: "popup" }
 ];
 
 /**
@@ -36,6 +37,8 @@ export const staticAssetPaths = [
     join(root, "src/options/SendChannels.css"),
     join(root, "src/options/TelegramAccountSection.css"),
     join(root, "src/options/SetupWizard.css"),
+    join(root, "src/popup/Popup.html"),
+    join(root, "src/popup/Popup.css"),
     join(root, "src/content/styles/content.css"),
     join(root, "icons"),
     join(root, MTCUTE_WASM_SOURCE)
@@ -67,6 +70,8 @@ async function copyStaticAssetsOnce() {
     await copyFileWithRetry(join(root, "src/options/SendChannels.css"), join(dist, "send-channels.css"));
     await copyFileWithRetry(join(root, "src/options/TelegramAccountSection.css"), join(dist, "account.css"));
     await copyFileWithRetry(join(root, "src/options/SetupWizard.css"), join(dist, "setup.css"));
+    await copyFileWithRetry(join(root, "src/popup/Popup.html"), join(dist, "popup.html"));
+    await copyFileWithRetry(join(root, "src/popup/Popup.css"), join(dist, "popup.css"));
     await copyFileWithRetry(join(root, "src/content/styles/content.css"), join(dist, "content.css"));
     await copyDirectoryWithRetry(join(root, "icons"), join(dist, "icons"));
     await copyFileWithRetry(join(root, MTCUTE_WASM_SOURCE), join(dist, MtcuteWasmFileName));
