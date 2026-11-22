@@ -79,6 +79,26 @@ describe("reduceDialogList", () => {
         expect(reduceDialogList(removed, { type: DialogListActionType.TOUCH, peerId: 99, at: 1 })).toBe(removed);
     });
 
+    it("keeps a group and its forum topics as distinct rows, and removes them together", () => {
+        const group = entry(-100555, { kind: TelegramPeerKind.GROUP, title: "Grupo" });
+        const topic = entry(-100555, {
+            kind: TelegramPeerKind.GROUP,
+            title: "Grupo · Fofocas",
+            topicId: 42,
+            parentTitle: "Grupo"
+        });
+        let list = reduceDialogList([], { type: DialogListActionType.PAGE, entries: [group, topic] });
+
+        expect(list).toHaveLength(2);
+
+        list = reduceDialogList(list, { type: DialogListActionType.UPSERT, entry: { ...topic, title: "Grupo · Renomeado" } });
+        expect(list).toHaveLength(2);
+        expect(list.find((item) => item.topicId === 42)?.title).toBe("Grupo · Renomeado");
+
+        list = reduceDialogList(list, { type: DialogListActionType.REMOVE, peerId: -100555 });
+        expect(list).toHaveLength(0);
+    });
+
     it("moves a chat up on new activity", () => {
         const list = reduceDialogList([], { type: DialogListActionType.PAGE, entries: [entry(1, { lastMessageAt: 10 }), entry(2, { lastMessageAt: 20 })] });
 

@@ -162,9 +162,12 @@
 }
 
 .x2tg-picker__title {
-    padding: 4px 8px 8px;
-    font-size: 13px;
-    font-weight: 600;
+    margin: 0;
+    padding: 0;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
     color: #f2f7fb;
 }
 
@@ -174,9 +177,57 @@
 
 .x2tg-picker__header {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 8px;
+    margin-bottom: 10px;
+    padding: 4px 4px 12px;
+    border-bottom: 1px solid #2a3a4a;
+}
+
+.x2tg-picker--facebook .x2tg-picker__header {
+    border-bottom-color: var(--divider, #3E4042);
+}
+
+.x2tg-picker__title-group {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
+}
+
+.x2tg-picker__back {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #8ba3b8;
+    cursor: pointer;
+}
+
+.x2tg-picker__back svg {
+    display: block;
+}
+
+.x2tg-picker__back[hidden] {
+    display: none;
+}
+
+.x2tg-picker__back:hover,
+.x2tg-picker__back:focus-visible {
+    background: #1e2a36;
+    color: #f2f7fb;
+    outline: none;
+}
+
+.x2tg-picker--facebook .x2tg-picker__back {
+    color: var(--secondary-text, #B0B3B8);
 }
 
 .x2tg-picker__close {
@@ -213,6 +264,7 @@
 }
 
 .x2tg-picker__item {
+    position: relative;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -545,6 +597,34 @@
 .x2tg-picker__badge--tg-pin {
     flex-shrink: 0;
     --x2tg-badge-color: #8a9db0;
+}
+
+.x2tg-picker__badge--topic {
+    flex-shrink: 0;
+    --x2tg-badge-color: #4fa6ff;
+}
+
+.x2tg-picker__badge--topics {
+    flex-shrink: 0;
+    --x2tg-badge-color: #40c7d6;
+}
+
+.x2tg-picker__badge--topics svg {
+    transform: none;
+}
+
+.x2tg-picker__badge--topics-active {
+    --x2tg-badge-color: #7cc4ff;
+    background: color-mix(in srgb, #7cc4ff 28%, transparent);
+}
+
+.x2tg-picker__item--topic-selected::after {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    border-radius: 3px 0 0 3px;
+    background: #7cc4ff;
 }
 
 .x2tg-picker__badge--red {

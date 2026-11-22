@@ -95,14 +95,14 @@ describe("pickTelegramSafeVideoUrl", () => {
 });
 
 describe("buildTweetCaption", () => {
-    it("includes tweet text and fixupx link", () => {
+    it("includes tweet text and the canonical x.com link", () => {
         expect(buildTweetCaption("https://fixupx.com/jack/status/1", "Olá mundo"))
-            .toBe("Olá mundo\n\nhttps://fixupx.com/jack/status/1");
+            .toBe("Olá mundo\n\nhttps://x.com/jack/status/1");
     });
 
     it("returns only link when tweet has no text", () => {
         expect(buildTweetCaption("https://fixupx.com/jack/status/1", "   "))
-            .toBe("https://fixupx.com/jack/status/1");
+            .toBe("https://x.com/jack/status/1");
     });
 });
 

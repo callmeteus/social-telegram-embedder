@@ -252,7 +252,7 @@ export function buildTweetPostText(tweet: FxTwitterApiTweet): string {
 }
 
 /**
- * Builds a Telegram caption with tweet text and FixupX link.
+ * Builds a Telegram caption with tweet text and the canonical X link.
  */
 export function buildTweetCaption(fixupxUrl: string, text: string): string {
     return buildTelegramCaption(fixupxUrl, text);

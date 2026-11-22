@@ -18,6 +18,19 @@ export interface TelegramDialogEntry {
     hasAvatar: boolean;
     /** Ids of the account's Telegram folders that contain the chat; unknown when absent. */
     folderIds?: number[];
+    /** Forum topic thread id inside this peer. The peer is the parent group when set. */
+    topicId?: number;
+    /** Title of the parent group of a forum topic, used in the picker label and search. */
+    parentTitle?: string;
+}
+
+/**
+ * Stable key of a dialog entry; topics of one group need distinct keys.
+ */
+export function getDialogEntryKey(entry: Pick<TelegramDialogEntry, "peerId" | "topicId">): string {
+    return entry.topicId === undefined
+        ? `peer:${entry.peerId}`
+        : `peer:${entry.peerId}:topic:${entry.topicId}`;
 }
 
 /** Telegram folder tag colors, in the order of the API color ids (0 to 6). */
@@ -144,29 +157,42 @@ export type DialogListAction =
  * Entries without posting rights are dropped.
  */
 export function reduceDialogList(list: TelegramDialogEntry[], action: DialogListAction): TelegramDialogEntry[] {
-    const byPeer = new Map(list.map((entry) => [entry.peerId, entry]));
+    const byKey = new Map(list.map((entry) => [getDialogEntryKey(entry), entry]));
 
     if (action.type === DialogListActionType.PAGE) {
         for (const entry of action.entries) {
-            byPeer.set(entry.peerId, mergeEntry(byPeer.get(entry.peerId), entry));
+            const key = getDialogEntryKey(entry);
+
+            byKey.set(key, mergeEntry(byKey.get(key), entry));
         }
     } else
     if (action.type === DialogListActionType.UPSERT) {
-        byPeer.set(action.entry.peerId, mergeEntry(byPeer.get(action.entry.peerId), action.entry));
+        const key = getDialogEntryKey(action.entry);
+
+        byKey.set(key, mergeEntry(byKey.get(key), action.entry));
     } else
     if (action.type === DialogListActionType.REMOVE) {
-        byPeer.delete(action.peerId);
+        const groupKey = `peer:${action.peerId}`;
+
+        byKey.delete(groupKey);
+
+        for (const key of Array.from(byKey.keys())) {
+            if (key.startsWith(`${groupKey}:topic:`)) {
+                byKey.delete(key);
+            }
+        }
     } else {
-        const existing = byPeer.get(action.peerId);
+        const groupKey = `peer:${action.peerId}`;
+        const existing = byKey.get(groupKey);
 
         if (!existing) {
             return list;
         }
 
-        byPeer.set(action.peerId, { ...existing, lastMessageAt: Math.max(existing.lastMessageAt, action.at) });
+        byKey.set(groupKey, { ...existing, lastMessageAt: Math.max(existing.lastMessageAt, action.at) });
     }
 
-    return sortDialogEntries(Array.from(byPeer.values()).filter((entry) => entry.canPost));
+    return sortDialogEntries(Array.from(byKey.values()).filter((entry) => entry.canPost));
 }
 
 /**
@@ -200,6 +226,8 @@ function mergeEntry(existing: TelegramDialogEntry | undefined, incoming: Telegra
         ...incoming,
         lastMessageAt: Math.max(existing.lastMessageAt, incoming.lastMessageAt),
         pinnedRank: incoming.isPinned ? incoming.pinnedRank ?? existing.pinnedRank : undefined,
-        folderIds: incoming.folderIds ?? existing.folderIds
+        folderIds: incoming.folderIds ?? existing.folderIds,
+        parentTitle: incoming.parentTitle ?? existing.parentTitle,
+        topicId: incoming.topicId ?? existing.topicId
     };
 }

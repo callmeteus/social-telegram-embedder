@@ -191,6 +191,32 @@ describe("BotConnectionEditor", () => {
         expect(byId("save-dock").hidden).toBe(false);
     });
 
+    it("saves a forum topic link as a topic id on the destination", async () => {
+        await openEditor("bot");
+
+        typeInto(document.querySelector<HTMLInputElement>(".channel-topic-id")!, "https://t.me/c/1948454578/42");
+
+        byId("save-config").click();
+        await vi.waitFor(() => expect(byId("save-dock").hidden).toBe(true));
+
+        expect(savedConfig().channels.find((channel) => channel.id === "a")).toMatchObject({
+            chatId: "-1",
+            topicId: 42
+        });
+    });
+
+    it("rejects an invalid topic link when testing a destination", async () => {
+        await openEditor("bot");
+
+        const row = document.querySelector<HTMLElement>(".channel-row")!;
+
+        typeInto(row.querySelector<HTMLInputElement>(".channel-topic-id")!, "abc");
+        row.querySelector<HTMLButtonElement>(".btn-test-channel")!.click();
+
+        await vi.waitFor(() => expect(row.querySelector(".channel-row__status")!.textContent)
+            .toBe("Enter a valid topic id or topic link."));
+    });
+
     it("removes the bot and its destinations only after confirmation", async () => {
         const onRemoved = vi.fn();
         const confirmSpy = vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true);

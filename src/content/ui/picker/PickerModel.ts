@@ -46,6 +46,18 @@ export interface PickerItem {
     avatarConnectionId?: string;
     /** Set for Telegram bot channels; their photo is loaded through the bot. */
     avatarChannelId?: string;
+    /** True when the destination posts into a forum topic. */
+    isTopic?: boolean;
+    /** Key of the group or channel that owns this topic. */
+    topicParentKey?: string;
+    /** Topics available under this destination; clicking it opens the topic selector. */
+    topics?: PickerItem[];
+    /** Number of topics under this destination, shown as a badge. */
+    topicCount?: number;
+    /** Group title of a topic row, used when a synthetic parent is needed. */
+    topicParentTitle?: string;
+    /** Synthetic row that only opens a topic list and never sends by itself. */
+    isTopicParent?: boolean;
     hasAvatar: boolean;
     /** Telegram account chat pinned in the user's Telegram chat list (not a picker pin). */
     pinnedInTelegram?: boolean;
@@ -129,7 +141,7 @@ export function buildPickerSections(input: PickerModelInput): PickerSection[] {
         dialogToItem(connectionId, entry, names, foldersByAccount.get(connectionId) ?? []);
 
     const channelItems = sortChannelsForPicker(input.channels, input.recentDestinations)
-        .map((channel) => channelToItem(channel, names));
+        .map((channel) => channelToItem(channel, names, input.channels));
     const dialogItems = mergeAccountDialogs(accounts.map((account) => ({ connectionId: account.connectionId, entries: account.dialogs })))
         .map(({ connectionId, entry }) => toItem(connectionId, entry));
     const searchItems = query
@@ -137,7 +149,9 @@ export function buildPickerSections(input: PickerModelInput): PickerSection[] {
             .filter((entry) => entry.canPost)
             .map((entry) => toItem(account.connectionId, entry)))
         : [];
-    const liveItems = [...channelItems, ...dialogItems];
+    const grouped = groupTopicItems([...channelItems, ...dialogItems]);
+    const liveItems = grouped.all;
+    const mainItems = grouped.main;
     const pinnedItems = buildRefItems(input.pinnedDestinations, accountIds, names, liveItems);
     const recentItems = buildRefItems(input.recentDestinations.map((recent) => recent.ref), accountIds, names, liveItems);
     const used = new Set<string>();
@@ -154,8 +168,8 @@ export function buildPickerSections(input: PickerModelInput): PickerSection[] {
     const sections: PickerSection[] = [
         { id: PickerSectionId.PINNED, items: take(pinnedItems) },
         { id: PickerSectionId.RECENT, items: take(recentItems) },
-        { id: PickerSectionId.BOT_CHANNELS, items: take(channelItems) },
-        { id: PickerSectionId.TELEGRAM_ACCOUNT, items: [...take(dialogItems), ...take(searchItems)] }
+        { id: PickerSectionId.BOT_CHANNELS, items: take(mainItems.filter((item) => item.channelProvider !== undefined)) },
+        { id: PickerSectionId.TELEGRAM_ACCOUNT, items: [...take(mainItems.filter((item) => item.channelProvider === undefined)), ...take(searchItems)] }
     ];
 
     return sections.filter((section) => section.items.length > 0);
@@ -243,7 +257,8 @@ function buildRefItems(
                 isPinned: false,
                 isArchived: false,
                 lastMessageAt: 0,
-                hasAvatar: true
+                hasAvatar: true,
+                ...(ref.topicId === undefined ? {} : { topicId: ref.topicId })
             }, names, []));
         }
     }
@@ -276,10 +291,77 @@ export function isTelegramPickerItem(item: PickerItem): boolean {
     return item.channelProvider === DestinationProvider.TELEGRAM || item.avatarPeerId !== undefined;
 }
 
-function channelToItem(channel: DestinationChannel, names: ConnectionNames): PickerItem {
+/**
+ * Groups topic rows under their parent so the main picker shows only chats, channels and bots.
+ * Topics stay available for pins and recents; a synthetic parent is added when the general chat
+ * was never configured as a destination.
+ */
+function groupTopicItems(items: PickerItem[]): { all: PickerItem[]; main: PickerItem[] } {
+    const byKey = new Map(items.map((item) => [item.key, item]));
+    const groups = new Map<string, PickerItem[]>();
+
+    for (const item of items) {
+        if (!item.isTopic || !item.topicParentKey) {
+            continue;
+        }
+
+        const group = groups.get(item.topicParentKey) ?? [];
+
+        group.push(item);
+        groups.set(item.topicParentKey, group);
+    }
+
+    const synthetic: PickerItem[] = [];
+
+    for (const [parentKey, topics] of groups) {
+        const parent = byKey.get(parentKey);
+
+        if (parent) {
+            parent.topics = topics;
+            parent.topicCount = topics.length;
+            continue;
+        }
+
+        const first = topics[0]!;
+
+        synthetic.push({
+            key: parentKey,
+            ref: first.ref,
+            title: first.topicParentTitle ?? first.title.split(" · ")[0] ?? first.title,
+            route: first.route,
+            channelProvider: first.channelProvider,
+            avatarChannelId: first.avatarChannelId,
+            avatarConnectionId: first.avatarConnectionId,
+            avatarPeerId: first.avatarPeerId,
+            hasAvatar: first.hasAvatar,
+            isTopicParent: true,
+            topics,
+            topicCount: topics.length,
+            searchText: normalizeSearchText(first.topicParentTitle ?? first.title)
+        });
+    }
+
+    const all = [...items, ...synthetic];
+
+    return { all, main: all.filter((item) => !item.isTopic) };
+}
+
+function channelToItem(channel: DestinationChannel, names: ConnectionNames, allChannels: DestinationChannel[]): PickerItem {
     const ref: DestinationRef = { type: DestinationRefType.CHANNEL, channelId: channel.id };
     const isTelegram = channel.provider === DestinationProvider.TELEGRAM;
     const searchName = isTelegram ? names.searchable.get(channel.connectionId) : undefined;
+    let topicParentKey: string | undefined;
+    let topicParentTitle: string | undefined;
+
+    if (isTelegram && channel.topicId !== undefined) {
+        const parent = allChannels.find((candidate) => candidate.provider === DestinationProvider.TELEGRAM
+            && candidate.connectionId === channel.connectionId
+            && candidate.chatId === channel.chatId
+            && candidate.topicId === undefined);
+
+        topicParentKey = parent ? `channel:${parent.id}` : `topic-parent:${channel.connectionId}:${channel.chatId}`;
+        topicParentTitle = parent ? parent.label : channel.label.split(" · ")[0] ?? channel.label;
+    }
 
     return {
         key: getDestinationRefKey(ref),
@@ -288,6 +370,9 @@ function channelToItem(channel: DestinationChannel, names: ConnectionNames): Pic
         route: isTelegram ? buildRoute(SendConnectionType.TELEGRAM_BOT, names.all.get(channel.connectionId)) : undefined,
         channelProvider: channel.provider,
         avatarChannelId: isTelegram ? channel.id : undefined,
+        isTopic: isTelegram && channel.topicId !== undefined,
+        topicParentKey,
+        topicParentTitle,
         hasAvatar: false,
         searchText: normalizeSearchText(`${channel.label} ${searchName ?? ""}`)
     };
@@ -299,11 +384,13 @@ function dialogToItem(connectionId: string, entry: TelegramDialogEntry, names: C
         connectionId,
         peerId: entry.peerId,
         kind: entry.kind,
-        title: entry.title
+        title: entry.title,
+        ...(entry.topicId === undefined ? {} : { topicId: entry.topicId })
     };
     const searchName = names.searchable.get(connectionId);
     const memberIds = new Set(entry.folderIds ?? []);
     const memberFolders = folders.filter((folder) => memberIds.has(folder.id));
+    const isTopic = entry.topicId !== undefined;
 
     return {
         key: getDestinationRefKey(ref),
@@ -312,6 +399,17 @@ function dialogToItem(connectionId: string, entry: TelegramDialogEntry, names: C
         route: buildRoute(SendConnectionType.TELEGRAM_ACCOUNT, names.all.get(connectionId)),
         avatarPeerId: entry.peerId,
         avatarConnectionId: connectionId,
+        isTopic,
+        topicParentKey: isTopic
+            ? getDestinationRefKey({
+                type: DestinationRefType.TELEGRAM_PEER,
+                connectionId,
+                peerId: entry.peerId,
+                kind: entry.kind,
+                title: entry.parentTitle ?? ""
+            })
+            : undefined,
+        topicParentTitle: entry.parentTitle,
         hasAvatar: entry.hasAvatar,
         pinnedInTelegram: entry.isPinned,
         folderTags: memberFolders.flatMap((folder) => folder.tagColor ? [{ title: folder.title, color: folder.tagColor }] : []),

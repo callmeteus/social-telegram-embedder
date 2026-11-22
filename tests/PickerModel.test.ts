@@ -188,4 +188,41 @@ describe("buildPickerSections", () => {
         ]);
         expect(byFolder[0]?.items.map((item) => item.title)).toEqual(["Ana", "Bruno"]);
     });
+
+    it("groups forum topics under their parent instead of listing them flat", () => {
+        const sections = buildPickerSections(input({
+            accounts: [account([
+                dialog(-100555, "Grupo", { kind: TelegramPeerKind.GROUP, lastMessageAt: 20 }),
+                dialog(-100555, "Grupo · Fofocas", {
+                    kind: TelegramPeerKind.GROUP,
+                    topicId: 42,
+                    parentTitle: "Grupo",
+                    lastMessageAt: 10
+                })
+            ])]
+        }));
+        const items = sections[0]?.items ?? [];
+
+        expect(items.map((item) => item.title)).toEqual(["Grupo"]);
+        expect(items[0]?.topicCount).toBe(1);
+        expect(items[0]?.topics?.map((item) => item.title)).toEqual(["Grupo · Fofocas"]);
+        expect(items[0]?.topics?.[0]?.ref).toMatchObject({
+            type: DestinationRefType.TELEGRAM_PEER,
+            peerId: -100555,
+            topicId: 42
+        });
+    });
+
+    it("makes a synthetic parent for bot topics when the general chat is not configured", () => {
+        const sections = buildPickerSections(input({
+            connections: [Bot],
+            channels: [{ id: "c2", label: "Grupo · Fofocas", provider: DestinationProvider.TELEGRAM, chatId: "-100555", connectionId: "bot", topicId: 42 }]
+        }));
+        const parent = sections[0]?.items[0];
+
+        expect(parent?.isTopicParent).toBe(true);
+        expect(parent?.title).toBe("Grupo");
+        expect(parent?.topicCount).toBe(1);
+        expect(parent?.topics?.[0]?.isTopic).toBe(true);
+    });
 });

@@ -51,6 +51,8 @@ export interface TelegramDestinationChannel extends BaseDestinationChannel {
     chatId: string;
     /** The bot connection that sends here. */
     connectionId: string;
+    /** Forum topic thread id. When set, sends include message_thread_id. */
+    topicId?: number;
 }
 
 /** A Discord channel reached through an incoming webhook. */
@@ -63,7 +65,7 @@ export interface DiscordDestinationChannel extends BaseDestinationChannel {
 export type DestinationChannel = TelegramDestinationChannel | DiscordDestinationChannel;
 
 /** Current schema version of the persisted configuration. */
-export const CurrentConfigVersion = 4;
+export const CurrentConfigVersion = 5;
 
 /** Extension settings persisted in chrome.storage.sync. */
 export interface ExtensionConfig {

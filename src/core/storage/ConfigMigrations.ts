@@ -1,4 +1,5 @@
 import { isValidConnectionId, LegacyAccountConnectionId, LegacyBotConnectionId } from "./Connections";
+import { normalizeTelegramTopicId } from "../telegram/NormalizeTopicId";
 import {
     CurrentConfigVersion,
     DestinationProvider,
@@ -123,11 +124,34 @@ function migrateV3ToV4(raw: RawConfig): RawConfig {
     };
 }
 
+/**
+ * v5 (forum topics): Telegram destinations may carry a `topicId` sent as message_thread_id.
+ */
+function migrateV4ToV5(raw: RawConfig): RawConfig {
+    const channels = Array.isArray(raw.channels) ? raw.channels : [];
+
+    return {
+        ...raw,
+        version: 5,
+
+        channels: channels.map((channel) => {
+            if (!isRecord(channel) || channel.provider !== DestinationProvider.TELEGRAM) {
+                return channel;
+            }
+
+            const topicId = normalizeTelegramTopicId(channel.topicId);
+
+            return topicId === undefined ? channel : { ...channel, topicId };
+        })
+    };
+}
+
 /** Migration from key version to key + 1. Append new steps here when the schema changes. */
 const Migrations: Record<number, ConfigMigration> = {
     1: migrateV1ToV2,
     2: migrateV2ToV3,
-    3: migrateV3ToV4
+    3: migrateV3ToV4,
+    4: migrateV4ToV5
 };
 
 /**
@@ -233,7 +257,16 @@ function sanitizeChannel(raw: unknown): DestinationChannel | null {
     const label = asString(raw.label);
 
     if (raw.provider === DestinationProvider.TELEGRAM) {
-        return { id, label, provider: DestinationProvider.TELEGRAM, chatId: asString(raw.chatId), connectionId: asString(raw.connectionId) };
+        const topicId = normalizeTelegramTopicId(raw.topicId);
+
+        return {
+            id,
+            label,
+            provider: DestinationProvider.TELEGRAM,
+            chatId: asString(raw.chatId),
+            connectionId: asString(raw.connectionId),
+            ...(topicId === undefined ? {} : { topicId })
+        };
     } else
     if (raw.provider === DestinationProvider.DISCORD) {
         return { id, label, provider: DestinationProvider.DISCORD, webhookUrl: asString(raw.webhookUrl) };
@@ -339,12 +372,15 @@ export function sanitizeDestinationRef(raw: unknown): DestinationRef | null {
             return null;
         }
 
+        const topicId = normalizeTelegramTopicId(raw.topicId);
+
         return {
             type: DestinationRefType.TELEGRAM_PEER,
             connectionId: raw.connectionId,
             peerId,
             kind,
-            title: asString(raw.title).slice(0, 128)
+            title: asString(raw.title).slice(0, 128),
+            ...(topicId === undefined ? {} : { topicId })
         };
     }
 

@@ -79,3 +79,73 @@ describe("TelegramClient sendMediaGroup", () => {
         expect(String(twitterDownloads[1][0])).toContain("photo-b.jpg?name=orig");
     });
 });
+
+describe("TelegramClient forum topics", () => {
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    it("adds message_thread_id to JSON send bodies when a topic is configured", async () => {
+        const fetchMock = vi.fn(async () => ({
+            ok: true,
+            json: async () => ({ ok: true })
+        }));
+
+        vi.stubGlobal("fetch", fetchMock);
+
+        await new TelegramClient("123456:ABCDEF", 42).sendMessage("-100999", "hello");
+
+        const body = (fetchMock.mock.calls[0]![1] as RequestInit).body;
+        const payload = JSON.parse(String(body)) as Record<string, unknown>;
+
+        expect(payload.chat_id).toBe("-100999");
+        expect(payload.message_thread_id).toBe(42);
+    });
+
+    it("omits message_thread_id for destinations on the general chat", async () => {
+        const fetchMock = vi.fn(async () => ({
+            ok: true,
+            json: async () => ({ ok: true })
+        }));
+
+        vi.stubGlobal("fetch", fetchMock);
+
+        await new TelegramClient("123456:ABCDEF").sendMessage("-100999", "hello");
+
+        const body = (fetchMock.mock.calls[0]![1] as RequestInit).body;
+        const payload = JSON.parse(String(body)) as Record<string, unknown>;
+
+        expect("message_thread_id" in payload).toBe(false);
+    });
+
+    it("adds message_thread_id to multipart uploads when a topic is configured", async () => {
+        const bytes = new Uint8Array([0xff, 0xd8, 0xff, 0xd9]);
+        const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+            if (String(input).includes("pbs.twimg.com")) {
+                return {
+                    ok: true,
+                    headers: new Headers({ "content-type": "image/jpeg", "content-length": String(bytes.length) }),
+                    body: null,
+                    blob: async () => new Blob([bytes], { type: "image/jpeg" })
+                };
+            }
+
+            return { ok: true, json: async () => ({ ok: true }) };
+        });
+
+        vi.stubGlobal("fetch", fetchMock);
+
+        await new TelegramClient("123456:ABCDEF", 99).sendSocialPost("-100999", {
+            embedUrl: "https://fixupx.com/user/status/1",
+            text: "hello",
+            media: [{ kind: "photo", url: "https://pbs.twimg.com/media/photo.jpg?name=small" }]
+        });
+
+        const uploadCall = fetchMock.mock.calls.find((call) =>
+            String(call[0]).includes("sendPhoto") && (call[1] as RequestInit).body instanceof FormData);
+        const formData = (uploadCall![1] as RequestInit).body as FormData;
+
+        expect(formData.get("chat_id")).toBe("-100999");
+        expect(formData.get("message_thread_id")).toBe("99");
+    });
+});

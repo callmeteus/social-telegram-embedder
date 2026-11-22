@@ -6,6 +6,7 @@ import {
     TelegramClient,
     User,
     WebCryptoProvider,
+    type ForumTopic,
     type Message,
     type Peer,
     type RawUpdateInfo,
@@ -26,6 +27,7 @@ import {
     type TelegramPeerFacts
 } from "../../core/telegram-user/Dialogs";
 import { isSessionRevokedError } from "../../core/telegram-user/Errors";
+import { TelegramPeerKind } from "../../core/types/DestinationRef";
 import type { FormattedText } from "../../core/telegram-user/FormattedText";
 import type { TelegramUserAccount } from "../../core/telegram-user/SessionTypes";
 import { runWithStallGuard } from "../../core/telegram-user/StallGuard";
@@ -73,6 +75,13 @@ interface DialogPlacement {
 interface FolderMatcher {
     folder: TelegramFolder;
     includes: (dialog: Dialog) => boolean;
+}
+
+/**
+ * mtcute send option that routes a message into a forum topic.
+ */
+function threadParams(topicId?: number): { threadId?: number } {
+    return topicId === undefined ? {} : { threadId: topicId };
 }
 
 /**
@@ -195,6 +204,7 @@ export class MtcuteTelegramUserClient implements TelegramUserClient {
         let pinnedRank = 0;
         let inFolders = 0;
         const folderTotals = new Map<number, { total: number; postable: number }>();
+        const forumGroups: { peerId: number; title: string; kind: TelegramPeerKind; placement: DialogPlacement }[] = [];
 
         for await (const dialog of this.client.iterDialogs({ archived: "keep", chunkSize: DIALOG_PAGE_SIZE })) {
             const placement: DialogPlacement = {
@@ -219,6 +229,14 @@ export class MtcuteTelegramUserClient implements TelegramUserClient {
             if (entry?.canPost) {
                 page.push(entry);
                 inFolders += placement.folderIds && placement.folderIds.length > 0 ? 1 : 0;
+
+                // Forum groups and bots with threaded private chats both expose topics.
+                const isForumGroup = dialog.peer instanceof Chat && dialog.peer.isForum;
+                const isThreadedBot = dialog.peer instanceof User && dialog.peer.isBotWithForumView;
+
+                if (isForumGroup || isThreadedBot) {
+                    forumGroups.push({ peerId: entry.peerId, title: entry.title, kind: entry.kind, placement });
+                }
             }
 
             if (page.length >= DIALOG_PAGE_SIZE) {
@@ -239,6 +257,27 @@ export class MtcuteTelegramUserClient implements TelegramUserClient {
                 totals.postable
             );
         }
+        for (const group of forumGroups) {
+            try {
+                for await (const topic of this.client.iterForumTopics(group.peerId)) {
+                    if (topic.isClosed) {
+                        continue;
+                    }
+
+                    page.push(mapTopicToEntry(topic, group));
+
+                    if (page.length >= DIALOG_PAGE_SIZE) {
+                        onPage(page);
+                        page = [];
+                    }
+                }
+
+                console.debug("[telegram-user] topics of %d loaded", group.peerId);
+            } catch (err) {
+                console.debug("[telegram-user] topics of %d could not be loaded: %O", group.peerId, err);
+            }
+        }
+
         onPage(page);
     }
 
@@ -293,9 +332,12 @@ export class MtcuteTelegramUserClient implements TelegramUserClient {
         };
     }
 
-    public async sendText(peerId: number, text: FormattedText): Promise<void> {
+    public async sendText(peerId: number, text: FormattedText, topicId?: number): Promise<void> {
         await runWithStallGuard(async (abortSignal) => {
-            await this.client.sendText(peerId, toTextWithEntities(text), { abortSignal });
+            await this.client.sendText(peerId, toTextWithEntities(text), {
+                abortSignal,
+                ...threadParams(topicId)
+            });
         }, SEND_IDLE_TIMEOUT_MS);
     }
 
@@ -303,7 +345,8 @@ export class MtcuteTelegramUserClient implements TelegramUserClient {
         peerId: number,
         file: OutgoingMediaFile,
         caption?: FormattedText,
-        onProgress?: UploadProgressCallback
+        onProgress?: UploadProgressCallback,
+        topicId?: number
     ): Promise<void> {
         console.debug("[telegram-user] sending %s (%d bytes) to %d", file.kind, file.blob.size, peerId);
 
@@ -314,7 +357,8 @@ export class MtcuteTelegramUserClient implements TelegramUserClient {
                     touch();
                     logUploadProgress(0, uploaded, total);
                     onProgress?.(uploaded, total);
-                }
+                },
+                ...threadParams(topicId)
             });
         }, SEND_IDLE_TIMEOUT_MS);
 
@@ -325,7 +369,8 @@ export class MtcuteTelegramUserClient implements TelegramUserClient {
         peerId: number,
         files: OutgoingMediaFile[],
         caption?: FormattedText,
-        onProgress?: (index: number, uploaded: number, total: number) => void
+        onProgress?: (index: number, uploaded: number, total: number) => void,
+        topicId?: number
     ): Promise<void> {
         const medias = files.map((file, index) => toInputMedia(file, index === 0 ? caption : undefined, true));
 
@@ -338,7 +383,8 @@ export class MtcuteTelegramUserClient implements TelegramUserClient {
                     touch();
                     logUploadProgress(index, uploaded, total);
                     onProgress?.(index, uploaded, total);
-                }
+                },
+                ...threadParams(topicId)
             });
         }, SEND_IDLE_TIMEOUT_MS);
 
@@ -486,6 +532,28 @@ function toPeerFacts(peer: Peer): TelegramPeerFacts {
         isBanned: peer.isBanned,
         isMember: peer.isMember,
         canSendMessages: ownCanSend && defaultCanSend
+    };
+}
+
+/**
+ * Turns a forum topic into a picker row that shares its group's avatar and folders.
+ */
+function mapTopicToEntry(
+    topic: ForumTopic,
+    group: { peerId: number; title: string; kind: TelegramPeerKind; placement: DialogPlacement }
+): TelegramDialogEntry {
+    return {
+        peerId: group.peerId,
+        kind: group.kind,
+        title: `${group.title} · ${topic.title}`,
+        canPost: !topic.isClosed,
+        isPinned: topic.isPinned,
+        isArchived: group.placement.isArchived,
+        lastMessageAt: topic.date.getTime(),
+        hasAvatar: false,
+        folderIds: group.placement.folderIds,
+        topicId: topic.id,
+        parentTitle: group.title
     };
 }
 

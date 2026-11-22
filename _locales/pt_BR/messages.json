@@ -912,5 +912,35 @@
     },
     "popupSettingsHint": {
         "message": "Abre em uma nova aba"
+    },
+    "optionsChannelTopicLabel": {
+        "message": "ID do tópico"
+    },
+    "optionsChannelTopicPlaceholder": {
+        "message": "Opcional, ex.: 42"
+    },
+    "optionsTopicIdShort": {
+        "message": "Tópico $1"
+    },
+    "optionsInvalidTopic": {
+        "message": "Informe um ID ou link de tópico válido."
+    },
+    "pickerTopic": {
+        "message": "Tópico"
+    },
+    "pickerChooseTopic": {
+        "message": "Escolha um tópico"
+    },
+    "pickerTopicsCount": {
+        "message": "$1 tópicos"
+    },
+    "pickerTopicsSelected": {
+        "message": "$1/$2"
+    },
+    "pickerGeneralChat": {
+        "message": "Geral"
+    },
+    "pickerBack": {
+        "message": "Voltar"
     }
 }

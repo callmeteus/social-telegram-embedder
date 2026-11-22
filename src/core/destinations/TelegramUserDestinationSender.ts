@@ -41,7 +41,7 @@ export class TelegramUserDestinationSender implements DestinationSender {
         try {
             if (mediaTotal === 0) {
                 onProgress?.({ message: t("progressSendingLink") });
-                await this.messenger.sendText(this.ref.peerId, caption);
+                await this.messenger.sendText(this.ref.peerId, caption, this.ref.topicId);
                 return { ok: true };
             }
 
@@ -51,7 +51,7 @@ export class TelegramUserDestinationSender implements DestinationSender {
                 onProgress?.({ message: t("progressSendingToTelegram") });
                 await this.messenger.sendMedia(this.ref.peerId, file, caption, (uploaded, total) => {
                     onProgress?.(formatUploadProgress(1, 1, uploaded, total));
-                });
+                }, this.ref.topicId);
                 return { ok: true };
             }
 
@@ -92,7 +92,8 @@ export class TelegramUserDestinationSender implements DestinationSender {
                     batchIndex === 0 ? caption : undefined,
                     (uploaded, total) => {
                         onProgress?.(formatUploadProgress(mediaIndex + 1, mediaTotal, uploaded, total));
-                    }
+                    },
+                    this.ref.topicId
                 );
 
                 mediaIndex += 1;
@@ -121,7 +122,8 @@ export class TelegramUserDestinationSender implements DestinationSender {
                 batchIndex === 0 ? caption : undefined,
                 (index, uploaded, total) => {
                     onProgress?.(formatUploadProgress(startIndex + index + 1, mediaTotal, uploaded, total));
-                }
+                },
+                this.ref.topicId
             );
 
             mediaIndex += batch.length;
@@ -130,7 +132,7 @@ export class TelegramUserDestinationSender implements DestinationSender {
 
     private async sendPlainText(text: string): Promise<SendResult> {
         try {
-            await this.messenger.sendText(this.ref.peerId, { text, bold: [] });
+            await this.messenger.sendText(this.ref.peerId, { text, bold: [] }, this.ref.topicId);
             return { ok: true };
         } catch (err) {
             return toFailure(err);

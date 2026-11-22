@@ -42,7 +42,23 @@ describe("TelegramUserDestinationSender", () => {
 
         expect(peerId).toBe(-100123);
         expect(text.text).toContain("Hello & bye");
-        expect(text.text).toContain("https://fixupx.com/a/status/1");
+        expect(text.text).toContain("https://x.com/a/status/1");
+    });
+
+    it("forwards the forum topic to every send call", async () => {
+        const client = createFakeTelegramUserClient();
+        const topicRef: TelegramPeerDestinationRef = { ...Peer, topicId: 42 };
+        const sender = new TelegramUserDestinationSender(client, topicRef);
+
+        await sender.sendSocialPost(post([]));
+        expect(client.sendText.mock.calls[0]?.[2]).toBe(42);
+
+        stubFetch({ ok: true, status: 200, blob: new Blob(["img"], { type: "image/jpeg" }) });
+        await sender.sendSocialPost(post([{ kind: "photo", url: "https://example.com/a.jpg" }]));
+        expect(client.sendMedia.mock.calls[0]?.[4]).toBe(42);
+
+        await sender.sendSocialPost(post([photo(1), photo(2)]));
+        expect(client.sendMediaGroup.mock.calls[0]?.[4]).toBe(42);
     });
 
     it("downloads and sends a single photo with upload progress", async () => {

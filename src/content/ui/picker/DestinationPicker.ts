@@ -1,4 +1,4 @@
-import { X } from "lucide-static";
+import { ArrowLeft, X } from "lucide-static";
 import { AccountFeeds, AccountFeedsStatus } from "./AccountFeeds";
 import type { DialogsPortFactory } from "./DialogsConnection";
 import {
@@ -95,6 +95,8 @@ class DestinationPickerView {
     private readonly options: DestinationPickerOptions;
     private readonly overlay: HTMLElement;
     private readonly picker: HTMLElement;
+    private readonly titleEl: HTMLElement;
+    private readonly backButton: HTMLButtonElement;
     private readonly searchInput: HTMLInputElement;
     private readonly list: HTMLElement;
     private readonly footer: HTMLElement;
@@ -114,6 +116,7 @@ class DestinationPickerView {
     private searchTimer: ReturnType<typeof setTimeout> | null = null;
     private renderLimit = RENDER_BATCH;
     private notice = FooterNotice.NONE;
+    private topicParent: PickerItem | null = null;
     private pinned: DestinationRef[];
     private readonly keyHandler = (event: KeyboardEvent): void => this.handleKey(event);
     private readonly outsideClickHandler = (event: MouseEvent): void => this.handleOutsideClick(event);
@@ -135,10 +138,27 @@ class DestinationPickerView {
             this.picker.classList.add("x2tg-picker--facebook");
         }
 
-        const title = document.createElement("div");
+        this.titleEl = document.createElement("h2");
+        this.titleEl.className = "x2tg-picker__title";
+        this.titleEl.textContent = t("pickerTitle");
 
-        title.className = "x2tg-picker__title";
-        title.textContent = t("pickerTitle");
+        this.backButton = document.createElement("button");
+        this.backButton.type = "button";
+        this.backButton.className = "x2tg-picker__back";
+        this.backButton.title = t("pickerBack");
+        this.backButton.setAttribute("aria-label", t("pickerBack"));
+        this.backButton.appendChild(createLucideSvgElement(ArrowLeft, 16));
+        this.backButton.hidden = true;
+        this.backButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            this.closeTopicView();
+        });
+
+        const titleGroup = document.createElement("div");
+
+        titleGroup.className = "x2tg-picker__title-group";
+        titleGroup.append(this.backButton, this.titleEl);
 
         const header = document.createElement("div");
         const closeButton = document.createElement("button");
@@ -154,7 +174,7 @@ class DestinationPickerView {
             event.stopPropagation();
             closeDestinationPicker();
         });
-        header.append(title, closeButton);
+        header.append(titleGroup, closeButton);
 
         this.searchInput = document.createElement("input");
         this.searchInput.type = "search";
@@ -263,6 +283,11 @@ class DestinationPickerView {
 
         this.renderPending = false;
 
+        if (this.topicParent) {
+            this.renderTopicView();
+            return;
+        }
+
         const sections = buildPickerSections({
             channels: this.options.config.channels,
             recentDestinations: this.options.config.recentDestinations,
@@ -324,6 +349,100 @@ class DestinationPickerView {
         this.refreshFooter();
     }
 
+    /**
+     * Opens the second step of the picker: the topic list of one destination.
+     */
+    private openTopicView(item: PickerItem): void {
+        if (!item.topics?.length) {
+            return;
+        }
+
+        this.topicParent = item;
+        this.activeKey = null;
+        this.renderLimit = RENDER_BATCH;
+        this.searchInput.hidden = true;
+        this.backButton.hidden = false;
+        this.titleEl.textContent = t("pickerChooseTopic");
+        this.list.scrollTop = 0;
+        this.render();
+    }
+
+    /**
+     * Returns to the main destination list, keeping the topics already selected.
+     */
+    private closeTopicView(): void {
+        if (!this.topicParent) {
+            return;
+        }
+
+        this.topicParent = null;
+        this.activeKey = null;
+        this.renderLimit = RENDER_BATCH;
+        this.searchInput.hidden = false;
+        this.backButton.hidden = true;
+        this.titleEl.textContent = t("pickerTitle");
+        this.list.scrollTop = 0;
+        this.render();
+    }
+
+    /**
+     * Renders the topic rows of the current parent, with the general chat first when it is a destination.
+     */
+    private renderTopicView(): void {
+        const parent = this.topicParent;
+        const topics = parent?.topics ?? [];
+
+        if (!parent) {
+            return;
+        }
+
+        const items = parent.isTopicParent ? topics : [this.generalTopicItem(parent), ...topics];
+        const fragment = document.createDocumentFragment();
+
+        this.rows.clear();
+        this.flatItems = [];
+        this.pinnedRowKeys = [];
+
+        for (const item of items.slice(0, Math.max(0, this.renderLimit))) {
+            fragment.appendChild(this.createRow(item));
+            this.flatItems.push(item);
+        }
+
+        this.list.replaceChildren(fragment);
+
+        if (!this.activeKey || !this.rows.has(this.activeKey)) {
+            this.activeKey = this.flatItems[0]?.key ?? null;
+        }
+
+        this.refreshRowStates();
+        this.refreshFooter();
+    }
+
+    /**
+     * The parent row itself, relabeled so a topic can target the group's general chat.
+     */
+    private generalTopicItem(parent: PickerItem): PickerItem {
+        return {
+            ...parent,
+            title: t("pickerGeneralChat"),
+            isTopic: false,
+            topicCount: 0,
+            topics: undefined
+        };
+    }
+
+    /**
+     * Clicks a parent with topics open the topic list; other rows toggle selection.
+     */
+    private activate(item: PickerItem): void {
+        if (!this.topicParent && item.topics?.length) {
+            this.openTopicView(item);
+            return;
+        }
+
+        this.toggle(item);
+    }
+
     private createSectionTitle(section: PickerSection): HTMLElement {
         const titleEl = document.createElement("div");
         const titles: Record<PickerSectionId, string> = {
@@ -340,10 +459,12 @@ class DestinationPickerView {
 
     private createRow(item: PickerItem): HTMLElement {
         const avatarKey = getAvatarKey(item);
+        const selectedTopicCount = item.topics?.filter((topic) => this.selection.has(topic.key)).length ?? 0;
         const row = createPickerRow(item, {
             selected: this.selection.has(item.key),
             active: false,
             pinnedToTop: this.isPinned(item.key),
+            selectedTopicCount,
             avatarUrl: avatarKey ? avatarCache.get(avatarKey) : undefined
         });
 
@@ -363,7 +484,7 @@ class DestinationPickerView {
             if (event.target instanceof Element && event.target.closest(`.${PickerPinToggleClass}`)) {
                 this.togglePin(item);
             } else {
-                this.toggle(item);
+                this.activate(item);
             }
         });
 
@@ -526,7 +647,12 @@ class DestinationPickerView {
 
         if (event.key === "Escape") {
             event.preventDefault();
-            closeDestinationPicker();
+
+            if (this.topicParent) {
+                this.closeTopicView();
+            } else {
+                closeDestinationPicker();
+            }
         } else
         if ((event.key === "ArrowDown" || event.key === "ArrowUp") && event.altKey) {
             event.preventDefault();
@@ -550,12 +676,12 @@ class DestinationPickerView {
             event.preventDefault();
 
             if (activeItem) {
-                this.toggle(activeItem);
+                this.activate(activeItem);
             }
         } else
         if (event.key === " " && activeItem && (!this.query || event.target !== this.searchInput)) {
             event.preventDefault();
-            this.toggle(activeItem);
+            this.activate(activeItem);
         }
     }
 
@@ -573,7 +699,13 @@ class DestinationPickerView {
 
         if (event.key === "Escape") {
             event.preventDefault();
-            closeDestinationPicker();
+
+            if (this.topicParent) {
+                this.closeTopicView();
+            } else {
+                closeDestinationPicker();
+            }
+
             return;
         }
 

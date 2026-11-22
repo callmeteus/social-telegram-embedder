@@ -3,7 +3,7 @@ import { migrateConfig, sanitizeDestinationRef } from "../src/core/storage/Confi
 import { LegacyAccountConnectionId, LegacyBotConnectionId } from "../src/core/storage/Connections";
 import { isConfigReady } from "../src/core/storage/Storage";
 import { CurrentConfigVersion, DestinationProvider, SendConnectionType } from "../src/core/types/Config";
-import { DestinationRefType, MaxPinnedDestinations, MaxRecentDestinations, TelegramPeerKind } from "../src/core/types/DestinationRef";
+import { DestinationRefType, MaxPinnedDestinations, MaxRecentDestinations, TelegramPeerKind, getDestinationRefKey } from "../src/core/types/DestinationRef";
 
 /** chrome.storage.sync allows 8 KB per item. */
 const SyncItemQuotaBytes = 8192;
@@ -300,6 +300,25 @@ describe("migrateConfig", () => {
         expect(result.config.channels).toEqual([]);
         expect(result.config.recentDestinations).toEqual([]);
     });
+
+    it("preserves forum topic ids when upgrading v4 and ignores invalid ones", () => {
+        const result = migrateConfig({
+            version: 4,
+            connections: [LegacyBot],
+            channels: [
+                { id: "a", label: "Topic", provider: DestinationProvider.TELEGRAM, chatId: "-1001", connectionId: LegacyBotConnectionId, topicId: 42 },
+                { id: "b", label: "General", provider: DestinationProvider.TELEGRAM, chatId: "-1001", connectionId: LegacyBotConnectionId },
+                { id: "c", label: "Bad", provider: DestinationProvider.TELEGRAM, chatId: "-1001", connectionId: LegacyBotConnectionId, topicId: "abc" }
+            ]
+        });
+
+        expect(result.migrated).toBe(true);
+        expect(result.fromVersion).toBe(4);
+        expect(result.config.version).toBe(CurrentConfigVersion);
+        expect(result.config.channels[0]).toMatchObject({ id: "a", topicId: 42 });
+        expect("topicId" in result.config.channels[1]!).toBe(false);
+        expect("topicId" in result.config.channels[2]!).toBe(false);
+    });
 });
 
 describe("sanitizeDestinationRef", () => {
@@ -308,6 +327,36 @@ describe("sanitizeDestinationRef", () => {
             .toEqual({ type: DestinationRefType.CHANNEL, channelId: "a" });
         expect(sanitizeDestinationRef({ type: DestinationRefType.TELEGRAM_PEER, connectionId: "acc", peerId: -100123, kind: TelegramPeerKind.CHANNEL, title: "News" }))
             .toEqual({ type: DestinationRefType.TELEGRAM_PEER, connectionId: "acc", peerId: -100123, kind: TelegramPeerKind.CHANNEL, title: "News" });
+    });
+
+    it("keeps a forum topic id and gives it a distinct ref key", () => {
+        const ref = sanitizeDestinationRef({
+            type: DestinationRefType.TELEGRAM_PEER,
+            connectionId: "acc",
+            peerId: -100123,
+            kind: TelegramPeerKind.GROUP,
+            title: "Grupo · Fofocas",
+            topicId: 42
+        });
+
+        expect(ref).toEqual({
+            type: DestinationRefType.TELEGRAM_PEER,
+            connectionId: "acc",
+            peerId: -100123,
+            kind: TelegramPeerKind.GROUP,
+            title: "Grupo · Fofocas",
+            topicId: 42
+        });
+        expect(getDestinationRefKey(ref!)).toBe("peer:acc:-100123:topic:42");
+        expect(getDestinationRefKey({ ...ref!, topicId: undefined })).toBe("peer:acc:-100123");
+        expect(sanitizeDestinationRef({
+            type: DestinationRefType.TELEGRAM_PEER,
+            connectionId: "acc",
+            peerId: -100123,
+            kind: TelegramPeerKind.GROUP,
+            title: "Bad",
+            topicId: "abc"
+        })).not.toHaveProperty("topicId");
     });
 
     it("rejects unsafe or malformed refs", () => {

@@ -4,7 +4,7 @@ import {
     createCaptionEditor,
     renderCaptionHtml
 } from "../src/content/ui/picker/CaptionEditor";
-import { buildCaptionDraftHtml, resolveTelegramCaption } from "../src/core/telegram/Caption";
+import { buildCaptionDraftHtml, resolveTelegramCaption, toCaptionSourceUrl } from "../src/core/telegram/Caption";
 import { sanitizeCaptionHtml, TelegramCaptionLimit } from "../src/core/telegram/CaptionHtml";
 
 function surfaceOf(editor: { element: HTMLElement }): HTMLElement {
@@ -95,6 +95,20 @@ describe("caption draft and override", () => {
     it("drafts only the source link when there is no text", () => {
         expect(buildCaptionDraftHtml("", "https://x.com/a/status/1"))
             .toBe("https://x.com/a/status/1");
+    });
+
+    it("shows the canonical x.com link instead of the media proxy", () => {
+        expect(toCaptionSourceUrl("https://fixupx.com/Mumux_derg/status/2124545570215805122"))
+            .toBe("https://x.com/Mumux_derg/status/2124545570215805122");
+        expect(toCaptionSourceUrl("https://fxtwitter.com/jack/status/123?utm=1"))
+            .toBe("https://twitter.com/jack/status/123");
+        expect(toCaptionSourceUrl("https://www.facebook.com/post/1"))
+            .toBe("https://www.facebook.com/post/1");
+
+        expect(buildCaptionDraftHtml("Hey", "https://fixupx.com/Mumux_derg/status/2124545570215805122"))
+            .toBe("Hey\n\nhttps://x.com/Mumux_derg/status/2124545570215805122");
+        expect(resolveTelegramCaption("", "https://fixupx.com/a/status/1", "Hello"))
+            .toBe("Hello\n\nhttps://x.com/a/status/1");
     });
 
     it("uses the edited caption and falls back to the generated one", () => {

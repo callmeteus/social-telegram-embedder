@@ -20,16 +20,18 @@ export interface ChannelDestinationRef {
     channelId: string;
 }
 
-/** Points to a chat of one of the connected Telegram user accounts. */
+/** Points to a chat or forum topic of one of the connected Telegram user accounts. */
 export interface TelegramPeerDestinationRef {
     type: DestinationRefType.TELEGRAM_PEER;
     /** The account connection that sends here. */
     connectionId: string;
-    /** Marked peer id (users positive, chats and channels negative). */
+    /** Marked peer id of the group; for topics, the parent group. */
     peerId: number;
     kind: TelegramPeerKind;
     /** Title snapshot so recents render before the live list loads. */
     title: string;
+    /** Forum topic thread id. When set, the message is sent into that topic. */
+    topicId?: number;
 }
 
 /** Any destination a post can be sent to. */
@@ -58,5 +60,7 @@ export function getDestinationRefKey(ref: DestinationRef): string {
         return `channel:${ref.channelId}`;
     }
 
-    return `peer:${ref.connectionId}:${ref.peerId}`;
+    const base = `peer:${ref.connectionId}:${ref.peerId}`;
+
+    return ref.topicId === undefined ? base : `${base}:topic:${ref.topicId}`;
 }

@@ -36,7 +36,7 @@ export function createDestinationSender(
             return null;
         }
 
-        return new TelegramDestinationSender(new TelegramClient(bot.botToken), channel.chatId);
+        return new TelegramDestinationSender(new TelegramClient(bot.botToken, channel.topicId), channel.chatId);
     }
 
     console.debug("[destinations] no sender for channel %s (provider %s)", ref.channelId, channel?.provider ?? "missing");

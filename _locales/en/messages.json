@@ -912,5 +912,35 @@
     },
     "popupSettingsHint": {
         "message": "Opens in a new tab"
+    },
+    "optionsChannelTopicLabel": {
+        "message": "Topic ID"
+    },
+    "optionsChannelTopicPlaceholder": {
+        "message": "Optional, e.g. 42"
+    },
+    "optionsTopicIdShort": {
+        "message": "Topic $1"
+    },
+    "optionsInvalidTopic": {
+        "message": "Enter a valid topic id or topic link."
+    },
+    "pickerTopic": {
+        "message": "Topic"
+    },
+    "pickerChooseTopic": {
+        "message": "Choose a topic"
+    },
+    "pickerTopicsCount": {
+        "message": "$1 topics"
+    },
+    "pickerTopicsSelected": {
+        "message": "$1/$2"
+    },
+    "pickerGeneralChat": {
+        "message": "General"
+    },
+    "pickerBack": {
+        "message": "Back"
     }
 }

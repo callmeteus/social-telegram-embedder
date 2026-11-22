@@ -10,8 +10,13 @@ import {
     removeConnection,
     saveConfig
 } from "../core/storage/Storage";
-import type { DetectedTelegramChannel } from "../core/telegram/DiscoverChannels";
+import {
+    formatDetectedChannelTitle,
+    getDetectedChannelKey,
+    type DetectedTelegramChannel
+} from "../core/telegram/DiscoverChannels";
 import { normalizeTelegramChatId } from "../core/telegram/NormalizeChatId";
+import { normalizeTelegramTopicId } from "../core/telegram/NormalizeTopicId";
 import { TelegramClient } from "../core/telegram/TelegramClient";
 import {
     DestinationProvider,
@@ -49,6 +54,7 @@ interface ChannelRowState {
     element: HTMLElement;
     labelInput: HTMLInputElement;
     chatIdInput: HTMLInputElement;
+    topicInput: HTMLInputElement;
     statusEl: HTMLElement;
 }
 
@@ -103,16 +109,21 @@ export function initBotConnectionEditor(handlers: BotConnectionEditorHandlers): 
     let verifiedToken = "";
     let openRequest = 0;
 
-    const readChannels = (): TelegramDestinationChannel[] => rows.map((row) => ({
-        id: row.id,
-        label: row.labelInput.value.trim(),
-        provider: DestinationProvider.TELEGRAM,
-        chatId: normalizeTelegramChatId(row.chatIdInput.value),
-        connectionId
-    }));
+    const readChannels = (): TelegramDestinationChannel[] => rows.map((row) => {
+        const topicId = normalizeTelegramTopicId(row.topicInput.value);
+
+        return {
+            id: row.id,
+            label: row.labelInput.value.trim(),
+            provider: DestinationProvider.TELEGRAM,
+            chatId: normalizeTelegramChatId(row.chatIdInput.value),
+            connectionId,
+            ...(topicId === undefined ? {} : { topicId })
+        };
+    });
 
     const serializeChannels = (): string => JSON.stringify(readChannels()
-        .map((channel) => ({ id: channel.id, label: channel.label, chatId: channel.chatId })));
+        .map((channel) => ({ id: channel.id, label: channel.label, chatId: channel.chatId, topicId: channel.topicId })));
 
     const markSaved = (): void => {
         savedToken = el.tokenInput.value.trim();
@@ -158,11 +169,13 @@ export function initBotConnectionEditor(handlers: BotConnectionEditorHandlers): 
             element: fragment.querySelector(".channel-row") as HTMLElement,
             labelInput: fragment.querySelector(".channel-label") as HTMLInputElement,
             chatIdInput: fragment.querySelector(".channel-chat-id") as HTMLInputElement,
+            topicInput: fragment.querySelector(".channel-topic-id") as HTMLInputElement,
             statusEl: fragment.querySelector(".channel-row__status") as HTMLElement
         };
 
         row.labelInput.value = channel.label;
         row.chatIdInput.value = channel.chatId;
+        row.topicInput.value = channel.topicId === undefined ? "" : String(channel.topicId);
 
         fragment.querySelector(".btn-remove-channel")?.addEventListener("click", () => removeRow(row));
         fragment.querySelector(".btn-move-up")?.addEventListener("click", () => moveRow(row, -1));
@@ -307,8 +320,15 @@ export function initBotConnectionEditor(handlers: BotConnectionEditorHandlers): 
     const testChannel = async (row: ChannelRowState): Promise<void> => {
         const label = row.labelInput.value.trim();
         const chatId = normalizeTelegramChatId(row.chatIdInput.value);
+        const topicId = normalizeTelegramTopicId(row.topicInput.value);
+
+        if (row.topicInput.value.trim() && topicId === undefined) {
+            setStatus(row.statusEl, t("optionsInvalidTopic"), StatusVariant.ERROR);
+            return;
+        }
 
         row.chatIdInput.value = chatId;
+        row.topicInput.value = topicId === undefined ? "" : String(topicId);
 
         if (!label || !chatId) {
             setStatus(row.statusEl, t("optionsFillBeforeTest"), StatusVariant.ERROR);
@@ -317,7 +337,7 @@ export function initBotConnectionEditor(handlers: BotConnectionEditorHandlers): 
 
         setStatus(row.statusEl, t("optionsSendingTest"), StatusVariant.INFO);
 
-        const response = await new TelegramClient(el.tokenInput.value.trim()).sendTestMessage(chatId);
+        const response = await new TelegramClient(el.tokenInput.value.trim(), topicId).sendTestMessage(chatId);
 
         if (!response?.ok) {
             setStatus(row.statusEl, response?.error ?? t("optionsTestFailed"), StatusVariant.ERROR);
@@ -328,24 +348,35 @@ export function initBotConnectionEditor(handlers: BotConnectionEditorHandlers): 
         syncDirty();
     };
 
-    const isListed = (chatId: string): boolean => {
-        const normalized = chatId.trim().toLowerCase();
+    const isListed = (channel: DetectedTelegramChannel): boolean => {
+        const key = getDetectedChannelKey(channel);
 
-        return rows.some((row) => row.chatIdInput.value.trim().toLowerCase() === normalized);
+        return rows.some((row) => getDetectedChannelKey({
+            chatId: normalizeTelegramChatId(row.chatIdInput.value),
+            topicId: normalizeTelegramTopicId(row.topicInput.value)
+        }) === key);
     };
 
     const addDetected = (channel: DetectedTelegramChannel): void => {
-        if (isListed(channel.chatId)) {
+        if (isListed(channel)) {
             return;
         }
 
+        const label = formatDetectedChannelTitle(channel);
+        const topicValue = channel.topicId === undefined ? "" : String(channel.topicId);
         const emptyRow = rows.find((row) => !row.labelInput.value.trim() && !row.chatIdInput.value.trim());
 
         if (emptyRow) {
-            emptyRow.labelInput.value = channel.title;
+            emptyRow.labelInput.value = label;
             emptyRow.chatIdInput.value = channel.chatId;
+            emptyRow.topicInput.value = topicValue;
         } else {
-            addRow({ ...createEmptyTelegramChannel(connectionId), label: channel.title, chatId: channel.chatId });
+            addRow({
+                ...createEmptyTelegramChannel(connectionId),
+                label,
+                chatId: channel.chatId,
+                topicId: channel.topicId
+            });
         }
 
         syncDirty();
@@ -375,7 +406,7 @@ export function initBotConnectionEditor(handlers: BotConnectionEditorHandlers): 
             setStatus(el.discoverStatus, t("optionsChannelsFound", String(response.channels?.length ?? 0)), StatusVariant.SUCCESS);
         }
 
-        el.discovered.replaceChildren(...(response.channels ?? []).map((channel) => createDiscoveredItem(channel, isListed(channel.chatId), () => {
+        el.discovered.replaceChildren(...(response.channels ?? []).map((channel) => createDiscoveredItem(channel, isListed(channel), () => {
             addDetected(channel);
             setStatus(el.discoverStatus, t("optionsChannelAdded", channel.title), StatusVariant.SUCCESS);
         })));
@@ -470,9 +501,11 @@ function createDiscoveredItem(channel: DetectedTelegramChannel, listed: boolean,
     item.className = "discovered-item";
     info.className = "discovered-item__info";
     title.className = "discovered-item__title";
-    title.textContent = channel.title;
+    title.textContent = formatDetectedChannelTitle(channel);
     chatId.className = "discovered-item__chat-id";
-    chatId.textContent = channel.chatId;
+    chatId.textContent = channel.topicId === undefined
+        ? channel.chatId
+        : `${channel.chatId} · ${t("optionsTopicIdShort", String(channel.topicId))}`;
     info.append(title, chatId);
 
     addButton.type = "button";

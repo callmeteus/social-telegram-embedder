@@ -46,12 +46,31 @@ const TELEGRAM_HTML_PARSE_MODE = "HTML";
  */
 export class TelegramClient {
     private readonly botToken: string;
+    private readonly topicId?: number;
 
     /**
      * @param botToken - Bot token from @BotFather.
+     * @param topicId - Forum topic to post into. When set, every send includes message_thread_id.
      */
-    public constructor(botToken: string) {
+    public constructor(botToken: string, topicId?: number) {
         this.botToken = botToken.trim();
+        this.topicId = topicId;
+    }
+
+    /**
+     * Extra Bot API fields that route a message into a forum topic.
+     */
+    private threadFields(): Record<string, unknown> {
+        return this.topicId === undefined ? {} : { message_thread_id: this.topicId };
+    }
+
+    /**
+     * Adds the forum topic to multipart uploads, which cannot use the JSON field helper.
+     */
+    private appendThreadFields(formData: FormData): void {
+        if (this.topicId !== undefined) {
+            formData.append("message_thread_id", String(this.topicId));
+        }
     }
 
     /**
@@ -66,7 +85,8 @@ export class TelegramClient {
             chat_id: normalizeTelegramChatId(chatId),
             text,
             disable_web_page_preview: false,
-            ...(parseMode ? { parse_mode: parseMode } : {})
+            ...(parseMode ? { parse_mode: parseMode } : {}),
+            ...this.threadFields()
         });
     }
 
@@ -147,7 +167,8 @@ export class TelegramClient {
         const sendResponse = await this.requestRaw<TelegramSentMessage>("sendMessage", {
             chat_id: normalizedChatId,
             text: t("testChannelMessage"),
-            disable_web_page_preview: false
+            disable_web_page_preview: false,
+            ...this.threadFields()
         });
 
         if (!sendResponse.ok) {
@@ -341,7 +362,8 @@ export class TelegramClient {
 
         const byUrl = await this.request("sendMediaGroup", {
             chat_id: chatId,
-            media
+            media,
+            ...this.threadFields()
         });
 
         if (byUrl.ok) {
@@ -380,6 +402,7 @@ export class TelegramClient {
         const mediaPayload: TelegramInputMedia[] = [];
 
         formData.append("chat_id", chatId);
+        this.appendThreadFields(formData);
 
         for (let index = 0; index < mediaItems.length; index++) {
             const item = mediaItems[index];
@@ -479,7 +502,8 @@ export class TelegramClient {
             chat_id: chatId,
             [fieldName]: resolvedUrl,
             caption,
-            parse_mode: TELEGRAM_HTML_PARSE_MODE
+            parse_mode: TELEGRAM_HTML_PARSE_MODE,
+            ...this.threadFields()
         });
 
         if (byUrl.ok) {
@@ -561,6 +585,7 @@ export class TelegramClient {
         const formData = new FormData();
 
         formData.append("chat_id", chatId);
+        this.appendThreadFields(formData);
         formData.append(fieldName, blob, `social-media.${extension}`);
 
         if (caption) {

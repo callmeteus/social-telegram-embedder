@@ -80,6 +80,65 @@ afterEach(() => {
     vi.useRealTimers();
 });
 
+describe("showDestinationPicker topic selector", () => {
+    it("opens a second step with the topics of a group and sends the chosen topic", () => {
+        const { fake, onSend } = openWithAccount();
+
+        fake.emit({
+            type: DialogsPortMessageType.PAGE,
+            entries: [
+                dialog(-100555, "Grupo", { kind: TelegramPeerKind.GROUP, lastMessageAt: 20 }),
+                dialog(-100555, "Grupo · Fofocas", {
+                    kind: TelegramPeerKind.GROUP,
+                    topicId: 42,
+                    parentTitle: "Grupo",
+                    lastMessageAt: 10
+                })
+            ],
+            done: true
+        });
+
+        expect(labels()).not.toContain("Grupo · Fofocas");
+
+        const groupRow = rows().find((row) => row.querySelector(".x2tg-picker__label")?.textContent === "Grupo");
+
+        expect(groupRow?.querySelector(".x2tg-picker__badge--topics")).toBeTruthy();
+        groupRow?.click();
+
+        expect(document.querySelector(".x2tg-picker__title")?.textContent).toBe("Choose a topic");
+        expect(labels()).toEqual(["General", "Grupo · Fofocas"]);
+
+        rows()[1]?.click();
+
+        expect(rows()[1]?.getAttribute("aria-selected")).toBe("true");
+        expect(onSend).not.toHaveBeenCalled();
+
+        document.querySelector<HTMLButtonElement>(".x2tg-picker__back")?.click();
+
+        expect(document.querySelector(".x2tg-picker__title")?.textContent).toBe("Send to which channel?");
+        expect(labels()).not.toContain("Grupo · Fofocas");
+
+        const selectedParent = rows().find((row) => row.querySelector(".x2tg-picker__label")?.textContent === "Grupo");
+
+        expect(selectedParent?.classList.contains("x2tg-picker__item--topic-selected")).toBe(true);
+        expect(selectedParent?.querySelector(".x2tg-picker__badge--topics-active")?.textContent?.trim()).toBe("1/1");
+
+        press("Enter", { ctrlKey: true });
+
+        expect(onSend).toHaveBeenCalledWith([{
+            ref: {
+                type: DestinationRefType.TELEGRAM_PEER,
+                connectionId: "acc",
+                peerId: -100555,
+                kind: TelegramPeerKind.GROUP,
+                title: "Grupo · Fofocas",
+                topicId: 42
+            },
+            label: "Grupo · Fofocas"
+        }], "");
+    });
+});
+
 describe("showDestinationPicker keyboard navigation", () => {
     it("moves the active row with arrows, wraps, toggles with Enter and sends with Ctrl+Enter", () => {
         const onSend = vi.fn();

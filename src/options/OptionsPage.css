@@ -288,7 +288,7 @@ body {
 
 .channel-row__fields {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1.1fr 1.1fr 1fr;
     gap: var(--x2tg-space-3);
 }
 

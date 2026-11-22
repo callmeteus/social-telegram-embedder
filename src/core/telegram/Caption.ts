@@ -2,11 +2,39 @@ import { escapeTelegramHtml } from "./SocialCaption";
 import { sanitizeCaptionHtml, TelegramCaptionLimit } from "./CaptionHtml";
 
 /**
+ * Converts a media proxy link back into the canonical social URL shown in captions.
+ * The proxy is still used to resolve media; only the displayed link is rewritten.
+ */
+export function toCaptionSourceUrl(url: string): string {
+    const trimmed = url.trim();
+
+    try {
+        const parsed = new URL(trimmed);
+        const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+
+        if (host === "fixupx.com") {
+            parsed.hostname = "x.com";
+        } else
+        if (host === "fxtwitter.com") {
+            parsed.hostname = "twitter.com";
+        } else {
+            return trimmed;
+        }
+
+        parsed.search = "";
+        parsed.hash = "";
+        return parsed.toString();
+    } catch {
+        return trimmed;
+    }
+}
+
+/**
  * Builds a Telegram caption with post text and source link.
  */
 export function buildTelegramCaption(embedUrl: string, text: string): string {
     const trimmedText = text.trim();
-    const linkBlock = escapeTelegramHtml(embedUrl.trim());
+    const linkBlock = escapeTelegramHtml(toCaptionSourceUrl(embedUrl));
 
     if (!trimmedText) {
         return linkBlock.slice(0, TelegramCaptionLimit);
@@ -36,7 +64,7 @@ export function resolveTelegramCaption(captionHtml: string | undefined, embedUrl
  */
 export function buildCaptionDraftHtml(textHtml: string, sourceUrl: string, maxLength: number = TelegramCaptionLimit): string {
     const text = sanitizeCaptionHtml(textHtml, maxLength);
-    const link = escapeTelegramHtml(sourceUrl.trim());
+    const link = escapeTelegramHtml(toCaptionSourceUrl(sourceUrl));
 
     if (!text) {
         return link.slice(0, maxLength);

@@ -1,4 +1,4 @@
-import { Bot, Check, Megaphone, Pin, UserRound, Users } from "lucide-static";
+import { Bot, Check, ChevronRight, Megaphone, Pin, UserRound, Users } from "lucide-static";
 import { createTelegramIconElement } from "../../icons/TelegramIcon";
 import { createLucideSvgElement } from "../../../core/ui/LucideIcon";
 import { t } from "../../../core/i18n/I18n";
@@ -15,6 +15,8 @@ export interface PickerRowState {
     active: boolean;
     /** Pinned to the top of the picker by the user. */
     pinnedToTop: boolean;
+    /** How many of this row's topics are selected. */
+    selectedTopicCount?: number;
     avatarUrl?: string | null;
 }
 
@@ -29,6 +31,7 @@ export function createPickerRow(item: PickerItem, state: PickerRowState): HTMLBu
     row.className = "x2tg-picker__item";
     row.setAttribute("role", "option");
     row.dataset.key = item.key;
+    row.classList.toggle("x2tg-picker__item--topic-selected", Boolean(state.selectedTopicCount));
 
     const check = document.createElement("span");
 
@@ -57,18 +60,20 @@ export function createPickerRow(item: PickerItem, state: PickerRowState): HTMLBu
     const folderTags = item.folderTags ?? [];
     const showTelegramPin = Boolean(item.pinnedInTelegram) && !state.pinnedToTop;
 
-    if (showTelegramPin || folderTags.length > 0) {
-        text.appendChild(createBadges(showTelegramPin, folderTags));
+    if (showTelegramPin || folderTags.length > 0 || item.isTopic || item.topicCount) {
+        text.appendChild(createBadges(showTelegramPin, folderTags, Boolean(item.isTopic), item.topicCount, state.selectedTopicCount));
     }
 
     row.appendChild(text);
 
-    const pinToggle = document.createElement("span");
+    if (!item.isTopicParent) {
+        const pinToggle = document.createElement("span");
 
-    pinToggle.className = PickerPinToggleClass;
-    pinToggle.setAttribute("role", "button");
-    pinToggle.appendChild(createLucideSvgElement(Pin, 14));
-    row.appendChild(pinToggle);
+        pinToggle.className = PickerPinToggleClass;
+        pinToggle.setAttribute("role", "button");
+        pinToggle.appendChild(createLucideSvgElement(Pin, 14));
+        row.appendChild(pinToggle);
+    }
 
     applyPickerRowState(row, state);
 
@@ -144,10 +149,40 @@ function createMeta(route: PickerRoute): HTMLElement {
  * Badge line, styled like Telegram's chat list: "Pinned in Telegram" first, then the colored
  * tags of the folders holding the chat.
  */
-function createBadges(pinnedInTelegram: boolean, tags: PickerFolderTag[]): HTMLElement {
+function createBadges(
+    pinnedInTelegram: boolean,
+    tags: PickerFolderTag[],
+    isTopic: boolean,
+    topicCount?: number,
+    selectedTopicCount = 0
+): HTMLElement {
     const badges = document.createElement("span");
 
     badges.className = "x2tg-picker__badges";
+
+    if (topicCount) {
+        const topics = document.createElement("span");
+        const topicsText = document.createElement("span");
+
+        topics.className = selectedTopicCount > 0
+            ? "x2tg-picker__badge x2tg-picker__badge--topics x2tg-picker__badge--topics-active"
+            : "x2tg-picker__badge x2tg-picker__badge--topics";
+        topics.title = t("pickerChooseTopic");
+        topicsText.textContent = selectedTopicCount > 0
+            ? t("pickerTopicsSelected", [String(selectedTopicCount), String(topicCount)])
+            : t("pickerTopicsCount", String(topicCount));
+        topics.append(createLucideSvgElement(ChevronRight, 10), topicsText);
+        badges.appendChild(topics);
+    }
+
+    if (isTopic) {
+        const topic = document.createElement("span");
+
+        topic.className = "x2tg-picker__badge x2tg-picker__badge--topic";
+        topic.title = t("pickerTopic");
+        topic.textContent = t("pickerTopic");
+        badges.appendChild(topic);
+    }
 
     if (pinnedInTelegram) {
         const pin = document.createElement("span");
