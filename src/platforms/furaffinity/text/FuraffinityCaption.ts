@@ -74,7 +74,8 @@ export function parseFuraffinityTitle(rawTitle: string | undefined): Furaffinity
 export function buildFuraffinityCaptionHtml(
     title: string | undefined,
     artist: string | undefined,
-    description: string | undefined
+    description: string | undefined,
+    artistUrl?: string
 ): string {
     const body = [plainFuraffinityText(title), plainFuraffinityText(description)]
         .filter(Boolean)
@@ -82,6 +83,7 @@ export function buildFuraffinityCaptionHtml(
 
     return buildSocialPostText({
         body,
-        pageName: plainFuraffinityText(artist)
+        pageName: plainFuraffinityText(artist),
+        authorUrl: artistUrl
     });
 }

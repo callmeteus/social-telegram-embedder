@@ -12,7 +12,9 @@ function surfaceOf(editor: { element: HTMLElement }): HTMLElement {
 }
 
 function aboveToggleOf(editor: { element: HTMLElement }): HTMLButtonElement {
-    return editor.element.querySelector<HTMLButtonElement>(".x2tg-caption__option")!;
+    const options = Array.from(editor.element.querySelectorAll<HTMLButtonElement>(".x2tg-caption__option"));
+
+    return options.find((option) => option.textContent?.includes("Caption above media"))!;
 }
 
 describe("createCaptionEditor", () => {
@@ -77,20 +79,32 @@ describe("createCaptionEditor", () => {
         expect(createCaptionEditor().getHtml()).toBe("");
     });
 
-    it("reports the spoiler toggle state and accepts an initial value", () => {
+    it("starts with the caption-above-media option off and localized", () => {
         const editor = createCaptionEditor();
-        const toggle = editor.element.querySelector<HTMLInputElement>(".x2tg-caption__spoiler-check")!;
+        const toggle = aboveToggleOf(editor);
 
-        expect(toggle.checked).toBe(false);
-        expect(editor.getHasSpoiler()).toBe(false);
+        expect(editor.getCaptionAbove()).toBe(false);
+        expect(toggle.getAttribute("aria-pressed")).toBe("false");
+        expect(toggle.textContent).toBe("Caption above media");
+    });
+
+    it("accepts an initial caption-above-media state", () => {
+        expect(createCaptionEditor({ captionAbove: true }).getCaptionAbove()).toBe(true);
+    });
+
+    it("toggles the caption-above-media option on and off", () => {
+        const editor = createCaptionEditor();
+        const toggle = aboveToggleOf(editor);
 
         toggle.click();
-        expect(editor.getHasSpoiler()).toBe(true);
+
+        expect(editor.getCaptionAbove()).toBe(true);
+        expect(toggle.getAttribute("aria-pressed")).toBe("true");
 
         toggle.click();
-        expect(editor.getHasSpoiler()).toBe(false);
 
-        expect(createCaptionEditor({ initialHasSpoiler: true }).getHasSpoiler()).toBe(true);
+        expect(editor.getCaptionAbove()).toBe(false);
+        expect(toggle.getAttribute("aria-pressed")).toBe("false");
     });
 });
 
@@ -141,5 +155,24 @@ describe("caption draft and override", () => {
 
     it("sanitizes the edited caption before sending", () => {
         expect(sanitizeCaptionHtml("<script>x</script><b>ok</b>")).toBe("<b>ok</b>");
+    });
+
+    it("keeps safe author links and drops unsafe ones", () => {
+        const safe = '<b><a href="https://x.com/jack">@jack</a></b>';
+
+        expect(sanitizeCaptionHtml(safe)).toBe(safe);
+        expect(sanitizeCaptionHtml('<a href="javascript:alert(1)">bad</a>')).toBe("bad");
+    });
+
+    it("renders and serializes author links in the editor", () => {
+        const host = document.createElement("div");
+
+        renderCaptionHtml(host, '<b><a href="https://x.com/jack">@jack</a></b>\n\nHello');
+
+        const anchor = host.querySelector("a");
+
+        expect(anchor?.getAttribute("href")).toBe("https://x.com/jack");
+        expect(anchor?.closest("b")).not.toBeNull();
+        expect(captionHtmlFromElement(host)).toBe('<b><a href="https://x.com/jack">@jack</a></b>\n\nHello');
     });
 });

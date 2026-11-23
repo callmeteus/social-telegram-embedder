@@ -21,9 +21,10 @@ export class TelegramDestinationSender implements DestinationSender {
         post: FetchedSocialPost,
         onProgress?: SendProgressCallback,
         captionHtml?: string,
-        hasSpoiler?: boolean
+        hasSpoiler?: boolean,
+        captionAbove?: boolean
     ): Promise<SendResult> {
-        return this.client.sendSocialPost(this.chatId, post, onProgress, captionHtml, hasSpoiler);
+        return this.client.sendSocialPost(this.chatId, post, onProgress, captionHtml, hasSpoiler, captionAbove);
     }
 
     public sendLink(url: string): Promise<SendResult> {

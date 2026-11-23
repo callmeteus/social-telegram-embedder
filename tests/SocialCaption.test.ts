@@ -28,6 +28,17 @@ describe("buildSocialPostText", () => {
         ].join("\n\n"));
     });
 
+    it("links the author name in bold when a profile URL is available", () => {
+        expect(buildSocialPostText({
+            body: "Commission",
+            pageName: "CrossVertum",
+            authorUrl: "https://www.furaffinity.net/user/crossvertum"
+        })).toBe([
+            '<b><a href="https://www.furaffinity.net/user/crossvertum">CrossVertum</a></b>',
+            "Commission"
+        ].join("\n\n"));
+    });
+
     it("keeps @ outside bold tags so Telegram HTML parsing does not break", () => {
         expect(buildSocialPostText({
             body: "The final YCH",

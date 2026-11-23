@@ -61,18 +61,36 @@ describe("TelegramUserDestinationSender", () => {
         expect(client.sendMediaGroup.mock.calls[0]?.[4]).toBe(42);
     });
 
-    it("forwards the spoiler flag to media sends but leaves text-only sends alone", async () => {
+    it("forwards the caption-above-media choice to single and album sends", async () => {
         const client = createFakeTelegramUserClient();
         const sender = new TelegramUserDestinationSender(client, Peer);
 
-        await sender.sendSocialPost(post([]), undefined, undefined, true);
-        expect(client.sendText.mock.calls[0]).toHaveLength(3);
+        await sender.sendSocialPost(post([photo(0)]), undefined, undefined, true);
 
-        await sender.sendSocialPost(post([photo(1)]), undefined, undefined, true);
         expect(client.sendMedia.mock.calls[0]?.[5]).toBe(true);
 
-        await sender.sendSocialPost(post([photo(2), photo(3)]), undefined, undefined, true);
+        await sender.sendSocialPost(post([photo(1), photo(2)]), undefined, undefined, true);
+
         expect(client.sendMediaGroup.mock.calls[0]?.[5]).toBe(true);
+    });
+
+    it("passes no caption-above flag when the option is off", async () => {
+        const client = createFakeTelegramUserClient();
+        const sender = new TelegramUserDestinationSender(client, Peer);
+
+        await sender.sendSocialPost(post([photo(0)]));
+
+        expect(client.sendMedia.mock.calls[0]?.[5]).toBeUndefined();
+    });
+
+    it("leaves text-only sends unchanged when caption above is requested", async () => {
+        const client = createFakeTelegramUserClient();
+
+        await new TelegramUserDestinationSender(client, Peer).sendSocialPost(post([]), undefined, undefined, true);
+
+        expect(client.sendText.mock.calls[0]).toHaveLength(3);
+        expect(client.sendMedia).not.toHaveBeenCalled();
+        expect(client.sendMediaGroup).not.toHaveBeenCalled();
     });
 
     it("downloads and sends a single photo with upload progress", async () => {

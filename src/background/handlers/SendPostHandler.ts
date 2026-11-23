@@ -94,6 +94,10 @@ export async function handleSendPost(
             ? snapshotToFetchedPost(normalizedUrl, hydratedSnapshot)
             : await platform.fetchPost(normalizedUrl);
 
+        if (!fetchedPost && platform.progressMessages.linkOnly) {
+            onProgress?.({ message: t(platform.progressMessages.linkOnly) });
+        }
+
         const { result, succeeded } = await sendToDestinations(
             {
                 platform,
@@ -102,7 +106,8 @@ export async function handleSendPost(
                 destinations,
                 onProgress,
                 captionHtml: typeof message.captionHtml === "string" ? message.captionHtml : undefined,
-                hasSpoiler: message.hasSpoiler === true
+                hasSpoiler: message.hasSpoiler === true,
+                captionAbove: message.captionAbove === true
             },
             {
                 resolveDestination: (ref) => resolveDestination(config, ref),

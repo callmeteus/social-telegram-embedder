@@ -24,6 +24,8 @@ export interface SendPostMessage {
     captionHtml?: string;
     /** When true, sent media is hidden behind a Telegram spoiler. Text-only sends are unaffected. */
     hasSpoiler?: boolean;
+    /** Whether Telegram should show the caption above the media. Per send, off when absent. */
+    captionAbove?: boolean;
 }
 
 /** Payload to test a single channel. */

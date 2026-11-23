@@ -109,26 +109,25 @@ export function createCaptionEditor(options: CaptionEditorOptions = {}): Caption
     toolbar.appendChild(bold);
     frame.append(toolbar, editor);
 
-    const spoilerLabel = document.createElement("label");
-    const spoilerCheckbox = document.createElement("input");
-    const spoilerText = document.createElement("span");
-
-    spoilerLabel.className = "x2tg-caption__spoiler";
-    spoilerCheckbox.type = "checkbox";
-    spoilerCheckbox.className = "x2tg-caption__spoiler-check";
-    spoilerCheckbox.checked = options.initialHasSpoiler ?? false;
-    spoilerText.className = "x2tg-caption__spoiler-label";
-    spoilerText.textContent = t("captionSpoiler");
-    spoilerLabel.append(spoilerCheckbox, spoilerText);
-
-    element.append(header, frame, spoilerLabel);
-
     const optionsRow = document.createElement("div");
+    const spoiler = document.createElement("button");
+    const spoilerIndicator = document.createElement("span");
+    const spoilerText = document.createElement("span");
     const above = document.createElement("button");
     const aboveIndicator = document.createElement("span");
     const aboveLabel = document.createElement("span");
 
     optionsRow.className = "x2tg-caption__options";
+
+    spoiler.type = "button";
+    spoiler.className = "x2tg-caption__option";
+    spoiler.setAttribute("aria-pressed", String(options.initialHasSpoiler === true));
+    spoilerIndicator.className = "x2tg-caption__option-indicator";
+    spoilerText.className = "x2tg-caption__option-label";
+    spoilerText.textContent = t("captionSpoiler");
+    spoiler.append(spoilerIndicator, spoilerText);
+    optionsRow.appendChild(spoiler);
+
     above.type = "button";
     above.className = "x2tg-caption__option";
     above.setAttribute("aria-pressed", String(options.captionAbove === true));
@@ -137,7 +136,8 @@ export function createCaptionEditor(options: CaptionEditorOptions = {}): Caption
     aboveLabel.textContent = t("captionAbove");
     above.append(aboveIndicator, aboveLabel);
     optionsRow.appendChild(above);
-    element.appendChild(optionsRow);
+
+    element.append(header, frame, optionsRow);
 
     const refresh = (): void => {
         const html = captionHtmlFromElement(editor, maxLength);
@@ -149,6 +149,11 @@ export function createCaptionEditor(options: CaptionEditorOptions = {}): Caption
     };
 
     const handleInput = (): void => refresh();
+    const handleSpoilerClick = (event: MouseEvent): void => {
+        event.preventDefault();
+        event.stopPropagation();
+        spoiler.setAttribute("aria-pressed", String(spoiler.getAttribute("aria-pressed") !== "true"));
+    };
     const handleAboveClick = (event: MouseEvent): void => {
         event.preventDefault();
         event.stopPropagation();
@@ -166,6 +171,7 @@ export function createCaptionEditor(options: CaptionEditorOptions = {}): Caption
     };
 
     editor.addEventListener("input", handleInput);
+    spoiler.addEventListener("click", handleSpoilerClick);
     above.addEventListener("click", handleAboveClick);
     editor.addEventListener("paste", handlePaste);
     document.addEventListener("selectionchange", handleSelectionChange);
@@ -176,11 +182,12 @@ export function createCaptionEditor(options: CaptionEditorOptions = {}): Caption
     return {
         element,
         getHtml: () => captionHtmlFromElement(editor, maxLength),
-        getHasSpoiler: () => spoilerCheckbox.checked,
+        getHasSpoiler: () => spoiler.getAttribute("aria-pressed") === "true",
         getCaptionAbove: () => above.getAttribute("aria-pressed") === "true",
         focus: () => focusEnd(editor),
         destroy: () => {
             editor.removeEventListener("input", handleInput);
+            spoiler.removeEventListener("click", handleSpoilerClick);
             above.removeEventListener("click", handleAboveClick);
             editor.removeEventListener("paste", handlePaste);
             document.removeEventListener("selectionchange", handleSelectionChange);
@@ -197,7 +204,7 @@ export function captionHtmlFromElement(element: Element, maxLength: number = Tel
 }
 
 /**
- * Fills the editor with caption HTML, converting line breaks and bold ranges into DOM nodes.
+ * Fills the editor with caption HTML, converting line breaks and inline tags into DOM nodes.
  */
 export function renderCaptionHtml(element: Element, html: string, maxLength: number = TelegramCaptionLimit): void {
     const clean = sanitizeCaptionHtml(html, maxLength);
@@ -215,34 +222,41 @@ export function renderCaptionHtml(element: Element, html: string, maxLength: num
 }
 
 function appendInline(parent: Node, line: string): void {
-    let isBold = false;
+    const stack: Node[] = [parent];
 
-    for (const token of line.split(/(<b>|<\/b>)/)) {
+    for (const token of line.split(/(<b>|<\/b>|<a href="[^"]*">|<\/a>)/)) {
         if (!token) {
             continue;
         }
 
+        if (token === "</b>" || token === "</a>") {
+            if (stack.length > 1) {
+                stack.pop();
+            }
+
+            continue;
+        }
+
+        let container = stack[stack.length - 1] ?? parent;
+
         if (token === "<b>") {
-            isBold = true;
+            container = document.createElement("b");
+        } else if (token.startsWith("<a ")) {
+            const href = token.match(/href="([^"]*)"/)?.[1];
+            const anchor = document.createElement("a");
+
+            if (href) {
+                anchor.setAttribute("href", href);
+            }
+
+            container = anchor;
+        } else {
+            container.appendChild(document.createTextNode(decodeCaptionText(token)));
             continue;
         }
 
-        if (token === "</b>") {
-            isBold = false;
-            continue;
-        }
-
-        const text = document.createTextNode(decodeCaptionText(token));
-
-        if (isBold) {
-            const bold = document.createElement("b");
-
-            bold.appendChild(text);
-            parent.appendChild(bold);
-            continue;
-        }
-
-        parent.appendChild(text);
+        stack[stack.length - 1]?.appendChild(container);
+        stack.push(container);
     }
 }
 
@@ -292,6 +306,16 @@ function serializeNode(node: Node): string {
 
     if (node.tagName === "B" || node.tagName === "STRONG") {
         return inner.trim() ? `<b>${inner}</b>` : inner;
+    }
+
+    if (node.tagName === "A") {
+        const href = node.getAttribute("href") ?? "";
+
+        if (/^https?:\/\//i.test(href) && inner.trim()) {
+            const safeHref = href.replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+            return `<a href="${safeHref}">${inner}</a>`;
+        }
     }
 
     return inner;

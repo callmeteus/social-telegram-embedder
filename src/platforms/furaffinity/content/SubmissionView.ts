@@ -37,7 +37,23 @@ export function findFuraffinitySubmissions(root: ParentNode): Element[] {
  * @returns The control row, or the submission view itself.
  */
 export function findFuraffinityInsertRow(submission: Element): Element {
-    return submission.querySelector(".submission-controls, .actions-toolbar, .submission-actions") ?? submission;
+    const selectors = [
+        "#submission-options",
+        ".submission-controls-upper",
+        ".submission-controls",
+        ".actions-toolbar",
+        ".submission-actions"
+    ];
+
+    for (const selector of selectors) {
+        const row = submission.querySelector(selector);
+
+        if (row) {
+            return row;
+        }
+    }
+
+    return submission;
 }
 
 /**
@@ -45,6 +61,47 @@ export function findFuraffinityInsertRow(submission: Element): Element {
  */
 function readViewText(root: ParentNode, selector: string): string {
     return root.querySelector(selector)?.textContent?.trim() ?? "";
+}
+
+/**
+ * Reads the submission description without the footer links FurAffinity appends to the same node.
+ */
+function readDescriptionText(root: ParentNode): string {
+    const element = root.querySelector(".submission-description-text");
+
+    if (!element) {
+        return "";
+    }
+
+    const clone = element.cloneNode(true);
+
+    if (clone instanceof HTMLElement) {
+        clone.querySelector(".submission-footer")?.remove();
+    }
+
+    return clone.textContent?.trim() ?? "";
+}
+
+const ARTIST_SELECTOR = ".submission-description-artist .c-usernameBlockSimple__displayName, .submission-description-artist a[href^='/user/']:not(.c-avatarFrameCapable), .submission-artist, .submission-artist-container a";
+const ARTIST_LINK_SELECTOR = ".submission-description-artist a[href^='/user/']:not(.c-avatarFrameCapable), .submission-artist[href], .submission-artist-container a[href]";
+
+/**
+ * Resolves an absolute profile URL from a relative artist link.
+ */
+function readArtistUrl(root: ParentNode): string | undefined {
+    const href = root.querySelector(ARTIST_LINK_SELECTOR)?.getAttribute("href");
+
+    if (!href) {
+        return undefined;
+    }
+
+    try {
+        const url = new URL(href, FURAFFINITY_BASE_URL);
+
+        return url.protocol === "http:" || url.protocol === "https:" ? url.toString() : undefined;
+    } catch {
+        return undefined;
+    }
 }
 
 /**
@@ -67,7 +124,7 @@ function absoluteMediaUrl(value: string): string | null {
  * @returns The resolved media items, or an empty list when the view has no media.
  */
 export function extractFuraffinityMedia(root: ParentNode): SocialMediaItem[] {
-    const image = root.querySelector("#submission-img, img.submission-image, img[src*='facdn.net']");
+    const image = root.querySelector("#submissionImg, #submission-img, img.submission-image, img[src*='d.furaffinity.net'], img[src*='facdn.net']");
     const videoSource = root.querySelector("video[src], video source[src], source[src]");
     const media: SocialMediaItem[] = [];
     const seen = new Set<string>();
@@ -100,6 +157,24 @@ export function extractFuraffinityMedia(root: ParentNode): SocialMediaItem[] {
 }
 
 /**
+ * Finds the smallest ancestor holding the submission text, which FurAffinity renders outside the
+ * media view used for injection.
+ */
+function findCaptionRoot(root: Element): ParentNode {
+    let node: Element | null = root;
+
+    while (node) {
+        if (node.querySelector(".submission-description, .submission-title")) {
+            return node;
+        }
+
+        node = node.parentElement;
+    }
+
+    return root;
+}
+
+/**
  * Builds a content-script snapshot from the visible submission view.
  *
  * @param root - Submission view subtree.
@@ -112,11 +187,14 @@ export function buildFuraffinitySnapshot(root: ParentNode): SocialPostSnapshot |
         return null;
     }
 
+    const captionRoot = root instanceof Element ? findCaptionRoot(root) : root;
+
     return {
         text: buildFuraffinityCaptionHtml(
-            readViewText(root, ".submission-title h2, h2.submission-title, .submission-title"),
-            readViewText(root, ".submission-artist, .submission-artist-container a"),
-            readViewText(root, ".submission-description")
+            readViewText(captionRoot, ".submission-title h2, h2.submission-title, .submission-title"),
+            readViewText(captionRoot, ARTIST_SELECTOR),
+            readDescriptionText(captionRoot) || readViewText(captionRoot, ".submission-description"),
+            readArtistUrl(captionRoot)
         ),
         media
     };

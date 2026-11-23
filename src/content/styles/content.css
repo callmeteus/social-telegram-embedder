@@ -126,21 +126,16 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 6px 10px;
-    border: 1px solid #474b53;
-    border-radius: 4px;
-    background: #22262e;
-    color: #cfd3da;
-    cursor: pointer;
-    font: inherit;
+    gap: 6px;
     line-height: 1;
+    text-decoration: none;
+    cursor: pointer;
 }
 
 .x2tg-send-button--furaffinity:hover,
+.x2tg-send-button--furaffinity:focus,
 .x2tg-send-button--furaffinity:focus-visible {
-    background: #2aabee;
-    border-color: #2aabee;
-    color: #ffffff;
+    text-decoration: none;
 }
 
 .x2tg-send-button--furaffinity svg {
@@ -316,6 +311,15 @@
 .x2tg-picker__item--active {
     background: #1e2a36;
     outline: none;
+}
+
+.x2tg-picker button:hover,
+.x2tg-picker button:focus,
+.x2tg-picker button:focus-visible,
+.x2tg-picker__item:hover,
+.x2tg-picker__item:focus,
+.x2tg-picker__item:focus-visible {
+    text-decoration: none !important;
 }
 
 .x2tg-picker__list--reordering {

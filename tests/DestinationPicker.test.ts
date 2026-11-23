@@ -914,11 +914,11 @@ describe("showDestinationPicker caption editor", () => {
 
         showDestinationPicker({ config: configWith(["Canal A"]), onSend });
 
-        const toggle = document.querySelector<HTMLInputElement>(".x2tg-caption__spoiler-check")!;
+        const toggle = document.querySelector<HTMLButtonElement>(".x2tg-caption__option")!;
 
-        expect(toggle.type).toBe("checkbox");
-        expect(toggle.checked).toBe(false);
-        expect(document.querySelector(".x2tg-caption__spoiler")?.textContent).toBe("Hide media with a spoiler");
+        expect(toggle.tagName).toBe("BUTTON");
+        expect(toggle.getAttribute("aria-pressed")).toBe("false");
+        expect(toggle.textContent).toBe("Hide media with a spoiler");
 
         toggle.click();
         rows()[0]?.click();

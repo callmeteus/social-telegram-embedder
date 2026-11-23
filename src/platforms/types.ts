@@ -7,7 +7,9 @@ export enum SocialPlatformId {
     X = "x",
     FACEBOOK = "facebook",
     E621 = "e621",
-    FURAFINITY = "furaffinity"
+    INSTAGRAM = "instagram",
+    FURAFINITY = "furaffinity",
+    TIKTOK = "tiktok"
 }
 
 /** Post payload captured from the page DOM at click time. */
@@ -75,11 +77,14 @@ export interface SocialPlatform {
         post: FetchedSocialPost,
         onProgress?: SendProgressCallback,
         captionHtml?: string,
-        hasSpoiler?: boolean
+        hasSpoiler?: boolean,
+        captionAbove?: boolean
     ): Promise<SendResult>;
     progressMessages: {
         /** i18n message keys resolved via chrome.i18n at runtime. */
         fetching: string;
         invalidUrl: string;
+        /** Optional status shown when the post had to be sent as a link only. */
+        linkOnly?: string;
     };
 }

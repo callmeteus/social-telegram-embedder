@@ -33,7 +33,8 @@ export class TelegramUserDestinationSender implements DestinationSender {
         post: FetchedSocialPost,
         onProgress?: SendProgressCallback,
         captionHtml?: string,
-        hasSpoiler?: boolean
+        hasSpoiler?: boolean,
+        captionAbove?: boolean
     ): Promise<SendResult> {
         const captionHtmlResolved = resolveTelegramCaption(captionHtml, post.embedUrl, post.text);
         const caption = telegramHtmlToFormattedText(captionHtmlResolved);
@@ -52,11 +53,11 @@ export class TelegramUserDestinationSender implements DestinationSender {
                 onProgress?.({ message: t("progressSendingToTelegram") });
                 await this.messenger.sendMedia(this.ref.peerId, file, caption, (uploaded, total) => {
                     onProgress?.(formatUploadProgress(1, 1, uploaded, total));
-                }, this.ref.topicId, hasSpoiler);
+                }, this.ref.topicId, hasSpoiler, captionAbove);
                 return { ok: true };
             }
 
-            await this.sendBatches(post, caption, onProgress, hasSpoiler);
+            await this.sendBatches(post, caption, onProgress, hasSpoiler, captionAbove);
             return { ok: true };
         } catch (err) {
             return toFailure(err);
@@ -75,7 +76,8 @@ export class TelegramUserDestinationSender implements DestinationSender {
         post: FetchedSocialPost,
         caption: FormattedText,
         onProgress?: SendProgressCallback,
-        hasSpoiler?: boolean
+        hasSpoiler?: boolean,
+        captionAbove?: boolean
     ): Promise<void> {
         const batches = groupSocialMediaForTelegram(post.media);
         const mediaTotal = post.media.length;
@@ -96,7 +98,8 @@ export class TelegramUserDestinationSender implements DestinationSender {
                         onProgress?.(formatUploadProgress(mediaIndex + 1, mediaTotal, uploaded, total));
                     },
                     this.ref.topicId,
-                    hasSpoiler
+                    hasSpoiler,
+                    captionAbove
                 );
 
                 mediaIndex += 1;
@@ -127,7 +130,8 @@ export class TelegramUserDestinationSender implements DestinationSender {
                     onProgress?.(formatUploadProgress(startIndex + index + 1, mediaTotal, uploaded, total));
                 },
                 this.ref.topicId,
-                hasSpoiler
+                hasSpoiler,
+                captionAbove
             );
 
             mediaIndex += batch.length;

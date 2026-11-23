@@ -220,15 +220,26 @@ export function extractTweetMediaItems(media?: FxTwitterApiMedia): TweetMediaIte
 /**
  * Builds the Telegram caption body for a tweet API payload.
  */
+/**
+ * Builds the X profile URL used as the bold author link in captions.
+ */
+function xProfileUrl(handle: string | null | undefined): string | undefined {
+    const screenName = handle?.trim().replace(/^@/, "");
+
+    return screenName ? `https://x.com/${encodeURIComponent(screenName)}` : undefined;
+}
+
 export function buildTweetPostText(tweet: FxTwitterApiTweet): string {
     const retweet = tweet.retweet;
     const authorHandle = readFxTwitterAuthorHandle(tweet.author);
+    const originalHandle = retweet ? readFxTwitterAuthorHandle(retweet.author) : authorHandle;
 
     if (retweet) {
         return buildSocialPostText({
             body: stripLegacyRetweetPrefix(retweet.text ?? ""),
-            pageName: readFxTwitterAuthorHandle(retweet.author) ?? undefined,
+            pageName: originalHandle ?? undefined,
             repostedBy: authorHandle ?? undefined,
+            authorUrl: xProfileUrl(originalHandle),
             authorStyle: SocialCaptionAuthorStyle.HANDLE
         });
     }
@@ -240,6 +251,7 @@ export function buildTweetPostText(tweet: FxTwitterApiTweet): string {
             body: legacyRetweet.body,
             pageName: legacyRetweet.pageName,
             repostedBy: legacyRetweet.repostedBy,
+            authorUrl: xProfileUrl(legacyRetweet.pageName),
             authorStyle: SocialCaptionAuthorStyle.HANDLE
         });
     }
@@ -247,6 +259,7 @@ export function buildTweetPostText(tweet: FxTwitterApiTweet): string {
     return buildSocialPostText({
         body: tweet.text ?? "",
         pageName: authorHandle ?? undefined,
+        authorUrl: xProfileUrl(authorHandle),
         authorStyle: SocialCaptionAuthorStyle.HANDLE
     });
 }

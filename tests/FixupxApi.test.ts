@@ -115,7 +115,7 @@ describe("buildTweetPostText", () => {
                 screen_name: "lilyvanhauntt"
             }
         })).toBe([
-            "@<b>lilyvanhauntt</b>",
+            '<b><a href="https://x.com/lilyvanhauntt">@lilyvanhauntt</a></b>',
             "Art:lichee"
         ].join("\n\n"));
     });
@@ -135,7 +135,7 @@ describe("buildTweetPostText", () => {
                 }
             }
         })).toBe([
-            "@<b>ariooch</b> 🔁 @<b>lilyvanhauntt</b>",
+            '@<b>ariooch</b> 🔁 <b><a href="https://x.com/lilyvanhauntt">@lilyvanhauntt</a></b>',
             "Art:lichee"
         ].join("\n\n"));
     });
@@ -148,7 +148,7 @@ describe("buildTweetPostText", () => {
                 screen_name: "ariooch"
             }
         })).toBe([
-            "@<b>ariooch</b> 🔁 @<b>lilyvanhauntt</b>",
+            '@<b>ariooch</b> 🔁 <b><a href="https://x.com/lilyvanhauntt">@lilyvanhauntt</a></b>',
             "Art:lichee"
         ].join("\n\n"));
     });
@@ -211,7 +211,7 @@ describe("fetchTweetByFixupxUrl", () => {
         expect(result).toEqual({
             fixupxUrl: "https://fixupx.com/jack/status/1234567890",
             originalUrl: "https://x.com/jack/status/1234567890",
-            text: "@<b>jack</b>\n\nHello",
+            text: '<b><a href="https://x.com/jack">@jack</a></b>\n\nHello',
             media: [{ kind: "photo", url: "https://pbs.twimg.com/photo.jpg" }]
         });
     });
