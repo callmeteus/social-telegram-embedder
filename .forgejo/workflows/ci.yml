@@ -16,7 +16,7 @@ on:
 jobs:
   test:
     name: Test and build
-    runs-on: docker
+    runs-on: ci
 
     steps:
       - name: Checkout
