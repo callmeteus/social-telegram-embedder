@@ -5,6 +5,8 @@ import {
     buildPickerSections,
     getAvatarKey,
     getPeerAvatarKey,
+    matchesText,
+    normalizeSearchText,
     PickerSectionId,
     type PickerItem,
     type PickerSection
@@ -104,6 +106,7 @@ class DestinationPickerView {
     private readonly titleEl: HTMLElement;
     private readonly backButton: HTMLButtonElement;
     private readonly searchInput: HTMLInputElement;
+    private readonly topicSearchInput: HTMLInputElement;
     private readonly list: HTMLElement;
     private readonly footer: HTMLElement;
     private readonly footerCount: HTMLElement;
@@ -119,6 +122,7 @@ class DestinationPickerView {
     private flatItems: PickerItem[] = [];
     private activeKey: string | null = null;
     private query = "";
+    private topicQuery = "";
     private searchTimer: ReturnType<typeof setTimeout> | null = null;
     private renderLimit = RENDER_BATCH;
     private notice = FooterNotice.NONE;
@@ -190,6 +194,15 @@ class DestinationPickerView {
         this.searchInput.autocomplete = "off";
         this.searchInput.addEventListener("input", () => this.handleQueryChange());
 
+        this.topicSearchInput = document.createElement("input");
+        this.topicSearchInput.type = "search";
+        this.topicSearchInput.className = "x2tg-picker__search x2tg-picker__topic-search";
+        this.topicSearchInput.placeholder = t("pickerTopicSearchPlaceholder");
+        this.topicSearchInput.setAttribute("aria-label", t("pickerTopicSearchPlaceholder"));
+        this.topicSearchInput.autocomplete = "off";
+        this.topicSearchInput.hidden = true;
+        this.topicSearchInput.addEventListener("input", () => this.handleTopicQueryChange());
+
         this.list = document.createElement("div");
         this.list.className = "x2tg-picker__list";
         this.list.setAttribute("role", "listbox");
@@ -216,7 +229,7 @@ class DestinationPickerView {
         const body = document.createElement("div");
 
         destinationsColumn.className = "x2tg-picker__destinations-col";
-        destinationsColumn.append(this.searchInput, this.list);
+        destinationsColumn.append(this.searchInput, this.topicSearchInput, this.list);
         body.className = "x2tg-picker__body";
         body.append(destinationsColumn, this.caption.element);
 
@@ -366,12 +379,16 @@ class DestinationPickerView {
 
         this.topicParent = item;
         this.activeKey = null;
+        this.topicQuery = "";
+        this.topicSearchInput.value = "";
         this.renderLimit = RENDER_BATCH;
         this.searchInput.hidden = true;
+        this.topicSearchInput.hidden = false;
         this.backButton.hidden = false;
         this.titleEl.textContent = t("pickerChooseTopic");
         this.list.scrollTop = 0;
         this.render();
+        this.topicSearchInput.focus();
     }
 
     /**
@@ -384,8 +401,11 @@ class DestinationPickerView {
 
         this.topicParent = null;
         this.activeKey = null;
+        this.topicQuery = "";
+        this.topicSearchInput.value = "";
         this.renderLimit = RENDER_BATCH;
         this.searchInput.hidden = false;
+        this.topicSearchInput.hidden = true;
         this.backButton.hidden = true;
         this.titleEl.textContent = t("pickerTitle");
         this.list.scrollTop = 0;
@@ -394,6 +414,7 @@ class DestinationPickerView {
 
     /**
      * Renders the topic rows of the current parent, with the general chat first when it is a destination.
+     * A topic search narrows the list by title and an empty match shows a dedicated status.
      */
     private renderTopicView(): void {
         const parent = this.topicParent;
@@ -403,7 +424,9 @@ class DestinationPickerView {
             return;
         }
 
-        const items = parent.isTopicParent ? topics : [this.generalTopicItem(parent), ...topics];
+        const normalizedQuery = normalizeSearchText(this.topicQuery);
+        const candidates = parent.isTopicParent ? topics : [this.generalTopicItem(parent), ...topics];
+        const items = candidates.filter((item) => matchesText(normalizeSearchText(item.title), normalizedQuery));
         const fragment = document.createDocumentFragment();
 
         this.rows.clear();
@@ -413,6 +436,14 @@ class DestinationPickerView {
         for (const item of items.slice(0, Math.max(0, this.renderLimit))) {
             fragment.appendChild(this.createRow(item));
             this.flatItems.push(item);
+        }
+
+        if (items.length === 0) {
+            const statusEl = document.createElement("div");
+
+            statusEl.className = "x2tg-picker__status";
+            statusEl.textContent = t("pickerNoTopicsFound");
+            fragment.appendChild(statusEl);
         }
 
         this.list.replaceChildren(fragment);
@@ -688,7 +719,9 @@ class DestinationPickerView {
                 this.activate(activeItem);
             }
         } else
-        if (event.key === " " && activeItem && (!this.query || event.target !== this.searchInput)) {
+        if (event.key === " " && activeItem
+            && (!this.query || event.target !== this.searchInput)
+            && (!this.topicQuery || event.target !== this.topicSearchInput)) {
             event.preventDefault();
             this.activate(activeItem);
         }
@@ -765,6 +798,13 @@ class DestinationPickerView {
             }, SEARCH_DEBOUNCE_MS);
         }
 
+        this.render();
+    }
+
+    private handleTopicQueryChange(): void {
+        this.topicQuery = this.topicSearchInput.value;
+        this.renderLimit = RENDER_BATCH;
+        this.activeKey = null;
         this.render();
     }
 

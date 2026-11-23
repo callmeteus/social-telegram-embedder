@@ -955,13 +955,10 @@
     "pickerBack": {
         "message": "Back"
     },
-    "optionsPreferencesTitle": {
-        "message": "Preferences"
+    "pickerTopicSearchPlaceholder": {
+        "message": "Search topics"
     },
-    "optionsHideRecentChatsLabel": {
-        "message": "Hide recent chats"
-    },
-    "optionsHideRecentChatsDescription": {
-        "message": "Show only pinned destinations and your chat list in the picker."
+    "pickerNoTopicsFound": {
+        "message": "No topics found."
     }
 }
