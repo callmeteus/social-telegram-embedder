@@ -113,9 +113,9 @@ export function normalizeSearchText(value: string): string {
 }
 
 /**
- * Returns true when every word of the query appears in the item text.
+ * Returns true when every word of the normalized query appears in the normalized text.
  */
-export function matchesQuery(item: PickerItem, normalizedQuery: string): boolean {
+export function matchesText(normalizedText: string, normalizedQuery: string): boolean {
     if (!normalizedQuery) {
         return true;
     }
@@ -123,14 +123,22 @@ export function matchesQuery(item: PickerItem, normalizedQuery: string): boolean
     return normalizedQuery
         .replace(/^@/, "")
         .split(/\s+/)
-        .every((word) => item.searchText.includes(word));
+        .every((word) => normalizedText.includes(word));
+}
+
+/**
+ * Returns true when every word of the query appears in the item text.
+ */
+export function matchesQuery(item: PickerItem, normalizedQuery: string): boolean {
+    return matchesText(item.searchText, normalizedQuery);
 }
 
 /**
  * Builds the visible sections: Pinned, Recent, Bot channels, Telegram account. Chats of every account
  * are merged into one section. Each destination appears once (pins win, then recents), the query
  * filters every section, server results are merged into the account section, and empty sections are omitted.
- * When `hideRecentChats` is set, the Recent section is skipped and its rows stay in their regular sections.
+ * When `hideRecentChats` is set, only pinned destinations are listed (plus search results when the
+ * user types a query), so the account chat list is not loaded into the picker.
  */
 export function buildPickerSections(input: PickerModelInput): PickerSection[] {
     const query = normalizeSearchText(input.query);
@@ -175,13 +183,21 @@ export function buildPickerSections(input: PickerModelInput): PickerSection[] {
         }
     ];
 
-    // Skipping take() as well keeps those rows available in their regular sections.
-    if (!input.hideRecentChats) {
-        sections.push({
-            id: PickerSectionId.RECENT,
-            items: take(recentItems)
-        });
+    if (input.hideRecentChats) {
+        if (query) {
+            sections.push({
+                id: PickerSectionId.TELEGRAM_ACCOUNT,
+                items: take(searchItems)
+            });
+        }
+
+        return sections.filter((section) => section.items.length > 0);
     }
+
+    sections.push({
+        id: PickerSectionId.RECENT,
+        items: take(recentItems)
+    });
 
     sections.push(
         {

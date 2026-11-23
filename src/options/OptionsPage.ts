@@ -12,7 +12,7 @@ import { SendConnectionType, type ExtensionConfig } from "../core/types/Config";
 const connectionsView = document.getElementById("connections-view") as HTMLElement;
 const connectionsList = document.getElementById("connections-list") as HTMLElement;
 const preferencesView = document.getElementById("preferences-view") as HTMLElement;
-const hideRecentChatsInput = document.getElementById("hide-recent-chats") as HTMLInputElement;
+const hideRecentChatsSwitch = document.getElementById("hide-recent-chats") as HTMLButtonElement;
 const accountSection = document.getElementById("account-section") as HTMLElement;
 const botSection = document.getElementById("bot-section") as HTMLElement;
 const subtitle = document.querySelector<HTMLElement>(".page__subtitle");
@@ -40,9 +40,12 @@ async function init(): Promise<void> {
     accountSectionControls = initTelegramAccountSection({ onLoggedOut: () => navigate({ view: OptionsView.LIST }, { force: true }) });
 
     document.getElementById("connections-add")?.addEventListener("click", () => navigate({ view: OptionsView.ADD }));
-    hideRecentChatsInput.addEventListener("change", () => {
+    hideRecentChatsSwitch.addEventListener("click", () => {
         if (config) {
-            void saveConfig({ ...config, hideRecentChats: hideRecentChatsInput.checked });
+            const enabled = hideRecentChatsSwitch.getAttribute("aria-checked") !== "true";
+
+            hideRecentChatsSwitch.setAttribute("aria-checked", String(enabled));
+            void saveConfig({ ...config, hideRecentChats: enabled });
         }
     });
     document.getElementById("bot-back")?.addEventListener("click", () => navigate({ view: OptionsView.LIST }));
@@ -75,7 +78,7 @@ async function init(): Promise<void> {
 
 async function refreshConfig(): Promise<void> {
     config = await loadConfig();
-    hideRecentChatsInput.checked = config.hideRecentChats;
+    hideRecentChatsSwitch.setAttribute("aria-checked", String(config.hideRecentChats));
     renderConnectionsList(connectionsList, config, (connection) => navigate({
         view: connection.type === SendConnectionType.TELEGRAM_BOT ? OptionsView.BOT : OptionsView.ACCOUNT,
         connectionId: connection.id
