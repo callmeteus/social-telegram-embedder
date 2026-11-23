@@ -111,9 +111,9 @@ export function normalizeSearchText(value: string): string {
 }
 
 /**
- * Returns true when every word of the query appears in the item text.
+ * Returns true when every word of the normalized query appears in the normalized text.
  */
-export function matchesQuery(item: PickerItem, normalizedQuery: string): boolean {
+export function matchesText(normalizedText: string, normalizedQuery: string): boolean {
     if (!normalizedQuery) {
         return true;
     }
@@ -121,7 +121,14 @@ export function matchesQuery(item: PickerItem, normalizedQuery: string): boolean
     return normalizedQuery
         .replace(/^@/, "")
         .split(/\s+/)
-        .every((word) => item.searchText.includes(word));
+        .every((word) => normalizedText.includes(word));
+}
+
+/**
+ * Returns true when every word of the query appears in the item text.
+ */
+export function matchesQuery(item: PickerItem, normalizedQuery: string): boolean {
+    return matchesText(item.searchText, normalizedQuery);
 }
 
 /**

@@ -945,5 +945,11 @@
     },
     "pickerBack": {
         "message": "Back"
+    },
+    "pickerTopicSearchPlaceholder": {
+        "message": "Search topics"
+    },
+    "pickerNoTopicsFound": {
+        "message": "No topics found."
     }
 }

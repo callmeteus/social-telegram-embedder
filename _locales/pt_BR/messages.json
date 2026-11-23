@@ -945,5 +945,11 @@
     },
     "pickerBack": {
         "message": "Voltar"
+    },
+    "pickerTopicSearchPlaceholder": {
+        "message": "Buscar tópicos"
+    },
+    "pickerNoTopicsFound": {
+        "message": "Nenhum tópico encontrado."
     }
 }
