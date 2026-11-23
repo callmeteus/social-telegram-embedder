@@ -208,59 +208,6 @@ body {
     line-height: 1.5;
 }
 
-.sites {
-    margin: 18px 18px 0;
-}
-
-.sites__title {
-    margin: 0 0 8px;
-    color: var(--x2tg-text-muted);
-    font-size: 0.625rem;
-    font-weight: 700;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-}
-
-.sites__list {
-    display: flex;
-    gap: 8px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.site-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 10px;
-    border: 1px solid var(--x2tg-border);
-    border-radius: 999px;
-    background: var(--x2tg-inset);
-    color: var(--x2tg-text-secondary);
-    font-size: 0.6875rem;
-    font-weight: 600;
-    transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
-}
-
-.site-chip__dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--x2tg-text-muted);
-}
-
-.site-chip--current {
-    border-color: color-mix(in srgb, var(--x2tg-accent) 55%, var(--x2tg-border));
-    background: color-mix(in srgb, var(--x2tg-accent) 12%, var(--x2tg-inset));
-    color: var(--x2tg-text);
-}
-
-.site-chip--current .site-chip__dot {
-    background: var(--x2tg-accent);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--x2tg-accent) 18%, transparent);
-}
-
 .popup__footer {
     margin: 20px 16px 0;
 }
@@ -332,7 +279,6 @@ body {
         animation: none;
     }
 
-    .site-chip,
     .settings-button {
         transition: none;
     }

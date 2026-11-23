@@ -1,6 +1,5 @@
 import { getUiLanguage, t } from "../core/i18n/I18n";
 import { isConfigReady, loadConfig } from "../core/storage/Storage";
-import { SocialPlatformId } from "../platforms/types";
 import { resolvePopupStatus, type PopupStatus } from "./SiteStatus";
 
 const statusCard = document.querySelector<HTMLElement>("#status-card");
@@ -65,7 +64,7 @@ function applyStaticI18n(): void {
 }
 
 /**
- * Updates the status card and highlights the chip of the current site.
+ * Updates the status card with the current site.
  */
 function renderStatus(status: PopupStatus): void {
     const siteLabel = status.site?.label ?? t("popupSiteUnknown");
@@ -107,33 +106,6 @@ function renderStatus(status: PopupStatus): void {
     if (statusSite && statusHost) {
         statusSite.hidden = !status.host;
         statusHost.textContent = host;
-    }
-
-    highlightCurrentSite(status);
-}
-
-/**
- * Marks the supported-site chip that matches the active tab.
- */
-function highlightCurrentSite(status: PopupStatus): void {
-    let currentSite: string | undefined;
-
-    if (status.site?.id === SocialPlatformId.X) {
-        currentSite = "x";
-    } else if (status.site?.id === SocialPlatformId.FACEBOOK) {
-        currentSite = "facebook";
-    } else if (status.site?.id === SocialPlatformId.TIKTOK) {
-        currentSite = "tiktok";
-    } else if (status.site?.id === SocialPlatformId.E621) {
-        currentSite = "e621";
-    } else if (status.site?.id === SocialPlatformId.INSTAGRAM) {
-        currentSite = "instagram";
-    } else if (status.site?.id === SocialPlatformId.FURAFINITY) {
-        currentSite = "furaffinity";
-    }
-
-    for (const chip of Array.from(document.querySelectorAll<HTMLElement>(".site-chip"))) {
-        chip.classList.toggle("site-chip--current", chip.dataset.site === currentSite);
     }
 }
 
