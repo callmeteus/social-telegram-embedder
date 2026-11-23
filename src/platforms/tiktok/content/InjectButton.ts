@@ -20,6 +20,9 @@ import { SEND_TO_TELEGRAM_ICON_PATH } from "../../../content/icons/TelegramIcon"
 import { buildCaptionDraftHtml } from "../../../core/telegram/Caption";
 import { registerPendingSend, takePendingSend, wasRecentlySent } from "../../../content/send/PendingSend";
 import { isSendPostAccepted, type SendPostResponse } from "../../../core/types/Results";
+import { offloadSnapshotMediaBlobs } from "../../../content/media/BlobSnapshotTransfer";
+import { buildTikTokSnapshot } from "./TikTokSnapshot";
+import type { SocialPostSnapshot } from "../../types";
 
 /** Marker set on an action rail after its send button has been injected. */
 export const TIKTOK_INJECTED_ATTR = "data-x2tg-tiktok-injected";
@@ -98,7 +101,7 @@ async function handleSendClick(postUrl: string): Promise<void> {
     }
 
     const resolvedPostUrl = tikTokPostUrlFromPage(window.location) ?? postUrl;
-    const draftText = extractTikTokCaptionText(document);
+    const draftText = extractTikTokCaptionText(document) || await buildTikTokSnapshot(resolvedPostUrl).then((s) => s.text);
 
     showDestinationPicker({
         config,
@@ -128,7 +131,17 @@ async function sendToDestinations(
     const requestId = crypto.randomUUID();
     updateProgressToast(requestId, t("preparingSend"));
 
-    // No DOM snapshot: the worker resolves the video through public endpoints, then falls back to a link send.
+    // TikTok's public endpoints no longer expose the video, so capture it from the page payload.
+    // TikTok's CSP blocks chrome.storage.session, so the inline blob travels in the message itself.
+    const snapshot = await buildTikTokSnapshot(postUrl);
+    let payloadSnapshot: SocialPostSnapshot = snapshot;
+
+    try {
+        payloadSnapshot = await offloadSnapshotMediaBlobs(snapshot, requestId);
+    } catch (err) {
+        console.debug("[tiktok] storage offload unavailable, sending inline bytes directly", err);
+    }
+
     registerPendingSend(requestId, { dedupeKey, destinations });
 
     const response = await sendRuntimeMessage<SendPostResponse>({
@@ -137,6 +150,7 @@ async function sendToDestinations(
         requestId,
         destinations: destinations.map((destination) => destination.ref),
         postUrl,
+        postSnapshot: payloadSnapshot,
         captionHtml
     });
 
