@@ -101,6 +101,8 @@ export interface PickerModelInput {
     connections: SendConnection[];
     accounts: PickerAccountInput[];
     query: string;
+    /** Omits the Recent section; recent destinations are still tracked in storage. */
+    hideRecentChats?: boolean;
 }
 
 /**
@@ -128,6 +130,7 @@ export function matchesQuery(item: PickerItem, normalizedQuery: string): boolean
  * Builds the visible sections: Pinned, Recent, Bot channels, Telegram account. Chats of every account
  * are merged into one section. Each destination appears once (pins win, then recents), the query
  * filters every section, server results are merged into the account section, and empty sections are omitted.
+ * When `hideRecentChats` is set, the Recent section is skipped and its rows stay in their regular sections.
  */
 export function buildPickerSections(input: PickerModelInput): PickerSection[] {
     const query = normalizeSearchText(input.query);
@@ -166,11 +169,30 @@ export function buildPickerSections(input: PickerModelInput): PickerSection[] {
     });
 
     const sections: PickerSection[] = [
-        { id: PickerSectionId.PINNED, items: take(pinnedItems) },
-        { id: PickerSectionId.RECENT, items: take(recentItems) },
-        { id: PickerSectionId.BOT_CHANNELS, items: take(mainItems.filter((item) => item.channelProvider !== undefined)) },
-        { id: PickerSectionId.TELEGRAM_ACCOUNT, items: [...take(mainItems.filter((item) => item.channelProvider === undefined)), ...take(searchItems)] }
+        {
+            id: PickerSectionId.PINNED,
+            items: take(pinnedItems)
+        }
     ];
+
+    // Skipping take() as well keeps those rows available in their regular sections.
+    if (!input.hideRecentChats) {
+        sections.push({
+            id: PickerSectionId.RECENT,
+            items: take(recentItems)
+        });
+    }
+
+    sections.push(
+        {
+            id: PickerSectionId.BOT_CHANNELS,
+            items: take(mainItems.filter((item) => item.channelProvider !== undefined))
+        },
+        {
+            id: PickerSectionId.TELEGRAM_ACCOUNT,
+            items: [...take(mainItems.filter((item) => item.channelProvider === undefined)), ...take(searchItems)]
+        }
+    );
 
     return sections.filter((section) => section.items.length > 0);
 }

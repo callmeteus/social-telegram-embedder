@@ -36,7 +36,9 @@ describe("migrateConfig", () => {
                 { ref: { type: DestinationRefType.CHANNEL, channelId: "b" }, usedAt: expect.any(Number) }
             ],
 
-            pinnedDestinations: []
+            pinnedDestinations: [],
+
+            hideRecentChats: false
         });
         expect(isConfigReady(result.config)).toBe(true);
     });
@@ -156,7 +158,9 @@ describe("migrateConfig", () => {
                 { ref: { type: DestinationRefType.TELEGRAM_PEER, connectionId: "acc-1", peerId: 42, kind: TelegramPeerKind.USER, title: "Ana" }, usedAt: 5 }
             ],
 
-            pinnedDestinations: [{ type: DestinationRefType.CHANNEL, channelId: "b" }]
+            pinnedDestinations: [{ type: DestinationRefType.CHANNEL, channelId: "b" }],
+
+            hideRecentChats: true
         };
 
         const result = migrateConfig(stored);
@@ -299,6 +303,16 @@ describe("migrateConfig", () => {
         expect(result.config.connections).toEqual([]);
         expect(result.config.channels).toEqual([]);
         expect(result.config.recentDestinations).toEqual([]);
+    });
+
+    it("defaults hideRecentChats to false and coerces invalid values", () => {
+        const fresh = migrateConfig(undefined);
+        const enabled = migrateConfig({ version: CurrentConfigVersion, hideRecentChats: true });
+        const invalid = migrateConfig({ version: CurrentConfigVersion, hideRecentChats: "yes" });
+
+        expect(fresh.config.hideRecentChats).toBe(false);
+        expect(enabled.config.hideRecentChats).toBe(true);
+        expect(invalid.config.hideRecentChats).toBe(false);
     });
 
     it("preserves forum topic ids when upgrading v4 and ignores invalid ones", () => {

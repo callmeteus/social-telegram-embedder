@@ -125,6 +125,7 @@ Compare the output with the contents of the `.sha256` file from the release.
 - **Local-only secrets** - bot token stays in `chrome.storage.sync` on your machine
 - **Telegram account mode** - log in as yourself (QR or phone, with two-step verification) and send to any chat, group or channel you can write in; see [Telegram Account Mode](#telegram-account-mode)
 - **Searchable live picker** - search bar, recent destinations, live chat list with avatars
+- **Hide recent chats option** - show only pinned destinations and your chat list in the picker (off by default)
 - **Send to several destinations at once** - up to 10 per click, across bot channels and account chats
 
 ---

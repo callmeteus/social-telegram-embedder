@@ -6,11 +6,13 @@ import { initTelegramAccountSection, type TelegramAccountSectionControls } from 
 import { applyOptionsPageI18n } from "../core/i18n/ApplyOptionsPageI18n";
 import { t } from "../core/i18n/I18n";
 import { createConnectionId } from "../core/storage/Connections";
-import { loadConfig } from "../core/storage/Storage";
+import { loadConfig, saveConfig } from "../core/storage/Storage";
 import { SendConnectionType, type ExtensionConfig } from "../core/types/Config";
 
 const connectionsView = document.getElementById("connections-view") as HTMLElement;
 const connectionsList = document.getElementById("connections-list") as HTMLElement;
+const preferencesView = document.getElementById("preferences-view") as HTMLElement;
+const hideRecentChatsInput = document.getElementById("hide-recent-chats") as HTMLInputElement;
 const accountSection = document.getElementById("account-section") as HTMLElement;
 const botSection = document.getElementById("bot-section") as HTMLElement;
 const subtitle = document.querySelector<HTMLElement>(".page__subtitle");
@@ -38,6 +40,11 @@ async function init(): Promise<void> {
     accountSectionControls = initTelegramAccountSection({ onLoggedOut: () => navigate({ view: OptionsView.LIST }, { force: true }) });
 
     document.getElementById("connections-add")?.addEventListener("click", () => navigate({ view: OptionsView.ADD }));
+    hideRecentChatsInput.addEventListener("change", () => {
+        if (config) {
+            void saveConfig({ ...config, hideRecentChats: hideRecentChatsInput.checked });
+        }
+    });
     document.getElementById("bot-back")?.addEventListener("click", () => navigate({ view: OptionsView.LIST }));
     document.getElementById("account-back")?.addEventListener("click", () => navigate({ view: OptionsView.LIST }));
 
@@ -68,6 +75,7 @@ async function init(): Promise<void> {
 
 async function refreshConfig(): Promise<void> {
     config = await loadConfig();
+    hideRecentChatsInput.checked = config.hideRecentChats;
     renderConnectionsList(connectionsList, config, (connection) => navigate({
         view: connection.type === SendConnectionType.TELEGRAM_BOT ? OptionsView.BOT : OptionsView.ACCOUNT,
         connectionId: connection.id
@@ -134,6 +142,7 @@ function applyVisibility(): void {
     const onChooser = current.view === OptionsView.ADD || (current.view === OptionsView.LIST && !hasConnections);
 
     connectionsView.hidden = !onList;
+    preferencesView.hidden = !onList;
     setupWizard?.setVisible(onChooser, hasConnections);
     botSection.hidden = current.view !== OptionsView.BOT;
     accountSection.hidden = current.view !== OptionsView.ACCOUNT;
