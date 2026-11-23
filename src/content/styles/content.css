@@ -122,6 +122,26 @@
     fill: currentColor;
 }
 
+/* E621 post control strip */
+.x2tg-send-button-slot--e621 {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-self: center;
+    pointer-events: auto;
+}
+
+.x2tg-send-button--e621 {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.x2tg-send-button--e621 svg {
+    display: block;
+    flex: 0 0 auto;
+}
+
 .x2tg-picker-overlay {
     position: fixed;
     inset: 0;

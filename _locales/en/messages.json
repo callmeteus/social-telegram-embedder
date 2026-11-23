@@ -3,13 +3,16 @@
         "message": "Social Telegram Embedder"
     },
     "extDescription": {
-        "message": "Embed social posts in Telegram channels with rich media. Works on X/Twitter and Facebook."
+        "message": "Embed social posts in Telegram channels with rich media. Works on X/Twitter, Facebook and e621."
+    },
+    "siteE621": {
+        "message": "e621"
     },
     "optionsPageTitle": {
         "message": "Social Telegram Embedder - Settings"
     },
     "optionsSubtitle": {
-        "message": "Where the posts you send from X and Facebook go."
+        "message": "Where the posts you send from X, Facebook and e621 go."
     },
     "optionsBotSection": {
         "message": "Telegram bot"
@@ -738,7 +741,7 @@
         "message": "Start with one. You can add more later."
     },
     "optionsSetupSubtitle": {
-        "message": "Choose how posts go from X or Facebook to Telegram."
+        "message": "Choose how posts go from X, Facebook or e621 to Telegram."
     },
     "optionsSetupAccountTitle": {
         "message": "Your Telegram account"
@@ -902,7 +905,7 @@
         "message": "Not available on this site"
     },
     "popupStatusUnsupportedDescription": {
-        "message": "The extension works on X and Facebook only."
+        "message": "The extension works on X, Facebook and e621 only."
     },
     "popupSupportedSites": {
         "message": "Works on"
