@@ -22,6 +22,12 @@ describe("getPlatformSiteForUrl", () => {
             .toBe(SocialPlatformId.INSTAGRAM);
     });
 
+    it("recognizes TikTok video pages and short links from the platform manifest", () => {
+        expect(getPlatformSiteForUrl("https://www.tiktok.com/@chef/video/1")?.id).toBe(SocialPlatformId.TIKTOK);
+        expect(getPlatformSiteForUrl("https://vm.tiktok.com/ZSabc123")?.id).toBe(SocialPlatformId.TIKTOK);
+        expect(getPlatformSiteForUrl("https://vt.tiktok.com/ZSxyz789")?.id).toBe(SocialPlatformId.TIKTOK);
+    });
+
     it("recognizes the FurAffinity hosts from the platform manifest", () => {
         expect(getPlatformSiteForUrl("https://www.furaffinity.net/view/12345/")?.id).toBe(SocialPlatformId.FURAFINITY);
         expect(getPlatformSiteForUrl("https://furaffinity.net/view/12345")?.id).toBe(SocialPlatformId.FURAFINITY);

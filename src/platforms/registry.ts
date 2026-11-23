@@ -2,6 +2,7 @@ import { e621Platform } from "./e621";
 import { facebookPlatform } from "./facebook";
 import { furaffinityPlatform } from "./furaffinity";
 import { instagramPlatform } from "./instagram";
+import { tiktokPlatform } from "./tiktok";
 import { xPlatform } from "./x";
 import type { SocialPlatform, SocialPlatformId } from "./types";
 
@@ -11,7 +12,8 @@ export const socialPlatforms: SocialPlatform[] = [
     facebookPlatform,
     e621Platform,
     instagramPlatform,
-    furaffinityPlatform
+    furaffinityPlatform,
+    tiktokPlatform
 ];
 
 /**
