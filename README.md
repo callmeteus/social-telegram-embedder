@@ -2,11 +2,11 @@
 
 # Social Telegram Embedder
 
-> Embed social posts in Telegram channels with one click - rich media on X/Twitter, Facebook, Instagram and e621.
+> Embed social posts in Telegram channels with one click - rich media on X/Twitter, Facebook, Instagram, FurAffinity and e621.
 >
 > [github.com/callmeteus/social-telegram-embedder](https://github.com/callmeteus/social-telegram-embedder)
 
-**A Chrome extension that adds a send button to social posts, lets you pick a Telegram channel, and delivers photos, videos, GIFs, and text with source links. Supports X/Twitter (FixupX), Facebook (page snapshot), Instagram (page snapshot) and e621 (public API).**
+**A Chrome extension that adds a send button to social posts, lets you pick a Telegram channel, and delivers photos, videos, GIFs, and text with source links. Supports X/Twitter (FixupX), Facebook (page snapshot), Instagram (page snapshot), e621 (public API) and FurAffinity (submission view).**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Chrome Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4.svg)](#)
@@ -21,7 +21,7 @@
 
 ## What Is Social Telegram Embedder?
 
-Sharing posts from social networks to a Telegram channel usually means copy-paste and broken previews. This extension embeds the real media in Telegram. **X/Twitter, Facebook, Instagram and e621 are supported today.**
+Sharing posts from social networks to a Telegram channel usually means copy-paste and broken previews. This extension embeds the real media in Telegram. **X/Twitter, Facebook, Instagram, FurAffinity and e621 are supported today.**
 
 ```text
   Tweet on X/Twitter
@@ -103,10 +103,18 @@ Compare the output with the contents of the `.sha256` file from the release.
 3. Choose a channel from the picker
 4. The extension posts media and/or text to that channel
 
+### 4. Send a FurAffinity submission
+
+1. Open any submission on [furaffinity.net](https://www.furaffinity.net) (for example `https://www.furaffinity.net/view/12345/`)
+2. Click the **paper-plane button** in the submission controls
+3. Choose a Telegram destination from the picker
+4. The extension sends the artwork and a caption with the source link, or the link alone if the media cannot be resolved
+
 ---
 
 ## Features
 
+- **FurAffinity submissions** with artwork, animation and a title and artist caption, with a link-only fallback
 - **One-click send** from the tweet action bar on timeline and tweet detail pages
 - **Channel picker on every send** - always asks which channel, even if you only have one
 - **Multi-channel config** - friendly names, reorder, test, and remove channels
@@ -295,6 +303,7 @@ Load the `dist/` folder via **Load unpacked** while developing. After changes, c
 | `src/platforms/facebook/` | Facebook: DOM snapshot, action bar injection, Open Graph fallback |
 | `src/platforms/instagram/` | Instagram: post and reel URL normalization, page media snapshot, action bar injection |
 | `src/platforms/e621/` | e621 and e926: URL normalization, public JSON API, control strip injection |
+| `src/platforms/furaffinity/` | FurAffinity: URL normalization, submission view and Open Graph media, control row injection |
 | `src/content/` | Content script orchestrator and shared UI (picker, toasts) |
 | `src/background/` | Service worker and send handler |
 | `src/background/telegram-user/` | Telegram account session (mtcute), login and dialogs ports; the only place mtcute is imported |

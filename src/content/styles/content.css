@@ -145,6 +145,33 @@
     fill: currentColor;
 }
 
+.x2tg-send-button--furaffinity {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border: 1px solid #474b53;
+    border-radius: 4px;
+    background: #22262e;
+    color: #cfd3da;
+    cursor: pointer;
+    font: inherit;
+    line-height: 1;
+}
+
+.x2tg-send-button--furaffinity:hover,
+.x2tg-send-button--furaffinity:focus-visible {
+    background: #2aabee;
+    border-color: #2aabee;
+    color: #ffffff;
+}
+
+.x2tg-send-button--furaffinity svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
 .x2tg-picker-overlay {
     position: fixed;
     inset: 0;

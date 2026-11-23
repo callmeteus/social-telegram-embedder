@@ -7,7 +7,8 @@ export enum SocialPlatformId {
     X = "x",
     FACEBOOK = "facebook",
     E621 = "e621",
-    INSTAGRAM = "instagram"
+    INSTAGRAM = "instagram",
+    FURAFINITY = "furaffinity"
 }
 
 /** Post payload captured from the page DOM at click time. */

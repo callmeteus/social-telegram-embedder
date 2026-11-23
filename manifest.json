@@ -39,7 +39,11 @@
         "https://instagram.com/*",
         "https://www.instagram.com/*",
         "https://*.cdninstagram.com/*",
-        "https://*.cdninstagram.net/*"
+        "https://*.cdninstagram.net/*",
+        "https://www.furaffinity.net/*",
+        "https://furaffinity.net/*",
+        "https://*.furaffinity.net/*",
+        "https://*.facdn.net/*"
     ],
     "background": {
         "service_worker": "background.js"
@@ -55,7 +59,9 @@
                 "https://e621.net/*",
                 "https://e926.net/*",
                 "https://instagram.com/*",
-                "https://www.instagram.com/*"
+                "https://www.instagram.com/*",
+                "https://www.furaffinity.net/*",
+                "https://furaffinity.net/*"
             ],
             "js": [
                 "content.js"

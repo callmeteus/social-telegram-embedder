@@ -1,5 +1,6 @@
 import { e621PlatformManifest } from "./e621/manifest";
 import { facebookPlatformManifest } from "./facebook/manifest";
+import { furaffinityPlatformManifest } from "./furaffinity/manifest";
 import { instagramPlatformManifest } from "./instagram/manifest";
 import { xPlatformManifest } from "./x/manifest";
 import { SocialPlatformId } from "./types";
@@ -32,6 +33,11 @@ export const socialPlatformSites: SocialPlatformSite[] = [
         id: SocialPlatformId.INSTAGRAM,
         label: "Instagram",
         matches: instagramPlatformManifest.matches
+    },
+    {
+        id: SocialPlatformId.FURAFINITY,
+        label: "FurAffinity",
+        matches: furaffinityPlatformManifest.matches
     }
 ];
 

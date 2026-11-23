@@ -126,6 +126,8 @@ function highlightCurrentSite(status: PopupStatus): void {
         currentSite = "e621";
     } else if (status.site?.id === SocialPlatformId.INSTAGRAM) {
         currentSite = "instagram";
+    } else if (status.site?.id === SocialPlatformId.FURAFINITY) {
+        currentSite = "furaffinity";
     }
 
     for (const chip of Array.from(document.querySelectorAll<HTMLElement>(".site-chip"))) {
