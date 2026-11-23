@@ -250,8 +250,8 @@ async function handleSendClick(
             config,
             platformId: SocialPlatformId.X,
             initialCaptionHtml: buildCaptionDraftHtml(pendingSnapshot?.text || draftText, postUrl),
-            onSend: (destinations, captionHtml) => {
-                void sendToDestinations(destinations, postUrl, captionHtml, pendingSnapshot);
+            onSend: (destinations, captionHtml, hasSpoiler) => {
+                void sendToDestinations(destinations, postUrl, captionHtml, hasSpoiler, pendingSnapshot);
             }
         });
     };
@@ -299,6 +299,7 @@ async function sendToDestinations(
     destinations: PickedDestination[],
     postUrl: string,
     captionHtml: string,
+    hasSpoiler: boolean,
     pendingSnapshot?: SocialPostSnapshot
 ): Promise<void> {
     const dedupeKey = `${getDestinationsKey(destinations)}:${postUrl}`;
@@ -326,7 +327,8 @@ async function sendToDestinations(
         destinations: destinations.map((destination) => destination.ref),
         postUrl,
         postSnapshot,
-        captionHtml
+        captionHtml,
+        hasSpoiler
     });
 
     if (response === undefined) {

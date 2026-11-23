@@ -12,6 +12,8 @@ export interface CaptionEditorOptions {
     initialHtml?: string;
     /** Visible character limit; defaults to the Telegram caption limit. */
     maxLength?: number;
+    /** Whether the media spoiler toggle starts checked. */
+    initialHasSpoiler?: boolean;
 }
 
 /** The caption editor mounted inside the destination picker. */
@@ -20,6 +22,8 @@ export interface CaptionEditor {
     element: HTMLElement;
     /** Sanitized caption HTML, or "" when the user left it empty. */
     getHtml(): string;
+    /** Whether the media spoiler toggle is checked. */
+    getHasSpoiler(): boolean;
     focus(): void;
     destroy(): void;
 }
@@ -45,8 +49,10 @@ const DROPPED_TAGS = new Set([
 ]);
 
 /**
- * Builds the WYSIWYG caption editor: a bold toggle and a contenteditable surface whose HTML
- * only ever contains escaped text, `<b>` and line breaks.
+ * Builds the WYSIWYG caption editor: a bold toggle, a contenteditable surface whose HTML
+ * only ever contains escaped text, `<b>` and line breaks, and a media spoiler toggle below it.
+ * The toggle controls the media spoiler only. It never inspects or rewrites caption entities:
+ * picker captions cannot contain a `<spoiler>` tag because the sanitizer drops unknown tags.
  */
 export function createCaptionEditor(options: CaptionEditorOptions = {}): CaptionEditor {
     const maxLength = options.maxLength ?? TelegramCaptionLimit;
@@ -99,7 +105,19 @@ export function createCaptionEditor(options: CaptionEditorOptions = {}): Caption
     toolbar.appendChild(bold);
     frame.append(toolbar, editor);
 
-    element.append(header, frame);
+    const spoilerLabel = document.createElement("label");
+    const spoilerCheckbox = document.createElement("input");
+    const spoilerText = document.createElement("span");
+
+    spoilerLabel.className = "x2tg-caption__spoiler";
+    spoilerCheckbox.type = "checkbox";
+    spoilerCheckbox.className = "x2tg-caption__spoiler-check";
+    spoilerCheckbox.checked = options.initialHasSpoiler ?? false;
+    spoilerText.className = "x2tg-caption__spoiler-label";
+    spoilerText.textContent = t("captionSpoiler");
+    spoilerLabel.append(spoilerCheckbox, spoilerText);
+
+    element.append(header, frame, spoilerLabel);
 
     const refresh = (): void => {
         const html = captionHtmlFromElement(editor, maxLength);
@@ -132,6 +150,7 @@ export function createCaptionEditor(options: CaptionEditorOptions = {}): Caption
     return {
         element,
         getHtml: () => captionHtmlFromElement(editor, maxLength),
+        getHasSpoiler: () => spoilerCheckbox.checked,
         focus: () => focusEnd(editor),
         destroy: () => {
             editor.removeEventListener("input", handleInput);

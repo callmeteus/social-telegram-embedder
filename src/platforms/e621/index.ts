@@ -22,9 +22,10 @@ export const e621Platform: SocialPlatform = {
         sender: DestinationSender,
         post: FetchedSocialPost,
         onProgress?: SendProgressCallback,
-        captionHtml?: string
+        captionHtml?: string,
+        hasSpoiler?: boolean
     ): Promise<SendResult> {
-        return sender.sendSocialPost(post, onProgress, captionHtml);
+        return sender.sendSocialPost(post, onProgress, captionHtml, hasSpoiler);
     },
     progressMessages: {
         fetching: "progressFetchingPost",
