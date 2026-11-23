@@ -3,7 +3,10 @@
         "message": "Social Telegram Embedder"
     },
     "extDescription": {
-        "message": "Embed social posts in Telegram channels with rich media. Works on X/Twitter, Facebook, Instagram, e621 and FurAffinity."
+        "message": "Embed social posts in Telegram channels with rich media. Works on X/Twitter, Facebook, Instagram, TikTok, e621 and FurAffinity."
+    },
+    "siteTikTok": {
+        "message": "TikTok"
     },
     "siteE621": {
         "message": "e621"
@@ -18,7 +21,7 @@
         "message": "Social Telegram Embedder - Settings"
     },
     "optionsSubtitle": {
-        "message": "Where the posts you send from X, Facebook, Instagram, e621 and FurAffinity go."
+        "message": "Where the posts you send from X, Facebook, Instagram, TikTok, e621 and FurAffinity go."
     },
     "optionsBotSection": {
         "message": "Telegram bot"
@@ -218,6 +221,9 @@
     },
     "progressReadingInstagram": {
         "message": "Reading Instagram post..."
+    },
+    "progressTikTokLinkOnly": {
+        "message": "TikTok did not provide the video. Sending the link instead."
     },
     "instagramLinkOnly": {
         "message": "Instagram media is unavailable. Sending the link only."
@@ -759,7 +765,7 @@
         "message": "Start with one. You can add more later."
     },
     "optionsSetupSubtitle": {
-        "message": "Choose how posts go from X, Facebook, Instagram, e621 or FurAffinity to Telegram."
+        "message": "Choose how posts go from X, Facebook, Instagram, TikTok, e621 or FurAffinity to Telegram."
     },
     "optionsSetupAccountTitle": {
         "message": "Your Telegram account"
@@ -923,7 +929,7 @@
         "message": "Not available on this site"
     },
     "popupStatusUnsupportedDescription": {
-        "message": "The extension works on X, Facebook, Instagram, e621 and FurAffinity only."
+        "message": "The extension works on X, Facebook, Instagram, TikTok, e621 and FurAffinity only."
     },
     "popupSupportedSites": {
         "message": "Works on"

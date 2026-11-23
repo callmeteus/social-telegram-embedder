@@ -122,6 +122,8 @@ function highlightCurrentSite(status: PopupStatus): void {
         currentSite = "x";
     } else if (status.site?.id === SocialPlatformId.FACEBOOK) {
         currentSite = "facebook";
+    } else if (status.site?.id === SocialPlatformId.TIKTOK) {
+        currentSite = "tiktok";
     } else if (status.site?.id === SocialPlatformId.E621) {
         currentSite = "e621";
     } else if (status.site?.id === SocialPlatformId.INSTAGRAM) {

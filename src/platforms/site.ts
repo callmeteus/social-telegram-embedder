@@ -2,6 +2,7 @@ import { e621PlatformManifest } from "./e621/manifest";
 import { facebookPlatformManifest } from "./facebook/manifest";
 import { furaffinityPlatformManifest } from "./furaffinity/manifest";
 import { instagramPlatformManifest } from "./instagram/manifest";
+import { tiktokPlatformManifest } from "./tiktok/manifest";
 import { xPlatformManifest } from "./x/manifest";
 import { SocialPlatformId } from "./types";
 
@@ -38,6 +39,11 @@ export const socialPlatformSites: SocialPlatformSite[] = [
         id: SocialPlatformId.FURAFINITY,
         label: "FurAffinity",
         matches: furaffinityPlatformManifest.matches
+    },
+    {
+        id: SocialPlatformId.TIKTOK,
+        label: "TikTok",
+        matches: tiktokPlatformManifest.matches
     }
 ];
 
