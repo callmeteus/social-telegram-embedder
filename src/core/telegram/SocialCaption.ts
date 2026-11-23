@@ -13,6 +13,7 @@ export interface SocialCaptionParts {
     body: string;
     pageName?: string;
     repostedBy?: string;
+    authorUrl?: string;
     authorStyle?: SocialCaptionAuthorStyle;
 }
 
@@ -43,11 +44,13 @@ function buildAuthorHeader(parts: SocialCaptionParts): string {
     const reposter = formatAuthorLabel(parts.repostedBy, style);
 
     if (reposter && originalAuthor) {
-        return `${boldTelegram(reposter)} ${REPOST_MARKER} ${boldTelegram(originalAuthor)}`;
+        const linked = parts.authorUrl ? linkTelegram(parts.authorUrl, originalAuthor) : boldTelegram(originalAuthor);
+
+        return `${boldTelegram(reposter)} ${REPOST_MARKER} ${linked}`;
     }
 
     if (originalAuthor) {
-        return boldTelegram(originalAuthor);
+        return parts.authorUrl ? linkTelegram(parts.authorUrl, originalAuthor) : boldTelegram(originalAuthor);
     }
 
     if (reposter) {
@@ -69,6 +72,19 @@ function formatAuthorLabel(value: string | undefined, style: SocialCaptionAuthor
     }
 
     return trimmed.replace(/^@/, "");
+}
+
+/**
+ * Renders a bold Telegram link to an author profile.
+ */
+function linkTelegram(url: string, label: string): string {
+    const safeUrl = url
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+    return `<b><a href="${safeUrl}">${escapeTelegramHtml(label)}</a></b>`;
 }
 
 function boldTelegram(value: string): string {

@@ -98,7 +98,7 @@ describe("buildFuraffinitySnapshot", () => {
 
         const snapshot = buildFuraffinitySnapshot(submission);
 
-        expect(snapshot?.text).toBe("<b>Artist</b>\n\nCool Art\n\nHello world.");
+        expect(snapshot?.text).toBe('<b><a href="https://www.furaffinity.net/user/artist">Artist</a></b>\n\nCool Art\n\nHello world.');
         expect(snapshot?.media).toEqual([
             {
                 kind: "photo",

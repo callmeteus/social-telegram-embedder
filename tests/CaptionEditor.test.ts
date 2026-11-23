@@ -156,4 +156,23 @@ describe("caption draft and override", () => {
     it("sanitizes the edited caption before sending", () => {
         expect(sanitizeCaptionHtml("<script>x</script><b>ok</b>")).toBe("<b>ok</b>");
     });
+
+    it("keeps safe author links and drops unsafe ones", () => {
+        const safe = '<b><a href="https://x.com/jack">@jack</a></b>';
+
+        expect(sanitizeCaptionHtml(safe)).toBe(safe);
+        expect(sanitizeCaptionHtml('<a href="javascript:alert(1)">bad</a>')).toBe("bad");
+    });
+
+    it("renders and serializes author links in the editor", () => {
+        const host = document.createElement("div");
+
+        renderCaptionHtml(host, '<b><a href="https://x.com/jack">@jack</a></b>\n\nHello');
+
+        const anchor = host.querySelector("a");
+
+        expect(anchor?.getAttribute("href")).toBe("https://x.com/jack");
+        expect(anchor?.closest("b")).not.toBeNull();
+        expect(captionHtmlFromElement(host)).toBe('<b><a href="https://x.com/jack">@jack</a></b>\n\nHello');
+    });
 });

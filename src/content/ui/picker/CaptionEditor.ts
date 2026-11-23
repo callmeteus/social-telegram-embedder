@@ -204,7 +204,7 @@ export function captionHtmlFromElement(element: Element, maxLength: number = Tel
 }
 
 /**
- * Fills the editor with caption HTML, converting line breaks and bold ranges into DOM nodes.
+ * Fills the editor with caption HTML, converting line breaks and inline tags into DOM nodes.
  */
 export function renderCaptionHtml(element: Element, html: string, maxLength: number = TelegramCaptionLimit): void {
     const clean = sanitizeCaptionHtml(html, maxLength);
@@ -222,34 +222,41 @@ export function renderCaptionHtml(element: Element, html: string, maxLength: num
 }
 
 function appendInline(parent: Node, line: string): void {
-    let isBold = false;
+    const stack: Node[] = [parent];
 
-    for (const token of line.split(/(<b>|<\/b>)/)) {
+    for (const token of line.split(/(<b>|<\/b>|<a href="[^"]*">|<\/a>)/)) {
         if (!token) {
             continue;
         }
 
+        if (token === "</b>" || token === "</a>") {
+            if (stack.length > 1) {
+                stack.pop();
+            }
+
+            continue;
+        }
+
+        let container = stack[stack.length - 1] ?? parent;
+
         if (token === "<b>") {
-            isBold = true;
+            container = document.createElement("b");
+        } else if (token.startsWith("<a ")) {
+            const href = token.match(/href="([^"]*)"/)?.[1];
+            const anchor = document.createElement("a");
+
+            if (href) {
+                anchor.setAttribute("href", href);
+            }
+
+            container = anchor;
+        } else {
+            container.appendChild(document.createTextNode(decodeCaptionText(token)));
             continue;
         }
 
-        if (token === "</b>") {
-            isBold = false;
-            continue;
-        }
-
-        const text = document.createTextNode(decodeCaptionText(token));
-
-        if (isBold) {
-            const bold = document.createElement("b");
-
-            bold.appendChild(text);
-            parent.appendChild(bold);
-            continue;
-        }
-
-        parent.appendChild(text);
+        stack[stack.length - 1]?.appendChild(container);
+        stack.push(container);
     }
 }
 
@@ -299,6 +306,16 @@ function serializeNode(node: Node): string {
 
     if (node.tagName === "B" || node.tagName === "STRONG") {
         return inner.trim() ? `<b>${inner}</b>` : inner;
+    }
+
+    if (node.tagName === "A") {
+        const href = node.getAttribute("href") ?? "";
+
+        if (/^https?:\/\//i.test(href) && inner.trim()) {
+            const safeHref = href.replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+            return `<a href="${safeHref}">${inner}</a>`;
+        }
     }
 
     return inner;

@@ -82,6 +82,28 @@ function readDescriptionText(root: ParentNode): string {
     return clone.textContent?.trim() ?? "";
 }
 
+const ARTIST_SELECTOR = ".submission-description-artist .c-usernameBlockSimple__displayName, .submission-description-artist a[href^='/user/']:not(.c-avatarFrameCapable), .submission-artist, .submission-artist-container a";
+const ARTIST_LINK_SELECTOR = ".submission-description-artist a[href^='/user/']:not(.c-avatarFrameCapable), .submission-artist[href], .submission-artist-container a[href]";
+
+/**
+ * Resolves an absolute profile URL from a relative artist link.
+ */
+function readArtistUrl(root: ParentNode): string | undefined {
+    const href = root.querySelector(ARTIST_LINK_SELECTOR)?.getAttribute("href");
+
+    if (!href) {
+        return undefined;
+    }
+
+    try {
+        const url = new URL(href, FURAFFINITY_BASE_URL);
+
+        return url.protocol === "http:" || url.protocol === "https:" ? url.toString() : undefined;
+    } catch {
+        return undefined;
+    }
+}
+
 /**
  * Resolves a media source URL against the FurAffinity origin.
  */
@@ -170,8 +192,9 @@ export function buildFuraffinitySnapshot(root: ParentNode): SocialPostSnapshot |
     return {
         text: buildFuraffinityCaptionHtml(
             readViewText(captionRoot, ".submission-title h2, h2.submission-title, .submission-title"),
-            readViewText(captionRoot, ".submission-description-artist .c-usernameBlockSimple__displayName, .submission-description-artist a[href^='/user/']:not(.c-avatarFrameCapable), .submission-artist, .submission-artist-container a"),
-            readDescriptionText(captionRoot) || readViewText(captionRoot, ".submission-description")
+            readViewText(captionRoot, ARTIST_SELECTOR),
+            readDescriptionText(captionRoot) || readViewText(captionRoot, ".submission-description"),
+            readArtistUrl(captionRoot)
         ),
         media
     };

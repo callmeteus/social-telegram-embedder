@@ -7,15 +7,50 @@ const BLOCK_END_PATTERN = /<\/(?:div|p|li|h[1-6]|blockquote)\s*>/gi;
 const LINE_BREAK_PATTERN = /<br\s*\/?>/gi;
 const DROPPED_BLOCK_PATTERN = /<(script|style|noscript|template|iframe|object)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
 const DROPPED_TAG_PATTERN = /<(?:script|style|noscript|template|iframe|object|embed)\b[^>]*\/?>/gi;
-const BOLD_TAG_PATTERN = /^<(?:b|strong)(?:\s[^>]*)?>$/i;
-const BOLD_CLOSE_TAG_PATTERN = /^<\/(?:b|strong)\s*>$/i;
 const TAG_PATTERN = /^<[^>]*>$/;
 const ANY_TAG_PATTERN = /<[^>]*>/g;
+const LINK_OPEN_PATTERN = /^<a\s+href="(https?:\/\/[^"]+)"\s*>$/i;
+const LINK_CLOSE_PATTERN = /^<\/a\s*>$/i;
+const INLINE_TAG_SPLIT = /(<b>|<\/b>|<a\s+href="[^"]*">|<\/a>)/gi;
 
 /**
- * Keeps the caption HTML that Telegram understands and that the send pipeline writes:
- * escaped text, `<b>` ranges and line breaks. Everything else is dropped, bold tags are
- * balanced and the visible text is capped at {@link TelegramCaptionLimit}.
+ * Normalizes the inline tags Telegram accepts in captions: bold and safe HTTP links.
+ *
+ * @param token - Raw tag token from the caption HTML.
+ * @returns The normalized tag, or null when the tag must be dropped.
+ */
+function normalizeInlineTag(token: string): string | null {
+    if (/^<b>$/i.test(token)) {
+        return "<b>";
+    }
+
+    if (/^<\/b>$/i.test(token)) {
+        return "</b>";
+    }
+
+    const link = token.match(LINK_OPEN_PATTERN);
+
+    if (link) {
+        return `<a href="${link[1]}">`;
+    }
+
+    if (LINK_CLOSE_PATTERN.test(token)) {
+        return "</a>";
+    }
+
+    return null;
+}
+
+/**
+ * Returns the closing tag matching an inline tag.
+ */
+function closingTag(tag: string): string {
+    return tag === "<b>" ? "</b>" : "</a>";
+}
+
+/**
+ * Keeps the caption HTML that Telegram understands: escaped text, `<b>` ranges, `<a href>` links
+ * and line breaks. Everything else is dropped and inline tags are balanced.
  *
  * Shared by the content script (editor output) and the service worker (untrusted messages).
  */
@@ -30,7 +65,7 @@ export function sanitizeCaptionHtml(html: string, maxLength: number = TelegramCa
         .replace(LINE_BREAK_PATTERN, "\n")
         .replace(BLOCK_END_PATTERN, "\n");
 
-    return truncateCaptionHtml(balanceBold(flattened), maxLength);
+    return truncateCaptionHtml(balanceInlineTags(flattened), maxLength);
 }
 
 /**
@@ -41,26 +76,33 @@ export function truncateCaptionHtml(html: string, maxLength: number = TelegramCa
         return "";
     }
 
-    const tokens = html.split(/(<\/?b>)/);
+    const tokens = html.split(INLINE_TAG_SPLIT);
+    const openTags: string[] = [];
     let visible = 0;
     let output = "";
-    let openBold = 0;
 
     for (const token of tokens) {
         if (!token) {
             continue;
         }
 
-        if (token === "<b>") {
-            output += token;
-            openBold += 1;
-            continue;
-        }
+        if (TAG_PATTERN.test(token)) {
+            const tag = normalizeInlineTag(token);
 
-        if (token === "</b>") {
-            if (openBold > 0) {
-                output += token;
-                openBold -= 1;
+            if (!tag) {
+                continue;
+            }
+
+            output += tag;
+
+            if (tag === "<b>" || tag.startsWith("<a ")) {
+                openTags.push(tag);
+            } else if (openTags.length > 0) {
+                const expected = tag === "</b>" ? "<b>" : "<a";
+
+                if (openTags[openTags.length - 1]?.startsWith(expected)) {
+                    openTags.pop();
+                }
             }
 
             continue;
@@ -83,52 +125,62 @@ export function truncateCaptionHtml(html: string, maxLength: number = TelegramCa
         }
     }
 
-    while (openBold > 0) {
-        output += "</b>";
-        openBold -= 1;
+    while (openTags.length > 0) {
+        const tag = openTags.pop();
+
+        if (tag) {
+            output += closingTag(tag);
+        }
     }
 
     return output.replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 /**
- * Drops attributes, unknown tags and unbalanced bold ranges.
+ * Drops attributes, unknown tags and unbalanced inline ranges.
  */
-function balanceBold(html: string): string {
+function balanceInlineTags(html: string): string {
     const tokens = html.split(/(<[^>]*>)/);
+    const openTags: string[] = [];
     let output = "";
-    let openBold = 0;
 
     for (const token of tokens) {
         if (!token) {
             continue;
         }
 
-        if (BOLD_TAG_PATTERN.test(token)) {
-            output += "<b>";
-            openBold += 1;
-            continue;
-        }
+        if (TAG_PATTERN.test(token)) {
+            const tag = normalizeInlineTag(token);
 
-        if (BOLD_CLOSE_TAG_PATTERN.test(token)) {
-            if (openBold > 0) {
-                output += "</b>";
-                openBold -= 1;
+            if (!tag) {
+                continue;
             }
 
-            continue;
-        }
+            if (tag === "<b>" || tag.startsWith("<a ")) {
+                output += tag;
+                openTags.push(tag);
+                continue;
+            }
 
-        if (TAG_PATTERN.test(token)) {
+            const expected = tag === "</b>" ? "<b>" : "<a";
+
+            if (openTags[openTags.length - 1]?.startsWith(expected)) {
+                output += tag;
+                openTags.pop();
+            }
+
             continue;
         }
 
         output += token;
     }
 
-    while (openBold > 0) {
-        output += "</b>";
-        openBold -= 1;
+    while (openTags.length > 0) {
+        const tag = openTags.pop();
+
+        if (tag) {
+            output += closingTag(tag);
+        }
     }
 
     return output;
