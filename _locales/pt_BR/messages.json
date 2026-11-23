@@ -3,16 +3,19 @@
         "message": "Social Telegram Embedder"
     },
     "extDescription": {
-        "message": "Embute posts de redes sociais em canais do Telegram com mídia rica. Funciona no X/Twitter, no Facebook e no e621."
+        "message": "Embute posts de redes sociais em canais do Telegram com mídia rica. Funciona no X/Twitter, no Facebook, no e621 e no FurAffinity."
     },
     "siteE621": {
         "message": "e621"
+    },
+    "siteFuraffinity": {
+        "message": "FurAffinity"
     },
     "optionsPageTitle": {
         "message": "Social Telegram Embedder - Configurações"
     },
     "optionsSubtitle": {
-        "message": "Para onde vão os posts que você envia do X, do Facebook e do e621."
+        "message": "Para onde vão os posts que você envia do X, do Facebook, do e621 e do FurAffinity."
     },
     "optionsBotSection": {
         "message": "Bot do Telegram"
@@ -747,7 +750,7 @@
         "message": "Comece por um. Você pode adicionar outros depois."
     },
     "optionsSetupSubtitle": {
-        "message": "Escolha como os posts vão do X, do Facebook ou do e621 para o Telegram."
+        "message": "Escolha como os posts vão do X, do Facebook, do e621 ou do FurAffinity para o Telegram."
     },
     "optionsSetupAccountTitle": {
         "message": "Sua conta do Telegram"
@@ -911,7 +914,7 @@
         "message": "Não disponível neste site"
     },
     "popupStatusUnsupportedDescription": {
-        "message": "A extensão funciona apenas no X, no Facebook e no e621."
+        "message": "A extensão funciona apenas no X, no Facebook, no e621 e no FurAffinity."
     },
     "popupSupportedSites": {
         "message": "Funciona em"

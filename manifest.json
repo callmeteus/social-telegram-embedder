@@ -35,7 +35,11 @@
         "https://e621.net/*",
         "https://e926.net/*",
         "https://*.e621.net/*",
-        "https://*.e926.net/*"
+        "https://*.e926.net/*",
+        "https://www.furaffinity.net/*",
+        "https://furaffinity.net/*",
+        "https://*.furaffinity.net/*",
+        "https://*.facdn.net/*"
     ],
     "background": {
         "service_worker": "background.js"
@@ -49,7 +53,9 @@
                 "https://web.facebook.com/*",
                 "https://m.facebook.com/*",
                 "https://e621.net/*",
-                "https://e926.net/*"
+                "https://e926.net/*",
+                "https://www.furaffinity.net/*",
+                "https://furaffinity.net/*"
             ],
             "js": [
                 "content.js"
