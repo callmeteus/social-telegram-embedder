@@ -2,11 +2,11 @@
 
 # Social Telegram Embedder
 
-> Embed social posts in Telegram channels with one click - rich media on X/Twitter, Facebook and e621.
+> Embed social posts in Telegram channels with one click - rich media on X/Twitter, Facebook, Instagram and e621.
 >
 > [github.com/callmeteus/social-telegram-embedder](https://github.com/callmeteus/social-telegram-embedder)
 
-**A Chrome extension that adds a send button to social posts, lets you pick a Telegram channel, and delivers photos, videos, GIFs, and text with source links. Supports X/Twitter (FixupX), Facebook (page snapshot) and e621 (public API).**
+**A Chrome extension that adds a send button to social posts, lets you pick a Telegram channel, and delivers photos, videos, GIFs, and text with source links. Supports X/Twitter (FixupX), Facebook (page snapshot), Instagram (page snapshot) and e621 (public API).**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Chrome Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4.svg)](#)
@@ -21,7 +21,7 @@
 
 ## What Is Social Telegram Embedder?
 
-Sharing posts from social networks to a Telegram channel usually means copy-paste and broken previews. This extension embeds the real media in Telegram. **X/Twitter, Facebook and e621 are supported today.**
+Sharing posts from social networks to a Telegram channel usually means copy-paste and broken previews. This extension embeds the real media in Telegram. **X/Twitter, Facebook, Instagram and e621 are supported today.**
 
 ```text
   Tweet on X/Twitter
@@ -290,9 +290,10 @@ Load the `dist/` folder via **Load unpacked** while developing. After changes, c
 | `src/core/` | Types, storage, Telegram client, network helpers |
 | `src/core/i18n/` | `chrome.i18n` helper and options page localization |
 | `_locales/` | Localized message catalogs (`en`, `pt_BR`) |
-| `src/platforms/` | Social platform registry and adapters (`x/`, `facebook/`, `e621/`) |
+| `src/platforms/` | Social platform registry and adapters (`x/`, `facebook/`, `instagram/`, `e621/`) |
 | `src/platforms/x/` | X/Twitter: FixupX URL, FxTwitter API, action bar injection |
 | `src/platforms/facebook/` | Facebook: DOM snapshot, action bar injection, Open Graph fallback |
+| `src/platforms/instagram/` | Instagram: post and reel URL normalization, page media snapshot, action bar injection |
 | `src/platforms/e621/` | e621 and e926: URL normalization, public JSON API, control strip injection |
 | `src/content/` | Content script orchestrator and shared UI (picker, toasts) |
 | `src/background/` | Service worker and send handler |

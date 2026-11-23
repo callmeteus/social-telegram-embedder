@@ -25,6 +25,29 @@
     background-color: rgba(42, 171, 238, 0.1);
 }
 
+/* Instagram post / reel action bar */
+.x2tg-send-button--instagram {
+    align-items: center;
+    background: none;
+    border: 0;
+    color: var(--ig-secondary-text, #737373);
+    cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    padding: 8px;
+}
+
+.x2tg-send-button--instagram:hover,
+.x2tg-send-button--instagram:focus-visible {
+    color: var(--ig-primary-text, #262626);
+    outline: none;
+}
+
+.x2tg-send-button--instagram svg {
+    height: 24px;
+    width: 24px;
+}
+
 /* Facebook feed / modal action bar */
 .x2tg-send-button-slot--facebook {
     pointer-events: auto;
