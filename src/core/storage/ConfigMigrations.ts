@@ -209,7 +209,9 @@ function sanitizeConfig(raw: RawConfig): ExtensionConfig {
         connections,
         channels,
         recentDestinations: sanitizeRecentDestinations(raw.recentDestinations, channels, accountIds),
-        pinnedDestinations: sanitizePinnedDestinations(raw.pinnedDestinations, channels, accountIds)
+        pinnedDestinations: sanitizePinnedDestinations(raw.pinnedDestinations, channels, accountIds),
+        // Like pins, this setting was added without a version bump; coerce to a boolean here.
+        hideRecentChats: raw.hideRecentChats === true
     };
 }
 

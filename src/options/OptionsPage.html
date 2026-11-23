@@ -30,6 +30,17 @@
             <ul id="connections-list" class="connections-list"></ul>
         </section>
 
+        <section id="preferences-view" class="card card--preferences" aria-labelledby="preferences-title" hidden>
+            <h2 id="preferences-title" class="card__title" data-i18n="optionsPreferencesTitle">Preferences</h2>
+            <label class="preference" for="hide-recent-chats">
+                <input id="hide-recent-chats" class="preference__checkbox" type="checkbox">
+                <span class="preference__text">
+                    <span class="preference__label" data-i18n="optionsHideRecentChatsLabel">Hide recent chats</span>
+                    <span class="preference__description" data-i18n="optionsHideRecentChatsDescription">Show only pinned destinations and your chat list in the picker.</span>
+                </span>
+            </label>
+        </section>
+
         <section id="setup-wizard" class="setup-wizard" aria-labelledby="setup-wizard-title" hidden>
             <div class="path-head">
                 <button id="setup-back" type="button" class="path-head__back" data-i18n-title="optionsSetupBack" title="Back" hidden></button>
