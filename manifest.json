@@ -35,7 +35,11 @@
         "https://e621.net/*",
         "https://e926.net/*",
         "https://*.e621.net/*",
-        "https://*.e926.net/*"
+        "https://*.e926.net/*",
+        "https://instagram.com/*",
+        "https://www.instagram.com/*",
+        "https://*.cdninstagram.com/*",
+        "https://*.cdninstagram.net/*"
     ],
     "background": {
         "service_worker": "background.js"
@@ -49,7 +53,9 @@
                 "https://web.facebook.com/*",
                 "https://m.facebook.com/*",
                 "https://e621.net/*",
-                "https://e926.net/*"
+                "https://e926.net/*",
+                "https://instagram.com/*",
+                "https://www.instagram.com/*"
             ],
             "js": [
                 "content.js"

@@ -1,5 +1,6 @@
 import { e621PlatformManifest } from "./e621/manifest";
 import { facebookPlatformManifest } from "./facebook/manifest";
+import { instagramPlatformManifest } from "./instagram/manifest";
 import { xPlatformManifest } from "./x/manifest";
 import { SocialPlatformId } from "./types";
 
@@ -26,6 +27,11 @@ export const socialPlatformSites: SocialPlatformSite[] = [
         id: SocialPlatformId.E621,
         label: "e621",
         matches: e621PlatformManifest.matches
+    },
+    {
+        id: SocialPlatformId.INSTAGRAM,
+        label: "Instagram",
+        matches: instagramPlatformManifest.matches
     }
 ];
 

@@ -6,7 +6,8 @@ import type { DestinationSender } from "../core/destinations";
 export enum SocialPlatformId {
     X = "x",
     FACEBOOK = "facebook",
-    E621 = "e621"
+    E621 = "e621",
+    INSTAGRAM = "instagram"
 }
 
 /** Post payload captured from the page DOM at click time. */
