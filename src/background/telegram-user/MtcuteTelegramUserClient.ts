@@ -13,6 +13,7 @@ import {
     type TextWithEntities,
     type tl
 } from "@mtcute/web";
+import { albumCaptionAboveParams, singleMediaCaptionAboveParams } from "./CaptionAboveParams";
 import { t } from "../../core/i18n/I18n";
 import { LegacyAccountConnectionId } from "../../core/storage/Connections";
 import type { TelegramApiCredentials } from "../../core/telegram-user/Credentials";
@@ -359,7 +360,8 @@ export class MtcuteTelegramUserClient implements TelegramUserClient {
                     logUploadProgress(0, uploaded, total);
                     onProgress?.(uploaded, total);
                 },
-                ...threadParams(topicId)
+                ...threadParams(topicId),
+                ...singleMediaCaptionAboveParams(captionAbove)
             });
         }, SEND_IDLE_TIMEOUT_MS);
 
@@ -386,7 +388,8 @@ export class MtcuteTelegramUserClient implements TelegramUserClient {
                     logUploadProgress(index, uploaded, total);
                     onProgress?.(index, uploaded, total);
                 },
-                ...threadParams(topicId)
+                ...threadParams(topicId),
+                ...albumCaptionAboveParams(captionAbove)
             });
         }, SEND_IDLE_TIMEOUT_MS);
 

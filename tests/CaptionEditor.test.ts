@@ -11,6 +11,10 @@ function surfaceOf(editor: { element: HTMLElement }): HTMLElement {
     return editor.element.querySelector<HTMLElement>(".x2tg-caption__editor")!;
 }
 
+function aboveToggleOf(editor: { element: HTMLElement }): HTMLButtonElement {
+    return editor.element.querySelector<HTMLButtonElement>(".x2tg-caption__option")!;
+}
+
 describe("createCaptionEditor", () => {
     it("prefills bold ranges and line breaks from the draft", () => {
         const editor = createCaptionEditor({ initialHtml: "@<b>user</b>\n\nhttps://x.com/a/status/1" });

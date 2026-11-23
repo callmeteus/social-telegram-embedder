@@ -370,6 +370,10 @@ export class TelegramClient {
                 entry.parse_mode = TELEGRAM_HTML_PARSE_MODE;
             }
 
+            if (captionAbove) {
+                entry.show_caption_above_media = true;
+            }
+
             return entry;
         });
 
@@ -461,6 +465,10 @@ export class TelegramClient {
             if (index === 0 && caption) {
                 entry.caption = caption;
                 entry.parse_mode = TELEGRAM_HTML_PARSE_MODE;
+            }
+
+            if (captionAbove) {
+                entry.show_caption_above_media = true;
             }
 
             mediaPayload.push(entry);
@@ -620,6 +628,8 @@ export class TelegramClient {
             formData.append("parse_mode", TELEGRAM_HTML_PARSE_MODE);
         }
 
+        appendCaptionAboveField(formData, captionAbove);
+
         return this.requestForm(method, formData);
     }
 
@@ -707,6 +717,22 @@ export class TelegramClient {
         }
 
         return { ok: true };
+    }
+}
+
+/**
+ * Bot API field that draws a single-media caption above the attachment.
+ */
+function captionAboveFields(captionAbove?: boolean): Record<string, boolean> {
+    return captionAbove ? { show_caption_above_media: true } : {};
+}
+
+/**
+ * Multipart counterpart of {@link captionAboveFields}, for uploaded single media.
+ */
+function appendCaptionAboveField(formData: FormData, captionAbove?: boolean): void {
+    if (captionAbove) {
+        formData.append("show_caption_above_media", "true");
     }
 }
 

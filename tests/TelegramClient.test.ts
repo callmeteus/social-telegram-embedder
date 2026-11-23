@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TelegramClient } from "../src/core/telegram/TelegramClient";
+import type { FetchedSocialPost, SocialMediaItem } from "../src/platforms/types";
 
 describe("TelegramClient sendMediaGroup", () => {
     afterEach(() => {
