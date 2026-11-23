@@ -33,6 +33,7 @@ interface TelegramInputMedia {
     media: string;
     caption?: string;
     parse_mode?: string;
+    has_spoiler?: boolean;
 }
 
 interface TelegramSentMessage {
@@ -91,13 +92,17 @@ export class TelegramClient {
     }
 
     /**
-     * Sends a social post with media attachments and source link in caption.
+     * Sends a social post with media attachments and source link in caption, hiding its media
+     * behind a spoiler when `hasSpoiler` is set. A caption `<spoiler>` entity is independent of
+     * this flag: the editor only produces escaped text and `<b>` ranges, so the media toggle is
+     * the supported spoiler for picker captions.
      */
     public async sendSocialPost(
         chatId: string,
         post: FetchedSocialPost,
         onProgress?: SendProgressCallback,
-        captionHtml?: string
+        captionHtml?: string,
+        hasSpoiler?: boolean
     ): Promise<SendResult> {
         const normalizedChatId = normalizeTelegramChatId(chatId);
         const caption = resolveTelegramCaption(captionHtml, post.embedUrl, post.text);
@@ -109,7 +114,7 @@ export class TelegramClient {
         }
 
         if (post.media.length === 1) {
-            return this.sendSingleMedia(normalizedChatId, post.media[0], caption, 1, mediaTotal, onProgress);
+            return this.sendSingleMedia(normalizedChatId, post.media[0], caption, 1, mediaTotal, onProgress, hasSpoiler);
         }
 
         const batches = groupSocialMediaForTelegram(post.media);
@@ -125,7 +130,8 @@ export class TelegramClient {
                     batchCaption,
                     mediaIndex + 1,
                     mediaTotal,
-                    onProgress
+                    onProgress,
+                    hasSpoiler
                 )
                 : await this.sendMediaBatch(
                     normalizedChatId,
@@ -133,7 +139,8 @@ export class TelegramClient {
                     batchCaption,
                     mediaIndex,
                     mediaTotal,
-                    onProgress
+                    onProgress,
+                    hasSpoiler
                 );
 
             if (!result.ok) {
@@ -261,7 +268,8 @@ export class TelegramClient {
         caption: string | undefined,
         itemIndex: number,
         itemTotal: number,
-        onProgress?: SendProgressCallback
+        onProgress?: SendProgressCallback,
+        hasSpoiler?: boolean
     ): Promise<SendResult> {
         const localBlob = resolveLocalMediaBlob(media);
 
@@ -275,12 +283,13 @@ export class TelegramClient {
                 caption,
                 itemIndex,
                 itemTotal,
-                onProgress
+                onProgress,
+                hasSpoiler
             );
         }
 
         if (media.kind === "photo") {
-            return this.sendMediaByUrl("sendPhoto", chatId, "photo", media.url, caption, itemIndex, itemTotal, onProgress);
+            return this.sendMediaByUrl("sendPhoto", chatId, "photo", media.url, caption, itemIndex, itemTotal, onProgress, hasSpoiler);
         }
 
         if (media.kind === "gif") {
@@ -292,17 +301,18 @@ export class TelegramClient {
                 caption,
                 itemIndex,
                 itemTotal,
-                onProgress
+                onProgress,
+                hasSpoiler
             );
 
             if (animationResult.ok) {
                 return animationResult;
             }
 
-            return this.sendMediaByUrl("sendVideo", chatId, "video", media.url, caption, itemIndex, itemTotal, onProgress);
+            return this.sendMediaByUrl("sendVideo", chatId, "video", media.url, caption, itemIndex, itemTotal, onProgress, hasSpoiler);
         }
 
-        return this.sendMediaByUrl("sendVideo", chatId, "video", media.url, caption, itemIndex, itemTotal, onProgress);
+        return this.sendMediaByUrl("sendVideo", chatId, "video", media.url, caption, itemIndex, itemTotal, onProgress, hasSpoiler);
     }
 
     private async sendMediaBatch(
@@ -311,7 +321,8 @@ export class TelegramClient {
         caption: string | undefined,
         startIndex: number,
         itemTotal: number,
-        onProgress?: SendProgressCallback
+        onProgress?: SendProgressCallback,
+        hasSpoiler?: boolean
     ): Promise<SendResult> {
         onProgress?.({
             message: itemTotal > 1
@@ -335,7 +346,8 @@ export class TelegramClient {
                 caption,
                 startIndex,
                 itemTotal,
-                onProgress
+                onProgress,
+                hasSpoiler
             );
 
             if (uploaded.ok) {
@@ -349,7 +361,8 @@ export class TelegramClient {
                 : item.url;
             const entry: TelegramInputMedia = {
                 type: item.kind === "photo" ? "photo" : "video",
-                media: photoUrl
+                media: photoUrl,
+                ...(hasSpoiler ? { has_spoiler: true } : {})
             };
 
             if (index === 0 && caption) {
@@ -379,7 +392,8 @@ export class TelegramClient {
                 itemCaption,
                 startIndex + index + 1,
                 itemTotal,
-                onProgress
+                onProgress,
+                hasSpoiler
             );
 
             if (!result.ok) {
@@ -396,7 +410,8 @@ export class TelegramClient {
         caption: string | undefined,
         startIndex: number,
         itemTotal: number,
-        onProgress?: SendProgressCallback
+        onProgress?: SendProgressCallback,
+        hasSpoiler?: boolean
     ): Promise<SendResult> {
         const formData = new FormData();
         const mediaPayload: TelegramInputMedia[] = [];
@@ -439,7 +454,8 @@ export class TelegramClient {
 
             const entry: TelegramInputMedia = {
                 type: item.kind === "photo" ? "photo" : "video",
-                media: `attach://${attachName}`
+                media: `attach://${attachName}`,
+                ...(hasSpoiler ? { has_spoiler: true } : {})
             };
 
             if (index === 0 && caption) {
@@ -473,7 +489,8 @@ export class TelegramClient {
         caption: string | undefined,
         itemIndex: number,
         itemTotal: number,
-        onProgress?: SendProgressCallback
+        onProgress?: SendProgressCallback,
+        hasSpoiler?: boolean
     ): Promise<SendResult> {
         const resolvedUrl = fieldName === "photo"
             ? preferTwitterLargeMediaUrl(mediaUrl)
@@ -494,7 +511,8 @@ export class TelegramClient {
                 caption,
                 itemIndex,
                 itemTotal,
-                onProgress
+                onProgress,
+                hasSpoiler
             );
         }
 
@@ -503,6 +521,7 @@ export class TelegramClient {
             [fieldName]: resolvedUrl,
             caption,
             parse_mode: TELEGRAM_HTML_PARSE_MODE,
+            ...(hasSpoiler ? { has_spoiler: true } : {}),
             ...this.threadFields()
         });
 
@@ -518,7 +537,8 @@ export class TelegramClient {
             caption,
             itemIndex,
             itemTotal,
-            onProgress
+            onProgress,
+            hasSpoiler
         );
     }
 
@@ -530,7 +550,8 @@ export class TelegramClient {
         caption: string | undefined,
         itemIndex: number,
         itemTotal: number,
-        onProgress?: SendProgressCallback
+        onProgress?: SendProgressCallback,
+        hasSpoiler?: boolean
     ): Promise<SendResult> {
         try {
             const blob = await fetchBlobWithProgress(mediaUrl, (loaded, total) => {
@@ -547,7 +568,8 @@ export class TelegramClient {
                 caption,
                 itemIndex,
                 itemTotal,
-                onProgress
+                onProgress,
+                hasSpoiler
             );
         } catch (err) {
             if (err instanceof Error && err.message.startsWith("Download failed")) {
@@ -573,7 +595,8 @@ export class TelegramClient {
         caption: string | undefined,
         itemIndex: number,
         itemTotal: number,
-        onProgress?: SendProgressCallback
+        onProgress?: SendProgressCallback,
+        hasSpoiler?: boolean
     ): Promise<SendResult> {
         onProgress?.({
             message: itemTotal > 1
@@ -587,6 +610,10 @@ export class TelegramClient {
         formData.append("chat_id", chatId);
         this.appendThreadFields(formData);
         formData.append(fieldName, blob, `social-media.${extension}`);
+
+        if (hasSpoiler) {
+            formData.append("has_spoiler", "true");
+        }
 
         if (caption) {
             formData.append("caption", caption);

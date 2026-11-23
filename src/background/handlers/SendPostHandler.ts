@@ -101,7 +101,8 @@ export async function handleSendPost(
                 normalizedUrl,
                 destinations,
                 onProgress,
-                captionHtml: typeof message.captionHtml === "string" ? message.captionHtml : undefined
+                captionHtml: typeof message.captionHtml === "string" ? message.captionHtml : undefined,
+                hasSpoiler: message.hasSpoiler === true
             },
             {
                 resolveDestination: (ref) => resolveDestination(config, ref),
