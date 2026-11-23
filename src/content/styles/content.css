@@ -434,6 +434,14 @@
     outline: none;
 }
 
+/* Host sites may style every input globally, so keep picker form controls isolated. */
+.x2tg-picker-overlay input:focus,
+.x2tg-picker-overlay textarea:focus,
+.x2tg-picker-overlay select:focus {
+    color: #f2f7fb;
+    background: #121a24;
+}
+
 .x2tg-picker__list {
     height: min(60vh, 440px);
     overflow-y: auto;
@@ -742,6 +750,13 @@
 .x2tg-picker--facebook .x2tg-picker__search:focus,
 .x2tg-picker--facebook .x2tg-picker__item--selected .x2tg-picker__check {
     border-color: var(--accent, #2D88FF);
+}
+
+.x2tg-picker--facebook input:focus,
+.x2tg-picker--facebook textarea:focus,
+.x2tg-picker--facebook select:focus {
+    color: var(--primary-text, #E4E6EB);
+    background: var(--comment-background, #3A3B3C);
 }
 
 .x2tg-picker--facebook .x2tg-picker__item--selected .x2tg-picker__check,

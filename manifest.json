@@ -31,7 +31,11 @@
         "https://api.telegram.org/*",
         "https://api.fxtwitter.com/*",
         "https://pbs.twimg.com/*",
-        "https://video.twimg.com/*"
+        "https://video.twimg.com/*",
+        "https://e621.net/*",
+        "https://e926.net/*",
+        "https://*.e621.net/*",
+        "https://*.e926.net/*"
     ],
     "background": {
         "service_worker": "background.js"
@@ -43,7 +47,9 @@
                 "https://twitter.com/*",
                 "https://www.facebook.com/*",
                 "https://web.facebook.com/*",
-                "https://m.facebook.com/*"
+                "https://m.facebook.com/*",
+                "https://e621.net/*",
+                "https://e926.net/*"
             ],
             "js": [
                 "content.js"

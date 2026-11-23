@@ -5,7 +5,8 @@ import type { DestinationSender } from "../core/destinations";
 /** Supported social network identifiers. */
 export enum SocialPlatformId {
     X = "x",
-    FACEBOOK = "facebook"
+    FACEBOOK = "facebook",
+    E621 = "e621"
 }
 
 /** Post payload captured from the page DOM at click time. */
