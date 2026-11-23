@@ -10,9 +10,9 @@ const postMarkup = `
         <img src="https://scontent-abc.cdninstagram.com/v/photo1.jpg">
         <a href="/p/ABC123def45/">permalink</a>
         <div class="actions">
-            <button aria-label="Like">Like</button>
-            <button aria-label="Comment">Comment</button>
-            <button aria-label="Share">Share</button>
+            <div role="button"><svg aria-label="Like"></svg></div>
+            <div role="button"><svg aria-label="Comment"></svg></div>
+            <div role="button"><svg aria-label="Share"></svg></div>
         </div>
     </article>
 `;
@@ -29,7 +29,7 @@ describe("injectInstagramContent", () => {
     it("injects the send button right after the share action", () => {
         injectInstagramContent(document);
 
-        const share = document.querySelector('[aria-label="Share"]');
+        const share = document.querySelector('svg[aria-label="Share"]')?.closest('[role="button"]');
         const button = document.querySelector(".x2tg-send-button--instagram");
 
         expect(button).not.toBeNull();
@@ -54,9 +54,9 @@ describe("injectInstagramContent", () => {
         document.body.innerHTML = `
             <article>
                 <div class="actions">
-                    <button aria-label="Like">Like</button>
-                    <button aria-label="Comment">Comment</button>
-                    <button aria-label="Share">Share</button>
+                    <div role="button"><svg aria-label="Like"></svg></div>
+                    <div role="button"><svg aria-label="Comment"></svg></div>
+                    <div role="button"><svg aria-label="Share"></svg></div>
                 </div>
             </article>
         `;
@@ -72,9 +72,9 @@ describe("injectInstagramContent", () => {
                 <video src="https://scontent-abc.cdninstagram.com/v/clip.mp4"></video>
                 <a href="/reel/XYZ987abc12/">permalink</a>
                 <div class="actions">
-                    <button aria-label="Curtir">Like</button>
-                    <button aria-label="Comentar">Comment</button>
-                    <button aria-label="Compartilhar">Share</button>
+                    <div role="button"><svg aria-label="Curtir"></svg></div>
+                    <div role="button"><svg aria-label="Comentar"></svg></div>
+                    <div role="button"><svg aria-label="Compartilhar"></svg></div>
                 </div>
             </article>
         `;

@@ -2,7 +2,7 @@ import { isExtensionContextValid, sendRuntimeMessage } from "../../../core/exten
 import { RuntimeMessageType } from "../../../core/types/Messages";
 import { t } from "../../../core/i18n/I18n";
 import { isConfigReady, loadConfig } from "../../../core/storage/Storage";
-import { SEND_TO_TELEGRAM_ICON_PATH } from "../../../content/icons/TelegramIcon";
+import { createTelegramIconElement } from "../../../content/icons/TelegramIcon";
 import { offloadSnapshotMediaBlobs } from "../../../content/media/BlobSnapshotTransfer";
 import { dismissProgressToast, openOptionsPage, showToast, updateProgressToast } from "../../../content/ui/Toast";
 import {
@@ -61,7 +61,8 @@ export function injectInstagramContent(root: ParentNode = document): void {
 }
 
 /**
- * Builds the paper-plane control that sits beside Instagram's Share action.
+ * Builds a Telegram-branded control that sits beside Instagram's Share action.
+ * Instagram's own Share icon is also a paper plane, so the brand mark keeps them distinct.
  */
 function buildSendButton(postRoot: Element, postUrl: string): HTMLButtonElement {
     const button = document.createElement("button");
@@ -69,16 +70,7 @@ function buildSendButton(postRoot: Element, postUrl: string): HTMLButtonElement 
     button.classList.add("x2tg-send-button", "x2tg-send-button--instagram");
     button.setAttribute("aria-label", t("sendToTelegram"));
     button.title = t("sendToTelegram");
-
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("viewBox", "0 0 24 24");
-    svg.setAttribute("fill", "currentColor");
-    svg.setAttribute("aria-hidden", "true");
-
-    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    path.setAttribute("d", SEND_TO_TELEGRAM_ICON_PATH);
-    svg.appendChild(path);
-    button.appendChild(svg);
+    button.appendChild(createTelegramIconElement(24));
 
     button.addEventListener("click", (event) => {
         event.preventDefault();

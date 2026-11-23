@@ -20,7 +20,7 @@ const photoPostMarkup = `
         <img src="https://scontent-abc.fbcdn.net/v/photo2.jpg">
         <img src="https://scontent-abc.cdninstagram.com/v/photo1.jpg?stp=dst-jpg">
         <a href="/p/ABC123def45/?igshid=1">permalink</a>
-        <div dir="auto">Chasing light in the city.</div>
+        <div dir="auto"><span class="x193iq5w">Chasing light in the city.</span></div>
         <div dir="auto">Like</div>
     </article>
 `;

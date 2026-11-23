@@ -30,17 +30,20 @@
     align-items: center;
     background: none;
     border: 0;
-    color: var(--ig-secondary-text, #737373);
+    color: #2aabee;
     cursor: pointer;
     display: inline-flex;
     justify-content: center;
     padding: 8px;
+    text-decoration: none;
 }
 
 .x2tg-send-button--instagram:hover,
+.x2tg-send-button--instagram:focus,
 .x2tg-send-button--instagram:focus-visible {
-    color: var(--ig-primary-text, #262626);
+    color: #1f8acb;
     outline: none;
+    text-decoration: none;
 }
 
 .x2tg-send-button--instagram svg {

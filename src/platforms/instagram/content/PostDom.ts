@@ -22,10 +22,21 @@ export function findInstagramShareControls(root: ParentNode): HTMLElement[] {
         return [];
     }
 
-    const controls = Array.from(root.querySelectorAll('[aria-label], [role="button"]'))
-        .filter((element): element is HTMLElement => element instanceof HTMLElement)
-        .filter((element) => ACTION_LABEL_PATTERN.test(element.getAttribute("aria-label")?.trim() ?? ""))
-        .filter((element) => /share|compartilhar|compartir/i.test(element.getAttribute("aria-label")?.trim() ?? ""));
+    const controls: HTMLElement[] = [];
+
+    for (const svg of Array.from(root.querySelectorAll("svg[aria-label]"))) {
+        const label = svg.getAttribute("aria-label")?.trim() ?? "";
+
+        if (!/share|compartilhar|compartir/i.test(label)) {
+            continue;
+        }
+
+        const control = svg.closest('[role="button"]') ?? svg.parentElement;
+
+        if (control instanceof HTMLElement) {
+            controls.push(control);
+        }
+    }
 
     return [...new Set(controls)];
 }
@@ -37,20 +48,20 @@ export function findInstagramShareControls(root: ParentNode): HTMLElement[] {
  * @returns The nearest row holding at least one other action control.
  */
 export function findInstagramActionBar(shareControl: Element): Element | null {
-    let node: Element | null = shareControl.parentElement;
+    let node: Element | null = shareControl;
 
     while (node && node !== document.body) {
-        const actions = Array.from(node.querySelectorAll('[aria-label], [role="button"]'))
-            .filter((element) => ACTION_LABEL_PATTERN.test(element.getAttribute("aria-label")?.trim() ?? ""));
+        const actions = Array.from(node.querySelectorAll("svg[aria-label]"))
+            .filter((svg) => ACTION_LABEL_PATTERN.test(svg.getAttribute("aria-label")?.trim() ?? ""));
 
-        if (actions.length >= 2) {
+        if (actions.length >= 3 && actions.length <= 10) {
             return node;
         }
 
         node = node.parentElement;
     }
 
-    return shareControl.parentElement;
+    return null;
 }
 
 /**
@@ -60,6 +71,19 @@ export function findInstagramActionBar(shareControl: Element): Element | null {
  * @returns The article or dialog holding the post, or the action bar itself.
  */
 export function findInstagramPostRoot(actionBar: Element): Element {
+    const mediaSelector = 'video, img[src*="fbcdn.net"], img[src*="cdninstagram"]';
+    let node: Element | null = actionBar;
+
+    while (node && node !== document.body) {
+        const rectangle = node.getBoundingClientRect();
+
+        if (rectangle.height >= 200 && rectangle.height <= 1000 && node.querySelector(mediaSelector)) {
+            return node;
+        }
+
+        node = node.parentElement;
+    }
+
     return actionBar.closest("article, [role='dialog']") ?? actionBar;
 }
 
@@ -96,25 +120,42 @@ export function extractInstagramPostUrl(
  * @returns The handle without the leading at sign, or null when unavailable.
  */
 export function extractInstagramAuthorHandle(root: Element): string | null {
-    const header = root.querySelector("header, h1");
+    const caption = root.querySelector("span.x193iq5w");
+    const scopes = [caption?.parentElement, root].filter((scope): scope is Element => scope instanceof Element);
 
-    if (header) {
-        const link = header.querySelector('a[href^="/"]');
-        const href = link?.getAttribute("href") ?? "";
-        const match = href.match(/^\/([A-Za-z0-9._]{1,30})\/?$/);
+    for (const scope of scopes) {
+        for (const link of Array.from(scope.querySelectorAll('a[href^="/"]'))) {
+            const href = link.getAttribute("href") ?? "";
+            const match = href.match(/^\/([A-Za-z0-9._]{1,30})\/?$/);
 
-        if (match?.[1]) {
-            return match[1];
-        }
-
-        const text = header.textContent?.trim().replace(/^@/, "");
-
-        if (text && /^[A-Za-z0-9._]{1,30}$/.test(text)) {
-            return text;
+            if (match?.[1] && !/^(p|reel|reels|tv|explore|accounts|stories)$/i.test(match[1])) {
+                return match[1];
+            }
         }
     }
 
-    return null;
+    const header = root.querySelector("header, h1");
+    const text = header?.textContent?.trim().replace(/^@/, "");
+
+    return text && /^[A-Za-z0-9._]{1,30}$/.test(text) ? text : null;
+}
+
+/**
+ * Clicks Instagram's "more" affordance so the full caption is available in the DOM.
+ */
+function expandInstagramCaption(root: Element): void {
+    for (const element of Array.from(root.querySelectorAll("button, [role='button'], span, div"))) {
+        if (!(element instanceof HTMLElement)) {
+            continue;
+        }
+
+        if (!/^(?:mais|more|see more|ver mais|\.\.\.(?:\s+mais)?)$/i.test(element.textContent?.trim() ?? "")) {
+            continue;
+        }
+
+        element.click();
+        return;
+    }
 }
 
 /**
@@ -124,10 +165,25 @@ export function extractInstagramAuthorHandle(root: Element): string | null {
  * @returns Plain caption text, or an empty string behind a login wall.
  */
 export function extractInstagramCaptionText(root: Element): string {
+    expandInstagramCaption(root);
+
     const dedicatedCaption = root.querySelector('[data-testid="post-caption"]')?.textContent?.trim();
 
     if (dedicatedCaption) {
         return normalizeCaptionWhitespace(dedicatedCaption);
+    }
+
+    const captions = Array.from(root.querySelectorAll("span.x193iq5w"))
+        .map((element) => normalizeCaptionWhitespace(element.textContent ?? "")
+            .replace(/^\s*[A-Za-z0-9._]{1,30}\s+\d+\s*[smhdwmy]\s*/i, "")
+            .replace(/\s+(?:mais|more|see more|ver mais)$/i, ""))
+        .filter((text) => text.length >= 2)
+        .filter((text) => !CHROME_TEXT_PATTERN.test(text))
+        .filter((text) => !/^(?:curtido por|liked by|me gusta)/i.test(text))
+        .sort((left, right) => right.length - left.length);
+
+    if (captions[0]) {
+        return captions[0];
     }
 
     const candidates = Array.from(root.querySelectorAll('div[dir="auto"], span[dir="auto"]'))
