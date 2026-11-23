@@ -181,6 +181,15 @@ describe("showDestinationPicker topic selector", () => {
             label: "Fofocas"
         }], "", false, false);
     });
+    it("does not duplicate the general topic when it is already a dialog", () => {
+        openTopics([
+            topic(1, "General", 900),
+            topic(2, "Piquenique", 800)
+        ]);
+
+        expect(labels().filter((label) => label === "General")).toHaveLength(1);
+    });
+
 
     it("goes back with Escape and sends the selected topic from the main list", () => {
         const { onSend } = openTopics([

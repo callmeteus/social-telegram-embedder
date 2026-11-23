@@ -425,7 +425,11 @@ class DestinationPickerView {
         }
 
         const normalizedQuery = normalizeSearchText(this.topicQuery);
-        const candidates = parent.isTopicParent ? topics : [this.generalTopicItem(parent), ...topics];
+        const generalTitle = normalizeSearchText(t("pickerGeneralChat"));
+        const hasGeneralTopic = topics.some((topic) => normalizeSearchText(topic.title) === generalTitle);
+        const candidates = parent.isTopicParent || hasGeneralTopic
+            ? topics
+            : [this.generalTopicItem(parent), ...topics];
         const items = candidates.filter((item) => matchesText(normalizeSearchText(item.title), normalizedQuery));
         const fragment = document.createDocumentFragment();
 
