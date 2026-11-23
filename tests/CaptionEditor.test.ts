@@ -72,6 +72,22 @@ describe("createCaptionEditor", () => {
     it("returns an empty caption for an untouched editor", () => {
         expect(createCaptionEditor().getHtml()).toBe("");
     });
+
+    it("reports the spoiler toggle state and accepts an initial value", () => {
+        const editor = createCaptionEditor();
+        const toggle = editor.element.querySelector<HTMLInputElement>(".x2tg-caption__spoiler-check")!;
+
+        expect(toggle.checked).toBe(false);
+        expect(editor.getHasSpoiler()).toBe(false);
+
+        toggle.click();
+        expect(editor.getHasSpoiler()).toBe(true);
+
+        toggle.click();
+        expect(editor.getHasSpoiler()).toBe(false);
+
+        expect(createCaptionEditor({ initialHasSpoiler: true }).getHasSpoiler()).toBe(true);
+    });
 });
 
 describe("captionHtmlFromElement / renderCaptionHtml", () => {

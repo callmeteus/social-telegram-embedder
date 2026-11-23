@@ -37,6 +37,8 @@ export interface MultiDestinationSendParams {
     onProgress?: SendProgressCallback;
     /** Caption edited in the picker (Telegram HTML); replaces the generated one when set. */
     captionHtml?: string;
+    /** Hides the sent media behind a spoiler; text-only sends ignore it. */
+    hasSpoiler?: boolean;
 }
 
 /** Result plus the destinations that succeeded (for recents). */
@@ -113,7 +115,7 @@ export async function sendToDestinations(
             : onProgress;
 
         const result: SendResult = post
-            ? await params.platform.sendPost(resolved.sender, post, destinationProgress, params.captionHtml)
+            ? await params.platform.sendPost(resolved.sender, post, destinationProgress, params.captionHtml, params.hasSpoiler)
             : await resolved.sender.sendLink(params.normalizedUrl);
 
         outcomes.push({ label: resolved.label, ok: result.ok, error: result.ok ? undefined : result.error });

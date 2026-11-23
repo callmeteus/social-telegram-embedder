@@ -15,19 +15,25 @@ export type UploadProgressCallback = (uploaded: number, total: number) => void;
 /** Sending surface used by the Telegram account destination. */
 export interface TelegramUserMessenger {
     sendText(peerId: number, text: FormattedText, topicId?: number): Promise<void>;
+    /**
+     * The optional `hasSpoiler` flag hides the uploaded media behind a spoiler. It is kept after
+     * `topicId` so existing callers keep their argument positions.
+     */
     sendMedia(
         peerId: number,
         file: OutgoingMediaFile,
         caption?: FormattedText,
         onProgress?: UploadProgressCallback,
-        topicId?: number
+        topicId?: number,
+        hasSpoiler?: boolean
     ): Promise<void>;
     sendMediaGroup(
         peerId: number,
         files: OutgoingMediaFile[],
         caption?: FormattedText,
         onProgress?: (index: number, uploaded: number, total: number) => void,
-        topicId?: number
+        topicId?: number,
+        hasSpoiler?: boolean
     ): Promise<void>;
 }
 

@@ -149,3 +149,80 @@ describe("TelegramClient forum topics", () => {
         expect(formData.get("message_thread_id")).toBe("99");
     });
 });
+
+describe("TelegramClient spoiler", () => {
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    function stubJsonFetch(): ReturnType<typeof vi.fn> {
+        const fetchMock = vi.fn(async () => ({ ok: true, json: async () => ({ ok: true }) }));
+
+        vi.stubGlobal("fetch", fetchMock);
+        return fetchMock;
+    }
+
+    const post = (media: Array<{ kind: "photo" | "video" | "gif"; url: string; prefetchedBlob?: Blob }>) => ({
+        embedUrl: "https://x.com/a/status/1",
+        text: "hello",
+        media
+    });
+
+    it("adds has_spoiler to a single photo sent by URL", async () => {
+        const fetchMock = stubJsonFetch();
+
+        await new TelegramClient("123456:ABCDEF").sendSocialPost("-100999", post([
+            { kind: "photo", url: "https://example.com/a.jpg" }
+        ]), undefined, undefined, true);
+
+        const body = (fetchMock.mock.calls[0]![1] as RequestInit).body;
+        const payload = JSON.parse(String(body)) as Record<string, unknown>;
+
+        expect(payload.has_spoiler).toBe(true);
+    });
+
+    it("adds has_spoiler to multipart single uploads", async () => {
+        const fetchMock = stubJsonFetch();
+
+        await new TelegramClient("123456:ABCDEF").sendSocialPost("-100999", post([
+            { kind: "photo", url: "https://example.com/a.jpg", prefetchedBlob: new Blob(["x"], { type: "image/jpeg" }) }
+        ]), undefined, undefined, true);
+
+        const formData = (fetchMock.mock.calls[0]![1] as RequestInit).body as FormData;
+
+        expect(formData.get("has_spoiler")).toBe("true");
+    });
+
+    it("adds has_spoiler to every album item and omits it when unchecked", async () => {
+        const fetchMock = stubJsonFetch();
+        const client = new TelegramClient("123456:ABCDEF");
+        const album = [
+            { kind: "photo" as const, url: "https://example.com/a.jpg" },
+            { kind: "photo" as const, url: "https://example.com/b.jpg" }
+        ];
+
+        await client.sendSocialPost("-100999", post(album), undefined, undefined, true);
+
+        const withSpoiler = JSON.parse(String((fetchMock.mock.calls[0]![1] as RequestInit).body)) as { media: Array<Record<string, unknown>> };
+
+        expect(withSpoiler.media.map((item) => item.has_spoiler)).toEqual([true, true]);
+
+        fetchMock.mockClear();
+        await client.sendSocialPost("-100999", post(album));
+
+        const withoutSpoiler = JSON.parse(String((fetchMock.mock.calls[0]![1] as RequestInit).body)) as { media: Array<Record<string, unknown>> };
+
+        expect(withoutSpoiler.media.every((item) => !("has_spoiler" in item))).toBe(true);
+    });
+
+    it("leaves text-only sends without a spoiler field", async () => {
+        const fetchMock = stubJsonFetch();
+
+        await new TelegramClient("123456:ABCDEF").sendSocialPost("-100999", post([]), undefined, undefined, true);
+
+        const body = (fetchMock.mock.calls[0]![1] as RequestInit).body;
+        const payload = JSON.parse(String(body)) as Record<string, unknown>;
+
+        expect("has_spoiler" in payload).toBe(false);
+    });
+});

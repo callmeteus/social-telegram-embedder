@@ -61,6 +61,20 @@ describe("TelegramUserDestinationSender", () => {
         expect(client.sendMediaGroup.mock.calls[0]?.[4]).toBe(42);
     });
 
+    it("forwards the spoiler flag to media sends but leaves text-only sends alone", async () => {
+        const client = createFakeTelegramUserClient();
+        const sender = new TelegramUserDestinationSender(client, Peer);
+
+        await sender.sendSocialPost(post([]), undefined, undefined, true);
+        expect(client.sendText.mock.calls[0]).toHaveLength(3);
+
+        await sender.sendSocialPost(post([photo(1)]), undefined, undefined, true);
+        expect(client.sendMedia.mock.calls[0]?.[5]).toBe(true);
+
+        await sender.sendSocialPost(post([photo(2), photo(3)]), undefined, undefined, true);
+        expect(client.sendMediaGroup.mock.calls[0]?.[5]).toBe(true);
+    });
+
     it("downloads and sends a single photo with upload progress", async () => {
         const client = createFakeTelegramUserClient();
         const progress = vi.fn();
