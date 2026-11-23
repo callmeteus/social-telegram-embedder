@@ -545,7 +545,7 @@ function mapTopicToEntry(
     return {
         peerId: group.peerId,
         kind: group.kind,
-        title: `${group.title} · ${topic.title}`,
+        title: topic.title,
         canPost: !topic.isClosed,
         isPinned: topic.isPinned,
         isArchived: group.placement.isArchived,

@@ -205,7 +205,7 @@ describe("buildPickerSections", () => {
 
         expect(items.map((item) => item.title)).toEqual(["Grupo"]);
         expect(items[0]?.topicCount).toBe(1);
-        expect(items[0]?.topics?.map((item) => item.title)).toEqual(["Grupo · Fofocas"]);
+        expect(items[0]?.topics?.map((item) => item.title)).toEqual(["Fofocas"]);
         expect(items[0]?.topics?.[0]?.ref).toMatchObject({
             type: DestinationRefType.TELEGRAM_PEER,
             peerId: -100555,

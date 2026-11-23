@@ -352,21 +352,24 @@ function channelToItem(channel: DestinationChannel, names: ConnectionNames, allC
     const searchName = isTelegram ? names.searchable.get(channel.connectionId) : undefined;
     let topicParentKey: string | undefined;
     let topicParentTitle: string | undefined;
+    let title = channel.label;
 
     if (isTelegram && channel.topicId !== undefined) {
         const parent = allChannels.find((candidate) => candidate.provider === DestinationProvider.TELEGRAM
             && candidate.connectionId === channel.connectionId
             && candidate.chatId === channel.chatId
             && candidate.topicId === undefined);
+        const parts = channel.label.split(" · ");
 
         topicParentKey = parent ? `channel:${parent.id}` : `topic-parent:${channel.connectionId}:${channel.chatId}`;
-        topicParentTitle = parent ? parent.label : channel.label.split(" · ")[0] ?? channel.label;
+        topicParentTitle = parent ? parent.label : parts[0] ?? channel.label;
+        title = parts.length > 1 ? parts.slice(1).join(" · ") : channel.label;
     }
 
     return {
         key: getDestinationRefKey(ref),
         ref,
-        title: channel.label,
+        title,
         route: isTelegram ? buildRoute(SendConnectionType.TELEGRAM_BOT, names.all.get(channel.connectionId)) : undefined,
         channelProvider: channel.provider,
         avatarChannelId: isTelegram ? channel.id : undefined,
@@ -379,23 +382,25 @@ function channelToItem(channel: DestinationChannel, names: ConnectionNames, allC
 }
 
 function dialogToItem(connectionId: string, entry: TelegramDialogEntry, names: ConnectionNames, folders: TelegramFolder[]): PickerItem {
+    const isTopic = entry.topicId !== undefined;
+    const prefix = entry.parentTitle ? `${entry.parentTitle} · ` : "";
+    const title = isTopic && entry.title.startsWith(prefix) ? entry.title.slice(prefix.length) : entry.title;
     const ref: DestinationRef = {
         type: DestinationRefType.TELEGRAM_PEER,
         connectionId,
         peerId: entry.peerId,
         kind: entry.kind,
-        title: entry.title,
+        title,
         ...(entry.topicId === undefined ? {} : { topicId: entry.topicId })
     };
     const searchName = names.searchable.get(connectionId);
     const memberIds = new Set(entry.folderIds ?? []);
     const memberFolders = folders.filter((folder) => memberIds.has(folder.id));
-    const isTopic = entry.topicId !== undefined;
 
     return {
         key: getDestinationRefKey(ref),
         ref,
-        title: entry.title,
+        title,
         route: buildRoute(SendConnectionType.TELEGRAM_ACCOUNT, names.all.get(connectionId)),
         avatarPeerId: entry.peerId,
         avatarConnectionId: connectionId,

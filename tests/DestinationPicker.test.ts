@@ -88,7 +88,7 @@ describe("showDestinationPicker topic selector", () => {
             type: DialogsPortMessageType.PAGE,
             entries: [
                 dialog(-100555, "Grupo", { kind: TelegramPeerKind.GROUP, lastMessageAt: 20 }),
-                dialog(-100555, "Grupo · Fofocas", {
+                dialog(-100555, "Fofocas", {
                     kind: TelegramPeerKind.GROUP,
                     topicId: 42,
                     parentTitle: "Grupo",
@@ -98,7 +98,7 @@ describe("showDestinationPicker topic selector", () => {
             done: true
         });
 
-        expect(labels()).not.toContain("Grupo · Fofocas");
+        expect(labels()).not.toContain("Fofocas");
 
         const groupRow = rows().find((row) => row.querySelector(".x2tg-picker__label")?.textContent === "Grupo");
 
@@ -106,7 +106,7 @@ describe("showDestinationPicker topic selector", () => {
         groupRow?.click();
 
         expect(document.querySelector(".x2tg-picker__title")?.textContent).toBe("Choose a topic");
-        expect(labels()).toEqual(["General", "Grupo · Fofocas"]);
+        expect(labels()).toEqual(["General", "Fofocas"]);
 
         rows()[1]?.click();
 
@@ -116,7 +116,7 @@ describe("showDestinationPicker topic selector", () => {
         document.querySelector<HTMLButtonElement>(".x2tg-picker__back")?.click();
 
         expect(document.querySelector(".x2tg-picker__title")?.textContent).toBe("Send to which channel?");
-        expect(labels()).not.toContain("Grupo · Fofocas");
+        expect(labels()).not.toContain("Fofocas");
 
         const selectedParent = rows().find((row) => row.querySelector(".x2tg-picker__label")?.textContent === "Grupo");
 
@@ -131,10 +131,10 @@ describe("showDestinationPicker topic selector", () => {
                 connectionId: "acc",
                 peerId: -100555,
                 kind: TelegramPeerKind.GROUP,
-                title: "Grupo · Fofocas",
+                title: "Fofocas",
                 topicId: 42
             },
-            label: "Grupo · Fofocas"
+            label: "Fofocas"
         }], "");
     });
 });

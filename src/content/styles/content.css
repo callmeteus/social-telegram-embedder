@@ -513,9 +513,8 @@
 }
 
 .x2tg-picker__text .x2tg-picker__label {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
+    white-space: normal;
 }
 
 .x2tg-picker__title-line {
