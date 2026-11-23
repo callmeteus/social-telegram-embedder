@@ -8,7 +8,8 @@ export enum SocialPlatformId {
     FACEBOOK = "facebook",
     E621 = "e621",
     INSTAGRAM = "instagram",
-    FURAFINITY = "furaffinity"
+    FURAFINITY = "furaffinity",
+    TIKTOK = "tiktok"
 }
 
 /** Post payload captured from the page DOM at click time. */
@@ -81,5 +82,7 @@ export interface SocialPlatform {
         /** i18n message keys resolved via chrome.i18n at runtime. */
         fetching: string;
         invalidUrl: string;
+        /** Optional status shown when the post had to be sent as a link only. */
+        linkOnly?: string;
     };
 }

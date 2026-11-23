@@ -3,7 +3,10 @@
         "message": "Social Telegram Embedder"
     },
     "extDescription": {
-        "message": "Embute posts de redes sociais em canais do Telegram com mídia rica. Funciona no X/Twitter, no Facebook, no Instagram, no FurAffinity e no e621."
+        "message": "Embute posts de redes sociais em canais do Telegram com mídia rica. Funciona no X/Twitter, no Facebook, no Instagram, no FurAffinity, no TikTok e no e621."
+    },
+    "siteTikTok": {
+        "message": "TikTok"
     },
     "siteE621": {
         "message": "e621"
@@ -18,7 +21,7 @@
         "message": "Social Telegram Embedder - Configurações"
     },
     "optionsSubtitle": {
-        "message": "Para onde vão os posts que você envia do X, do Facebook, do Instagram, do FurAffinity e do e621."
+        "message": "Para onde vão os posts que você envia do X, do Facebook, do Instagram, do FurAffinity, do TikTok e do e621."
     },
     "optionsBotSection": {
         "message": "Bot do Telegram"
@@ -221,6 +224,9 @@
     },
     "instagramLinkOnly": {
         "message": "Não foi possível carregar a mídia do Instagram. Enviando apenas o link."
+    },
+    "progressTikTokLinkOnly": {
+        "message": "O TikTok não disponibilizou o vídeo. Enviando apenas o link."
     },
     "progressResolvingVideo": {
         "message": "Resolvendo vídeo..."
@@ -753,7 +759,7 @@
         "message": "Comece por um. Você pode adicionar outros depois."
     },
     "optionsSetupSubtitle": {
-        "message": "Escolha como os posts vão do X, do Facebook, do Instagram, do FurAffinity ou do e621 para o Telegram."
+        "message": "Escolha como os posts vão do X, do Facebook, do Instagram, do FurAffinity, do TikTok ou do e621 para o Telegram."
     },
     "optionsSetupAccountTitle": {
         "message": "Sua conta do Telegram"
@@ -917,7 +923,7 @@
         "message": "Não disponível neste site"
     },
     "popupStatusUnsupportedDescription": {
-        "message": "A extensão funciona apenas no X, no Facebook, no Instagram, no FurAffinity e no e621."
+        "message": "A extensão funciona apenas no X, no Facebook, no Instagram, no FurAffinity, no TikTok e no e621."
     },
     "popupSupportedSites": {
         "message": "Funciona em"

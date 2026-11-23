@@ -27,6 +27,12 @@ describe("getPlatformSiteForUrl", () => {
         expect(getPlatformSiteForUrl("https://furaffinity.net/view/12345")?.id).toBe(SocialPlatformId.FURAFINITY);
     });
 
+    it("recognizes TikTok video pages and short links from the platform manifest", () => {
+        expect(getPlatformSiteForUrl("https://www.tiktok.com/@chef/video/1")?.id).toBe(SocialPlatformId.TIKTOK);
+        expect(getPlatformSiteForUrl("https://vm.tiktok.com/ZSabc123")?.id).toBe(SocialPlatformId.TIKTOK);
+        expect(getPlatformSiteForUrl("https://vt.tiktok.com/ZSxyz789")?.id).toBe(SocialPlatformId.TIKTOK);
+    });
+
     it("ignores unsupported, internal, and malformed URLs", () => {
         expect(getPlatformSiteForUrl("https://example.com/post/1")).toBeUndefined();
         expect(getPlatformSiteForUrl("https://facebook.com/post/1")).toBeUndefined();

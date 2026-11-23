@@ -94,6 +94,10 @@ export async function handleSendPost(
             ? snapshotToFetchedPost(normalizedUrl, hydratedSnapshot)
             : await platform.fetchPost(normalizedUrl);
 
+        if (!fetchedPost && platform.progressMessages.linkOnly) {
+            onProgress?.({ message: t(platform.progressMessages.linkOnly) });
+        }
+
         const { result, succeeded } = await sendToDestinations(
             {
                 platform,
