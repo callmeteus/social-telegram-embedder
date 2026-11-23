@@ -280,8 +280,8 @@ With Portuguese (`pt-BR`) as the browser language, the same controls appear in B
 ### Requirements
 
 - Node.js 20+
-- Yarn 1.x
-- Google Chrome or Chromium
+- Yarn (with `nodeLinker: node-modules`)
+- Google Chrome or Chromium, and/or Firefox 128+
 
 ### Scripts
 
@@ -292,11 +292,28 @@ cd social-telegram-embedder
 yarn install
 yarn typecheck
 yarn test
-yarn build                 # outputs dist/
+yarn build                 # outputs dist/ (Chrome)
 yarn package:zip           # builds + creates release/social-telegram-embedder-vX.Y.Z.zip
+yarn build:firefox         # outputs dist-firefox/
+yarn package:firefox       # builds + creates release/social-telegram-embedder-vX.Y.Z-firefox.xpi
 ```
 
-Load the `dist/` folder via **Load unpacked** while developing. After changes, click **Reload** on `chrome://extensions`.
+Load the `dist/` folder via **Load unpacked** while developing Chrome. After changes, click **Reload** on `chrome://extensions`.
+
+For Firefox, load the `dist-firefox/` manifest via **about:debugging > This Firefox > Load Temporary Add-on**, or install the generated `.xpi`.
+
+### Cross-browser bridge
+
+All extension API access goes through `src/core/extension/BrowserApi.ts`, which resolves `browser.*` on Firefox and `chrome.*` on Chrome at call time. It also normalizes the extension URL scheme (`moz-extension://` vs `chrome-extension://`) and notification creation (promise vs callback). Feature code should import from this bridge instead of touching `chrome.*` directly.
+
+### Firefox smoke test
+
+```bash
+yarn build:firefox
+node scripts/smoke-firefox.mjs
+```
+
+The smoke test uses Playwright with a temporary profile to load `dist-firefox/`, injects the content script on Instagram, and renders the extension popup.
 
 ### Project layout
 

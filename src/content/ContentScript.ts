@@ -1,3 +1,4 @@
+import { isFirefoxRuntime, runtime } from "../core/extension/BrowserApi";
 import { isExtensionContextError, isExtensionContextValid } from "../core/extension";
 import {
     ContentMessageType,
@@ -18,7 +19,7 @@ let contentScriptStopped = false;
 const RESCAN_INTERVAL_MS = 1000;
 
 try {
-    chrome.runtime.onMessage.addListener((message: ContentMessage) => {
+    runtime.onMessage.addListener((message: ContentMessage) => {
         if (!isExtensionContextValid()) {
             stopContentScript();
             return;
@@ -91,6 +92,14 @@ function startObserver(): void {
     }
 
     startInstagramVideoMapListener();
+
+    // Shared-DOM marker identifying which browser ran the content script.
+    // Useful for diagnostics and for the cross-browser smoke tests.
+    document.documentElement.setAttribute(
+        "data-x2tg-content-script",
+        isFirefoxRuntime() ? "firefox" : "chrome"
+    );
+
     scanPlatforms(document);
 
     domObserver = new MutationObserver((mutations) => {

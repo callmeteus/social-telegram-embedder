@@ -1,3 +1,4 @@
+import { runtime, scripting } from "../core/extension/BrowserApi";
 import { validateSendPostRequest } from "./handlers/SendPostHandler";
 import { startSendJob } from "./SendJobRunner";
 import { routeTelegramUserPort, telegramUserSessions } from "./telegram-user";
@@ -21,8 +22,8 @@ import {
 /**
  * Upgrades the stored config right after an extension update, before any page asks for it.
  */
-chrome.runtime.onInstalled.addListener((details) => {
-    if (details.reason !== chrome.runtime.OnInstalledReason.UPDATE) {
+runtime.onInstalled.addListener((details) => {
+    if (details.reason !== runtime.OnInstalledReason.UPDATE) {
         return;
     }
 
@@ -35,22 +36,22 @@ chrome.runtime.onInstalled.addListener((details) => {
  * Long-lived connections from the options page (account login) and the destination picker (dialogs).
  * Only extension pages and our own content scripts can connect; login only from extension pages.
  */
-chrome.runtime.onConnect.addListener((port) => {
-    routeTelegramUserPort(port, telegramUserSessions, chrome.runtime.id);
+runtime.onConnect.addListener((port) => {
+    routeTelegramUserPort(port, telegramUserSessions, runtime.id);
 });
 
 /**
  * Handles runtime messages from content script and options page.
  * SEND_POST is answered right away (the job runs in the worker) so the tab can close.
  */
-chrome.runtime.onMessage.addListener((
+runtime.onMessage.addListener((
     message: RuntimeMessage,
     sender,
     sendResponse
 ) => {
     if (message.type === RuntimeMessageType.INJECT_INSTAGRAM_VIDEO_MAP) {
         if (sender.tab?.id !== undefined) {
-            chrome.scripting.executeScript({
+            scripting.executeScript({
                 target: { tabId: sender.tab.id },
                 world: "MAIN",
                 files: ["instagram-video-map.js"],

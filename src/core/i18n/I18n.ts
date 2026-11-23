@@ -1,10 +1,11 @@
+import { i18n } from "../extension/BrowserApi";
 /**
  * Returns localized copy for an extension message key.
  * Chrome picks the locale from the browser language automatically.
  */
 export function t(messageName: string, substitutions?: string | string[]): string {
     try {
-        const message = chrome.i18n.getMessage(messageName, substitutions);
+        const message = i18n.getMessage(messageName, substitutions);
 
         if (message) {
             return message;
@@ -21,7 +22,7 @@ export function t(messageName: string, substitutions?: string | string[]): strin
  */
 export function getUiLanguage(): string {
     try {
-        return chrome.i18n.getUILanguage();
+        return i18n.getUILanguage();
     } catch {
         return "en";
     }

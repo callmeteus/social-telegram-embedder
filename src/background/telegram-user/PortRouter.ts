@@ -1,3 +1,4 @@
+import { extensionUrlScheme } from "../../core/extension/BrowserApi";
 import { handleAuthPort } from "./AuthPortHandler";
 import { handleDialogsPort } from "./DialogsPortHandler";
 import type { TelegramUserSessionRegistry } from "./TelegramUserSessionRegistry";
@@ -47,5 +48,5 @@ export function routeTelegramUserPort(port: chrome.runtime.Port, sessions: Teleg
 }
 
 function isExtensionPage(url: string | undefined, extensionId: string): boolean {
-    return typeof url === "string" && url.startsWith(`chrome-extension://${extensionId}/`);
+    return typeof url === "string" && url.startsWith(`${extensionUrlScheme}${extensionId}/`);
 }

@@ -1,3 +1,4 @@
+import { tabs, runtime } from "../core/extension/BrowserApi";
 import { handleSendPost } from "./handlers/SendPostHandler";
 import { notifySendResult } from "./SendNotifier";
 import { t } from "../core/i18n/I18n";
@@ -62,7 +63,7 @@ export async function deliverSendResult(
 
     if (tabId !== undefined) {
         try {
-            await chrome.tabs.sendMessage(tabId, payload);
+            await tabs.sendMessage(tabId, payload);
             return;
         } catch (err) {
             // Tab closed, navigated away or the extension was reloaded under it.
@@ -104,7 +105,7 @@ function startKeepalive(): void {
 
     keepaliveTimer = setInterval(() => {
         try {
-            void chrome.runtime.getPlatformInfo();
+            void runtime.getPlatformInfo();
         } catch (err) {
             console.debug("[send] keepalive failed: %O", err);
         }

@@ -1,3 +1,4 @@
+import { tabs } from "../core/extension/BrowserApi";
 import type { SendProgressCallback } from "../core/network/SendProgress";
 import { ContentMessageType, type SendProgressPayload } from "../core/network/SendProgress";
 
@@ -16,7 +17,7 @@ export function createTabProgressReporter(
             percent: update.percent
         };
 
-        void chrome.tabs.sendMessage(tabId, payload).catch(() => {
+        void tabs.sendMessage(tabId, payload).catch(() => {
             // Tab may have navigated away while sending.
         });
     };

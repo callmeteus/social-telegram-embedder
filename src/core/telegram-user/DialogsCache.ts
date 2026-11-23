@@ -1,3 +1,4 @@
+import { storage } from "../extension/BrowserApi";
 import type { TelegramDialogEntry, TelegramFolder } from "./Dialogs";
 
 const DIALOGS_CACHE_STORAGE_PREFIX = "telegramUserDialogsCache:";
@@ -19,7 +20,7 @@ function foldersStorageKey(connectionId: string): string {
 export async function loadCachedDialogs(connectionId: string): Promise<TelegramDialogEntry[]> {
     try {
         const key = storageKey(connectionId);
-        const result = await chrome.storage.local.get(key);
+        const result = await storage.local.get(key);
         const stored: unknown = result[key];
 
         return Array.isArray(stored) ? stored.filter(isDialogEntry) : [];
@@ -34,7 +35,7 @@ export async function loadCachedDialogs(connectionId: string): Promise<TelegramD
  */
 export async function saveCachedDialogs(connectionId: string, entries: TelegramDialogEntry[]): Promise<void> {
     try {
-        await chrome.storage.local.set({ [storageKey(connectionId)]: entries.slice(0, DIALOGS_CACHE_LIMIT) });
+        await storage.local.set({ [storageKey(connectionId)]: entries.slice(0, DIALOGS_CACHE_LIMIT) });
     } catch (err) {
         console.debug("[telegram-user] dialogs cache write failed: %O", err);
     }
@@ -47,7 +48,7 @@ export async function saveCachedDialogs(connectionId: string, entries: TelegramD
 export async function loadCachedFolders(connectionId: string): Promise<TelegramFolder[]> {
     try {
         const key = foldersStorageKey(connectionId);
-        const result = await chrome.storage.local.get(key);
+        const result = await storage.local.get(key);
         const stored: unknown = result[key];
 
         return Array.isArray(stored) ? stored.filter(isFolder) : [];
@@ -62,7 +63,7 @@ export async function loadCachedFolders(connectionId: string): Promise<TelegramF
  */
 export async function saveCachedFolders(connectionId: string, folders: TelegramFolder[]): Promise<void> {
     try {
-        await chrome.storage.local.set({ [foldersStorageKey(connectionId)]: folders });
+        await storage.local.set({ [foldersStorageKey(connectionId)]: folders });
     } catch (err) {
         console.debug("[telegram-user] folders cache write failed: %O", err);
     }
@@ -72,7 +73,7 @@ export async function saveCachedFolders(connectionId: string, folders: TelegramF
  * Removes an account's saved chat list and folders.
  */
 export async function clearCachedDialogs(connectionId: string): Promise<void> {
-    await chrome.storage.local.remove([storageKey(connectionId), foldersStorageKey(connectionId)]);
+    await storage.local.remove([storageKey(connectionId), foldersStorageKey(connectionId)]);
 }
 
 function isDialogEntry(value: unknown): value is TelegramDialogEntry {

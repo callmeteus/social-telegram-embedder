@@ -1,4 +1,6 @@
+import { tabs, getExtensionUrl, openOptionsPage as openExtensionOptionsPage } from "../core/extension/BrowserApi";
 import { getUiLanguage, t } from "../core/i18n/I18n";
+import { isExtensionContextValid } from "../core/extension/ExtensionContext";
 import { isConfigReady, loadConfig } from "../core/storage/Storage";
 import { SocialPlatformId } from "../platforms/types";
 import { resolvePopupStatus, type PopupStatus } from "./SiteStatus";
@@ -37,7 +39,7 @@ async function init(): Promise<void> {
  */
 async function getActiveTabUrl(): Promise<string | undefined> {
     try {
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const [tab] = await tabs.query({ active: true, currentWindow: true });
 
         return tab?.url;
     } catch (err) {
@@ -141,10 +143,12 @@ function highlightCurrentSite(status: PopupStatus): void {
  * Opens the full settings page in a browser tab.
  */
 function openOptionsPage(): void {
-    if (typeof chrome.runtime.openOptionsPage === "function") {
-        chrome.runtime.openOptionsPage();
+    if (isExtensionContextValid()) {
+        void openExtensionOptionsPage().catch(() => {
+            void tabs.create({ url: getExtensionUrl("options.html") });
+        });
         return;
     }
 
-    void chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
+    void tabs.create({ url: getExtensionUrl("options.html") });
 }
