@@ -1,5 +1,6 @@
 import { e621Platform } from "./e621";
 import { facebookPlatform } from "./facebook";
+import { tiktokPlatform } from "./tiktok";
 import { xPlatform } from "./x";
 import type { SocialPlatform, SocialPlatformId } from "./types";
 
@@ -7,6 +8,7 @@ import type { SocialPlatform, SocialPlatformId } from "./types";
 export const socialPlatforms: SocialPlatform[] = [
     xPlatform,
     facebookPlatform,
+    tiktokPlatform,
     e621Platform
 ];
 

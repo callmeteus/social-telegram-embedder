@@ -35,7 +35,13 @@
         "https://e621.net/*",
         "https://e926.net/*",
         "https://*.e621.net/*",
-        "https://*.e926.net/*"
+        "https://*.e926.net/*",
+        "https://tiktok.com/*",
+        "https://www.tiktok.com/*",
+        "https://vm.tiktok.com/*",
+        "https://vt.tiktok.com/*",
+        "https://*.tiktokcdn.com/*",
+        "https://*.tiktokcdn-us.com/*"
     ],
     "background": {
         "service_worker": "background.js"
@@ -48,6 +54,10 @@
                 "https://www.facebook.com/*",
                 "https://web.facebook.com/*",
                 "https://m.facebook.com/*",
+                "https://tiktok.com/*",
+                "https://www.tiktok.com/*",
+                "https://vm.tiktok.com/*",
+                "https://vt.tiktok.com/*",
                 "https://e621.net/*",
                 "https://e926.net/*"
             ],

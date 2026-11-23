@@ -6,6 +6,7 @@ import type { DestinationSender } from "../core/destinations";
 export enum SocialPlatformId {
     X = "x",
     FACEBOOK = "facebook",
+    TIKTOK = "tiktok",
     E621 = "e621"
 }
 
@@ -79,5 +80,7 @@ export interface SocialPlatform {
         /** i18n message keys resolved via chrome.i18n at runtime. */
         fetching: string;
         invalidUrl: string;
+        /** Optional status shown when the post had to be sent as a link only. */
+        linkOnly?: string;
     };
 }

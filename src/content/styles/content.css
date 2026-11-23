@@ -122,6 +122,30 @@
     fill: currentColor;
 }
 
+/* TikTok video action rail */
+.x2tg-send-button--tiktok {
+    cursor: pointer;
+    color: currentColor;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    background: none;
+    border: 0;
+}
+
+.x2tg-send-button--tiktok:hover,
+.x2tg-send-button--tiktok:focus-visible {
+    color: rgb(42, 171, 238);
+    outline: none;
+}
+
+.x2tg-send-button--tiktok svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
 .x2tg-picker-overlay {
     position: fixed;
     inset: 0;
