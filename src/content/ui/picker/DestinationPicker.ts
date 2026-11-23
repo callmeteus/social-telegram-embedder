@@ -52,10 +52,11 @@ export interface DestinationPickerOptions {
     config: ExtensionConfig;
     platformId?: SocialPlatformId;
     /**
-     * Called once with one or more destinations (in selection order) and the caption edited in the
-     * picker (Telegram HTML; "" when the user left the editor empty).
+     * Called once with one or more destinations (in selection order), the caption edited in the
+     * picker (Telegram HTML; "" when the user left the editor empty), and whether Telegram should
+     * show that caption above the attached media.
      */
-    onSend(destinations: PickedDestination[], captionHtml: string): void;
+    onSend(destinations: PickedDestination[], captionHtml: string, captionAbove: boolean): void;
     /** Draft caption shown in the editor, usually built with `buildCaptionDraftHtml`. */
     initialCaptionHtml?: string;
     /** Overrides the dialogs port of each Telegram account (tests). */
@@ -610,11 +611,12 @@ class DestinationPickerView {
     private send(destinations: PickedDestination[]): void {
         const onSend = this.options.onSend;
         const captionHtml = this.caption.getHtml();
+        const captionAbove = this.caption.getCaptionAbove();
         const ghost = capturePickerSendGhost(this.overlay, this.picker);
 
         closeDestinationPicker();
         // onSend creates the progress toast synchronously, so the ghost can land on it right away.
-        onSend(destinations, captionHtml);
+        onSend(destinations, captionHtml, captionAbove);
         ghost?.land();
     }
 

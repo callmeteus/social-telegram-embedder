@@ -20,14 +20,16 @@ export interface TelegramUserMessenger {
         file: OutgoingMediaFile,
         caption?: FormattedText,
         onProgress?: UploadProgressCallback,
-        topicId?: number
+        topicId?: number,
+        captionAbove?: boolean
     ): Promise<void>;
     sendMediaGroup(
         peerId: number,
         files: OutgoingMediaFile[],
         caption?: FormattedText,
         onProgress?: (index: number, uploaded: number, total: number) => void,
-        topicId?: number
+        topicId?: number,
+        captionAbove?: boolean
     ): Promise<void>;
 }
 

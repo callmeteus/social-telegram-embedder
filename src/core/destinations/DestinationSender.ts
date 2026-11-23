@@ -10,7 +10,8 @@ export interface DestinationSender {
     sendSocialPost(
         post: FetchedSocialPost,
         onProgress?: SendProgressCallback,
-        captionHtml?: string
+        captionHtml?: string,
+        captionAbove?: boolean
     ): Promise<SendResult>;
     /** Sends only the post link, used when post details could not be fetched. */
     sendLink(url: string): Promise<SendResult>;

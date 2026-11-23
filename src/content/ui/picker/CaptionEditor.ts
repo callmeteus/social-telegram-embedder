@@ -12,6 +12,8 @@ export interface CaptionEditorOptions {
     initialHtml?: string;
     /** Visible character limit; defaults to the Telegram caption limit. */
     maxLength?: number;
+    /** Whether the caption-above-media toggle starts on. Defaults to false. */
+    captionAbove?: boolean;
 }
 
 /** The caption editor mounted inside the destination picker. */
@@ -20,6 +22,8 @@ export interface CaptionEditor {
     element: HTMLElement;
     /** Sanitized caption HTML, or "" when the user left it empty. */
     getHtml(): string;
+    /** Whether Telegram should show the caption above the attached media. */
+    getCaptionAbove(): boolean;
     focus(): void;
     destroy(): void;
 }
@@ -101,6 +105,22 @@ export function createCaptionEditor(options: CaptionEditorOptions = {}): Caption
 
     element.append(header, frame);
 
+    const optionsRow = document.createElement("div");
+    const above = document.createElement("button");
+    const aboveIndicator = document.createElement("span");
+    const aboveLabel = document.createElement("span");
+
+    optionsRow.className = "x2tg-caption__options";
+    above.type = "button";
+    above.className = "x2tg-caption__option";
+    above.setAttribute("aria-pressed", String(options.captionAbove === true));
+    aboveIndicator.className = "x2tg-caption__option-indicator";
+    aboveLabel.className = "x2tg-caption__option-label";
+    aboveLabel.textContent = t("captionAbove");
+    above.append(aboveIndicator, aboveLabel);
+    optionsRow.appendChild(above);
+    element.appendChild(optionsRow);
+
     const refresh = (): void => {
         const html = captionHtmlFromElement(editor, maxLength);
         const length = decodeCaptionText(html.replace(/<\/?b>/g, "")).length;
@@ -111,6 +131,11 @@ export function createCaptionEditor(options: CaptionEditorOptions = {}): Caption
     };
 
     const handleInput = (): void => refresh();
+    const handleAboveClick = (event: MouseEvent): void => {
+        event.preventDefault();
+        event.stopPropagation();
+        above.setAttribute("aria-pressed", String(above.getAttribute("aria-pressed") !== "true"));
+    };
     const handlePaste = (event: ClipboardEvent): void => {
         event.preventDefault();
         insertPlainText(editor, event.clipboardData?.getData("text/plain") ?? "");
@@ -123,6 +148,7 @@ export function createCaptionEditor(options: CaptionEditorOptions = {}): Caption
     };
 
     editor.addEventListener("input", handleInput);
+    above.addEventListener("click", handleAboveClick);
     editor.addEventListener("paste", handlePaste);
     document.addEventListener("selectionchange", handleSelectionChange);
 
@@ -132,9 +158,11 @@ export function createCaptionEditor(options: CaptionEditorOptions = {}): Caption
     return {
         element,
         getHtml: () => captionHtmlFromElement(editor, maxLength),
+        getCaptionAbove: () => above.getAttribute("aria-pressed") === "true",
         focus: () => focusEnd(editor),
         destroy: () => {
             editor.removeEventListener("input", handleInput);
+            above.removeEventListener("click", handleAboveClick);
             editor.removeEventListener("paste", handlePaste);
             document.removeEventListener("selectionchange", handleSelectionChange);
             element.remove();

@@ -27,6 +27,8 @@ After setup, the options page is a "Send channels" list of connections: any numb
 
 Clicking a row drills in: the detail screen replaces the list, with a Back button in its header (browser back works too, and the URL hash keeps the screen on reload). The bot detail holds the token, its Telegram chats as "destinations" in flat divided rows, and a "Remove bot" danger zone; edits use the bottom save dock. Each destination has an optional topic id, accepted as a number or a link copied from a Telegram topic; when set, every Bot API send includes `message_thread_id` so posts land in that forum topic instead of the group's general chat. "Find destinations" also picks up topics seen in bot updates and labels them "Group · Topic". The picker marks topic destinations with a small "Topic" badge. The account detail holds login and logout. Leaving a screen with unsaved changes asks before discarding.
 
+The picker's caption editor has a "Caption above media" toggle below it. The choice is per send and off by default. When on, Bot API sends include `show_caption_above_media` on each media item, and MTProto sends set mtcute's `invert` for a single item or `invertMedia` for an album. Text-only sends stay unchanged.
+
 ## Tokens
 
 CSS custom properties in `OptionsPage.css` (`--x2tg-*`). Send-channel list styles live in `SendChannels.css`; account and setup styles in `TelegramAccountSection.css` and `SetupWizard.css`.

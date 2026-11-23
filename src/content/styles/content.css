@@ -997,6 +997,64 @@
     color: #06131c;
 }
 
+.x2tg-caption__options {
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+}
+
+.x2tg-caption__option {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 0;
+    border: 0;
+    background: transparent;
+    color: #8ba3b8;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.x2tg-caption__option:hover,
+.x2tg-caption__option:focus-visible {
+    color: #f2f7fb;
+    outline: none;
+}
+
+.x2tg-caption__option-indicator {
+    display: inline-flex;
+    width: 26px;
+    height: 15px;
+    align-items: center;
+    border-radius: 8px;
+    background: #2a3a4a;
+    transition: background 120ms ease;
+}
+
+.x2tg-caption__option-indicator::after {
+    content: "";
+    width: 11px;
+    height: 11px;
+    margin-left: 2px;
+    border-radius: 50%;
+    background: #8ba3b8;
+    transition: transform 120ms ease, background 120ms ease;
+}
+
+.x2tg-caption__option[aria-pressed="true"] {
+    color: #f2f7fb;
+}
+
+.x2tg-caption__option[aria-pressed="true"] .x2tg-caption__option-indicator {
+    background: #2aabee;
+}
+
+.x2tg-caption__option[aria-pressed="true"] .x2tg-caption__option-indicator::after {
+    background: #06131c;
+    transform: translateX(11px);
+}
+
 .x2tg-caption__editor {
     min-height: 132px;
     max-height: min(50vh, 320px);
@@ -1037,6 +1095,24 @@
 .x2tg-picker--facebook .x2tg-caption__tool:focus-visible {
     background: var(--hover-overlay, rgba(255, 255, 255, 0.1));
     color: var(--primary-text, #E4E6EB);
+}
+
+.x2tg-picker--facebook .x2tg-caption__option {
+    color: var(--secondary-text, #B0B3B8);
+}
+
+.x2tg-picker--facebook .x2tg-caption__option:hover,
+.x2tg-picker--facebook .x2tg-caption__option:focus-visible,
+.x2tg-picker--facebook .x2tg-caption__option[aria-pressed="true"] {
+    color: var(--primary-text, #E4E6EB);
+}
+
+.x2tg-picker--facebook .x2tg-caption__option-indicator {
+    background: var(--divider, #3E4042);
+}
+
+.x2tg-picker--facebook .x2tg-caption__option[aria-pressed="true"] .x2tg-caption__option-indicator {
+    background: #2aabee;
 }
 
 .x2tg-picker--facebook .x2tg-caption__editor {

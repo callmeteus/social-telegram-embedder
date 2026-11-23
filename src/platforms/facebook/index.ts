@@ -34,9 +34,10 @@ export const facebookPlatform: SocialPlatform = {
         sender: DestinationSender,
         post: FetchedSocialPost,
         onProgress?: SendProgressCallback,
-        captionHtml?: string
+        captionHtml?: string,
+        captionAbove?: boolean
     ): Promise<SendResult> {
-        return sender.sendSocialPost(post, onProgress, captionHtml);
+        return sender.sendSocialPost(post, onProgress, captionHtml, captionAbove);
     },
     progressMessages: {
         fetching: "progressFetchingPost",

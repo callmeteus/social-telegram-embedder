@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TelegramClient } from "../src/core/telegram/TelegramClient";
+import type { FetchedSocialPost, SocialMediaItem } from "../src/platforms/types";
 
 describe("TelegramClient sendMediaGroup", () => {
     afterEach(() => {
@@ -147,5 +148,156 @@ describe("TelegramClient forum topics", () => {
 
         expect(formData.get("chat_id")).toBe("-100999");
         expect(formData.get("message_thread_id")).toBe("99");
+    });
+});
+
+describe("TelegramClient caption above media", () => {
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    function post(media: SocialMediaItem[]): FetchedSocialPost {
+        return { embedUrl: "https://x.com/a/status/1", text: "hello", media };
+    }
+
+    function stubJson(): ReturnType<typeof vi.fn> {
+        const fetchMock = vi.fn(async () => ({
+            ok: true,
+            json: async () => ({ ok: true })
+        }));
+
+        vi.stubGlobal("fetch", fetchMock);
+        return fetchMock;
+    }
+
+    function stubUploads(): ReturnType<typeof vi.fn> {
+        const bytes = new Uint8Array([0xff, 0xd8, 0xff, 0xd9]);
+        const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+            if (String(input).includes("pbs.twimg.com/media")) {
+                return {
+                    ok: true,
+                    headers: new Headers({ "content-type": "image/jpeg", "content-length": String(bytes.length) }),
+                    body: null,
+                    blob: async () => new Blob([bytes], { type: "image/jpeg" })
+                };
+            }
+
+            return { ok: true, json: async () => ({ ok: true }) };
+        });
+
+        vi.stubGlobal("fetch", fetchMock);
+        return fetchMock;
+    }
+
+    it("adds the Bot API field to a single photo sent by URL", async () => {
+        const fetchMock = stubJson();
+
+        await new TelegramClient("t").sendSocialPost(
+            "-1",
+            post([{ kind: "photo", url: "https://example.com/a.jpg" }]),
+            undefined,
+            undefined,
+            true
+        );
+
+        expect(String(fetchMock.mock.calls[0]![0])).toContain("sendPhoto");
+
+        const body = (fetchMock.mock.calls[0]![1] as RequestInit).body;
+        const payload = JSON.parse(String(body)) as Record<string, unknown>;
+
+        expect(payload.show_caption_above_media).toBe(true);
+    });
+
+    it("adds the Bot API field to an animation sent by URL", async () => {
+        const fetchMock = stubJson();
+
+        await new TelegramClient("t").sendSocialPost(
+            "-1",
+            post([{ kind: "gif", url: "https://example.com/a.gif" }]),
+            undefined,
+            undefined,
+            true
+        );
+
+        expect(String(fetchMock.mock.calls[0]![0])).toContain("sendAnimation");
+
+        const body = (fetchMock.mock.calls[0]![1] as RequestInit).body;
+        const payload = JSON.parse(String(body)) as Record<string, unknown>;
+
+        expect(payload.show_caption_above_media).toBe(true);
+    });
+
+    it("omits the field by default", async () => {
+        const fetchMock = stubJson();
+
+        await new TelegramClient("t").sendSocialPost("-1", post([{ kind: "photo", url: "https://example.com/a.jpg" }]));
+
+        const body = (fetchMock.mock.calls[0]![1] as RequestInit).body;
+        const payload = JSON.parse(String(body)) as Record<string, unknown>;
+
+        expect("show_caption_above_media" in payload).toBe(false);
+    });
+
+    it("leaves text-only sends unchanged", async () => {
+        const fetchMock = stubJson();
+
+        await new TelegramClient("t").sendSocialPost("-1", post([]), undefined, undefined, true);
+
+        expect(String(fetchMock.mock.calls[0]![0])).toContain("sendMessage");
+
+        const body = (fetchMock.mock.calls[0]![1] as RequestInit).body;
+        const payload = JSON.parse(String(body)) as Record<string, unknown>;
+
+        expect("show_caption_above_media" in payload).toBe(false);
+    });
+
+    it("adds the field to every item of an album sent by URL", async () => {
+        const fetchMock = stubJson();
+
+        await new TelegramClient("t").sendSocialPost("-1", post([
+            { kind: "photo", url: "https://example.com/a.jpg" },
+            { kind: "photo", url: "https://example.com/b.jpg" }
+        ]), undefined, undefined, true);
+
+        const call = fetchMock.mock.calls.find((entry) => String(entry[0]).includes("sendMediaGroup"))!;
+        const body = (call[1] as RequestInit).body;
+        const payload = JSON.parse(String(body)) as { media: Array<Record<string, unknown>> };
+
+        expect(payload.media).toHaveLength(2);
+        expect(payload.media.every((entry) => entry.show_caption_above_media === true)).toBe(true);
+    });
+
+    it("adds the field to uploaded albums", async () => {
+        const fetchMock = stubUploads();
+
+        await new TelegramClient("t").sendSocialPost("-1", post([
+            { kind: "photo", url: "https://pbs.twimg.com/media/a.jpg?name=small" },
+            { kind: "photo", url: "https://pbs.twimg.com/media/b.jpg?name=small" }
+        ]), undefined, undefined, true);
+
+        const call = fetchMock.mock.calls.find((entry) => String(entry[0]).includes("sendMediaGroup"))!;
+        const formData = (call[1] as RequestInit).body as FormData;
+        const media = JSON.parse(String(formData.get("media"))) as Array<Record<string, unknown>>;
+
+        expect(media).toHaveLength(2);
+        expect(media.every((entry) => entry.show_caption_above_media === true)).toBe(true);
+    });
+
+    it("adds the form field to an uploaded single photo", async () => {
+        const fetchMock = stubUploads();
+
+        await new TelegramClient("t").sendSocialPost(
+            "-1",
+            post([{ kind: "photo", url: "https://pbs.twimg.com/media/a.jpg?name=small" }]),
+            undefined,
+            undefined,
+            true
+        );
+
+        const call = fetchMock.mock.calls.find((entry) =>
+            String(entry[0]).includes("sendPhoto") && (entry[1] as RequestInit).body instanceof FormData)!;
+        const formData = (call[1] as RequestInit).body as FormData;
+
+        expect(formData.get("show_caption_above_media")).toBe("true");
     });
 });

@@ -22,6 +22,8 @@ export interface SendPostMessage {
     postSnapshot?: SocialPostSnapshot;
     /** Optional caption edited in the picker (Telegram HTML: escaped text plus `<b>`); replaces the generated one. */
     captionHtml?: string;
+    /** Whether Telegram should show the caption above the media. Per send, off when absent. */
+    captionAbove?: boolean;
 }
 
 /** Payload to test a single channel. */

@@ -135,7 +135,7 @@ describe("showDestinationPicker topic selector", () => {
                 topicId: 42
             },
             label: "Fofocas"
-        }], "");
+        }], "", false);
     });
 });
 
@@ -172,7 +172,7 @@ describe("showDestinationPicker keyboard navigation", () => {
 
         press("Enter", { ctrlKey: true });
 
-        expect(onSend).toHaveBeenCalledWith([{ ref: { type: DestinationRefType.CHANNEL, channelId: "c2" }, label: "Canal B" }], "");
+        expect(onSend).toHaveBeenCalledWith([{ ref: { type: DestinationRefType.CHANNEL, channelId: "c2" }, label: "Canal B" }], "", false);
         expect(document.querySelector(".x2tg-picker-overlay")).toBeNull();
     });
 
@@ -183,7 +183,7 @@ describe("showDestinationPicker keyboard navigation", () => {
         press("ArrowDown");
         press("Enter", { metaKey: true });
 
-        expect(onSend).toHaveBeenCalledWith([{ ref: { type: DestinationRefType.CHANNEL, channelId: "c2" }, label: "Canal B" }], "");
+        expect(onSend).toHaveBeenCalledWith([{ ref: { type: DestinationRefType.CHANNEL, channelId: "c2" }, label: "Canal B" }], "", false);
     });
 
     it("closes on Escape without sending and keeps keys away from the page", () => {
@@ -221,7 +221,7 @@ describe("showDestinationPicker keyboard navigation", () => {
 
         sendButton.click();
 
-        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal B" })], "");
+        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal B" })], "", false);
     });
 
     it("closes from the close button without sending", () => {
@@ -552,7 +552,7 @@ describe("showDestinationPicker with several accounts", () => {
         expect(onSend).toHaveBeenCalledWith([{
             ref: { type: DestinationRefType.TELEGRAM_PEER, connectionId: "acc-2", peerId: 1, kind: TelegramPeerKind.USER, title: "Grupo" },
             label: "Grupo"
-        }], "");
+        }], "", false);
     });
 
     it("asks the owning account for each chat photo and closes every port", () => {
@@ -638,7 +638,7 @@ describe("showDestinationPicker multi-select", () => {
         expect(onSend).toHaveBeenCalledWith([
             expect.objectContaining({ label: "Canal A" }),
             expect.objectContaining({ label: "Canal C" })
-        ], "");
+        ], "", false);
     });
 
     it("toggles from the checkbox or the row, and unselects again", () => {
@@ -654,7 +654,7 @@ describe("showDestinationPicker multi-select", () => {
         expect(rows()[1]?.getAttribute("aria-selected")).toBe("false");
 
         document.querySelector<HTMLButtonElement>(".x2tg-picker__send")?.click();
-        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal A" })], "");
+        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal A" })], "", false);
     });
 
     it("stops at the selection limit and tells the user", () => {
@@ -883,7 +883,7 @@ describe("showDestinationPicker caption editor", () => {
         editorSurface().focus();
         pressInEditor("Enter", { ctrlKey: true });
 
-        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal B" })], "");
+        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal B" })], "", false);
         expect(document.querySelector(".x2tg-picker-overlay")).toBeNull();
     });
 
@@ -896,7 +896,24 @@ describe("showDestinationPicker caption editor", () => {
         editorSurface().focus();
         pressInEditor("Enter", { ctrlKey: true });
 
-        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal A" })], "<b>Oi</b>");
+        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal A" })], "<b>Oi</b>", false);
+    });
+
+    it("passes the caption-above-media choice to onSend", () => {
+        const onSend = vi.fn();
+
+        showDestinationPicker({ config: configWith(["Canal A"]), onSend });
+
+        const toggle = document.querySelector<HTMLButtonElement>(".x2tg-caption__option")!;
+
+        expect(toggle.getAttribute("aria-pressed")).toBe("false");
+        expect(toggle.textContent).toContain("Caption above media");
+
+        toggle.click();
+        rows()[0]?.click();
+        document.querySelector<HTMLButtonElement>(".x2tg-picker__send")?.click();
+
+        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal A" })], "", true);
     });
 
     it("prefills the editor with the draft caption", () => {

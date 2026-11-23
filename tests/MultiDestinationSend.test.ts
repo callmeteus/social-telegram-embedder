@@ -198,6 +198,25 @@ describe("sendToDestinations", () => {
         }
     });
 
+    it("passes the caption-above-media choice to every destination", async () => {
+        const { deps, sendPost } = setup();
+
+        await sendToDestinations(
+            {
+                platform: { sendPost },
+                post: Post,
+                normalizedUrl: "u",
+                destinations: [channel("a"), peer(1, "Ana")],
+                captionAbove: true
+            },
+            deps
+        );
+
+        for (const call of sendPost.mock.calls) {
+            expect(call[4]).toBe(true);
+        }
+    });
+
     it("sends only the link when the post could not be fetched", async () => {
         const { deps, sendPost, senders } = setup();
 
