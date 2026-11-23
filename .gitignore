@@ -9,6 +9,7 @@ Thumbs.db
 telegram-api.local.json
 .yarn/
 .pnp.*
+.private/
 
 # Stillmark
 .stillmark/plans/
