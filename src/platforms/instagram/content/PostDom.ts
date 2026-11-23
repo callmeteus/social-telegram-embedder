@@ -1,12 +1,13 @@
 import { normalizeInstagramPostUrl } from "../url/InstagramUrl";
 import { buildInstagramCaptionText } from "../text/InstagramCaption";
 import type { SocialMediaItem, SocialPostSnapshot } from "../../types";
+import { getMp4ForBlob } from "../../../content/media/InstagramVideoMap";
 
 /** Action labels Instagram shows in the post and reel control rows. */
 const ACTION_LABEL_PATTERN = /^(like|comment|share|repost|save|curtir|comentar|compartilhar|salvar|gustar|compartir)/i;
 
 /** Short interface labels that must never become the post caption. */
-const CHROME_TEXT_PATTERN = /^(like|comment|share|save|repost|follow|more|reply|replies|view all|see all|ver mais|curtir|comentar|compartilhar|salvar|seguir|respostas?|curtido|saved)$/i;
+const CHROME_TEXT_PATTERN = /^(like|comment|share|save|repost|follow|more|reply|replies|view all|see all|ver mais|curtir|comentar|compartilhar|salvar|seguir|respostas?|curtido|saved|sugestões para você|sugestões|sugestions for you|sugestions|áudio original|audio original|original audio|música original|ver tradução|see translation|ver traducao)$/i;
 
 /** Hosts that serve Instagram post photos and videos. */
 const MEDIA_HOST_PATTERN = /(?:cdninstagram|fbcdn\.net|instagram\.com)/i;
@@ -72,20 +73,32 @@ export function findInstagramActionBar(shareControl: Element): Element | null {
  */
 export function findInstagramPostRoot(actionBar: Element): Element {
     const mediaSelector = 'video, img[src*="fbcdn.net"], img[src*="cdninstagram"]';
-    const captionSelector = 'span.x193iq5w, div[class*="xvs91rp"]';
+    const captionSelector = 'span._ap3a._aacu, span.x193iq5w, div[class*="xvs91rp"]';
+    const candidates: Array<{ element: Element; hasVideo: boolean }> = [];
     let node: Element | null = actionBar;
 
     while (node && node !== document.body) {
         const rectangle = node.getBoundingClientRect();
+        const hasVideo = node.querySelector("video") !== null;
         const hasMedia = node.querySelector(mediaSelector) !== null;
         const hasCaption = Array.from(node.querySelectorAll(captionSelector))
             .some((element) => (element.textContent ?? "").trim().length > 20);
 
-        if (hasMedia && hasCaption && rectangle.height >= 200 && rectangle.height <= 1000) {
-            return node;
+        if ((hasMedia || hasVideo) && hasCaption && rectangle.height >= 200 && rectangle.height <= 1000) {
+            candidates.push({ element: node, hasVideo });
         }
 
         node = node.parentElement;
+    }
+
+    const videoCandidate = candidates.find((candidate) => candidate.hasVideo);
+
+    if (videoCandidate) {
+        return videoCandidate.element;
+    }
+
+    if (candidates[0]) {
+        return candidates[0].element;
     }
 
     node = actionBar;
@@ -196,26 +209,32 @@ function expandInstagramCaption(root: Element): void {
 export function extractInstagramCaptionText(root: Element): string {
     expandInstagramCaption(root);
 
+    const author = extractInstagramAuthorHandle(root);
     const dedicatedCaption = root.querySelector('[data-testid="post-caption"]')?.textContent?.trim();
 
     if (dedicatedCaption) {
         return normalizeCaptionWhitespace(dedicatedCaption);
     }
 
-    const captionSelectors = ["span.x193iq5w", 'div[class*="xvs91rp"]'];
-    const captions = captionSelectors
-        .flatMap((selector) => Array.from(root.querySelectorAll(selector)))
-        .map((element) => normalizeCaptionWhitespace(element.textContent ?? "")
-            .replace(/^\s*[A-Za-z0-9._]{1,30}\s+\d+\s*[smhdwmy]\s*/i, "")
-            .replace(/([^\s])#/g, "$1 #")
-            .replace(/\s+(?:mais|more|see more|ver mais)$/i, ""))
-        .filter((text) => text.length >= 2)
-        .filter((text) => !CHROME_TEXT_PATTERN.test(text))
-        .filter((text) => !/^(?:curtido por|liked by|me gusta)/i.test(text))
-        .sort((left, right) => right.length - left.length);
+    const captionSelectors = ["span._ap3a._aacu", "span.x193iq5w", 'div[class*="xvs91rp"]'];
 
-    if (captions[0]) {
-        return captions[0];
+    for (const selector of captionSelectors) {
+        const texts = Array.from(root.querySelectorAll(selector))
+            .map((element) => normalizeCaptionWhitespace(element.textContent ?? "")
+                .replace(/^\s*[A-Za-z0-9._]{1,30}\s+\d+\s*[smhdwmy]\s*/i, "")
+                .replace(/([^\s])#/g, "$1 #")
+                .replace(/\s+(?:mais|more|see more|ver mais)$/i, ""))
+            .filter((text) => text.length >= 2)
+            .filter((text) => !CHROME_TEXT_PATTERN.test(text))
+            .filter((text) => !/^(?:curtido por|liked by|me gusta)/i.test(text))
+            .filter((text) => !/^(?:e\s+)?outras?\s+\d+\s+pessoas?$/i.test(text))
+            .filter((text) => !/^(?:and\s+)?\d+\s+others?$/i.test(text))
+            .filter((text) => text !== author)
+            .sort((left, right) => right.length - left.length);
+
+        if (texts[0]) {
+            return texts[0];
+        }
     }
 
     const candidates = Array.from(root.querySelectorAll('div[dir="auto"], span[dir="auto"]'))
@@ -224,35 +243,23 @@ export function extractInstagramCaptionText(root: Element): string {
         .filter((text) => text.length >= 2)
         .filter((text) => !CHROME_TEXT_PATTERN.test(text))
         .filter((text) => !/^[\d.,\s]+$/.test(text))
+        .filter((text) => text !== author)
         .sort((left, right) => right.length - left.length);
 
     return candidates[0] ?? "";
 }
 
 /**
- * Finds the CDN mp4 URL behind Instagram's blob-based video player.
+ * Finds the CDN mp4 URL behind a specific blob-based Instagram video player.
  *
+ * The mapping is captured in the page world by the MAIN-world injector, so each
+ * video element resolves to its own mp4 instead of an unrelated feed video.
+ *
+ * @param blobUrl - Blob URL from the video element.
  * @returns A direct video URL without the MediaSource byte range, or undefined.
  */
-function findCdnVideoUrl(): string | undefined {
-    const candidates = performance.getEntriesByType("resource")
-        .map((entry) => entry.name)
-        .filter((name) => /fbcdn\.net\/.*\.mp4(?:\?|$)/i.test(name))
-        .map((name) => {
-            const parsed = new URL(name);
-            const end = Number(parsed.searchParams.get("byteend") ?? 0);
-
-            parsed.searchParams.delete("bytestart");
-            parsed.searchParams.delete("byteend");
-
-            return {
-                end,
-                url: parsed.toString()
-            };
-        })
-        .sort((left, right) => right.end - left.end);
-
-    return candidates[0]?.url;
+function findCdnVideoUrl(blobUrl: string): string | undefined {
+    return getMp4ForBlob(blobUrl);
 }
 
 /**
@@ -293,7 +300,7 @@ export function extractInstagramMedia(root: Element): SocialMediaItem[] {
 
     for (const video of videos) {
         const rawUrl = readVideoUrl(video);
-        const url = rawUrl?.startsWith("blob:") ? findCdnVideoUrl() ?? rawUrl : rawUrl;
+        const url = rawUrl?.startsWith("blob:") ? findCdnVideoUrl(rawUrl) ?? rawUrl : rawUrl;
 
         if (!url || urls.has(url)) {
             continue;

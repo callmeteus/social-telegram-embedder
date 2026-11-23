@@ -7,7 +7,13 @@ export enum RuntimeMessageType {
     TEST_CHANNEL = "TEST_CHANNEL",
     GET_BOT_INFO = "GET_BOT_INFO",
     DISCOVER_CHANNELS = "DISCOVER_CHANNELS",
-    GET_CHANNEL_PHOTO = "GET_CHANNEL_PHOTO"
+    GET_CHANNEL_PHOTO = "GET_CHANNEL_PHOTO",
+    INJECT_INSTAGRAM_VIDEO_MAP = "INJECT_INSTAGRAM_VIDEO_MAP"
+}
+
+/** Request from a content script to inject the MAIN-world Instagram video map bridge. */
+export interface InjectInstagramVideoMapMessage {
+    type: RuntimeMessageType.INJECT_INSTAGRAM_VIDEO_MAP;
 }
 
 /** Payload to send a social post URL to one or more destinations. */
@@ -63,4 +69,5 @@ export type RuntimeMessage =
     | TestChannelMessage
     | GetBotInfoMessage
     | DiscoverChannelsMessage
-    | GetChannelPhotoMessage;
+    | GetChannelPhotoMessage
+    | InjectInstagramVideoMapMessage;

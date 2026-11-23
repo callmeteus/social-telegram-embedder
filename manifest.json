@@ -19,7 +19,9 @@
     },
     "permissions": [
         "storage",
-        "notifications"
+        "notifications",
+        "scripting",
+        "tabs"
     ],
     "host_permissions": [
         "https://x.com/*",
@@ -80,6 +82,16 @@
                 "content.css"
             ],
             "run_at": "document_idle"
+        },
+        {
+            "matches": [
+                "https://instagram.com/*",
+                "https://www.instagram.com/*"
+            ],
+            "js": [
+                "instagram-video-map-bootstrap.js"
+            ],
+            "run_at": "document_start"
         }
     ],
     "options_page": "options.html"

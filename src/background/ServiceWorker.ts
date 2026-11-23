@@ -48,6 +48,22 @@ chrome.runtime.onMessage.addListener((
     sender,
     sendResponse
 ) => {
+    if (message.type === RuntimeMessageType.INJECT_INSTAGRAM_VIDEO_MAP) {
+        if (sender.tab?.id !== undefined) {
+            chrome.scripting.executeScript({
+                target: { tabId: sender.tab.id },
+                world: "MAIN",
+                files: ["instagram-video-map.js"],
+                injectImmediately: true
+            }).catch((err: unknown) => {
+                console.debug("[background] Instagram video map injection failed: %O", err);
+            });
+        }
+
+        sendResponse({ ok: true });
+        return false;
+    }
+
     if (message.type === RuntimeMessageType.SEND_POST) {
         const invalid = validateSendPostRequest(message);
 
