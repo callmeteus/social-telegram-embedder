@@ -41,6 +41,7 @@ describe("injectE621Content", () => {
         expect(button).not.toBeNull();
         expect(lastRow?.lastElementChild).toBe(button);
         expect(button?.classList.contains("st-button")).toBe(true);
+        expect(button?.classList.contains("kinetic")).toBe(true);
         expect(button?.querySelectorAll("svg path")).toHaveLength(2);
         expect(button?.textContent).toBe("");
     });

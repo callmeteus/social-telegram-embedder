@@ -64,7 +64,7 @@ export function injectE621Content(root: ParentNode = document): void {
 function buildSendButton(postUrl: string): HTMLButtonElement {
     const button = document.createElement("button");
     button.type = "button";
-    button.classList.add("st-button", "x2tg-send-button", "x2tg-send-button--e621");
+    button.classList.add("st-button", "kinetic", "x2tg-send-button", "x2tg-send-button--e621");
     button.setAttribute("aria-label", t("sendToTelegram"));
     button.title = t("sendToTelegram");
 
