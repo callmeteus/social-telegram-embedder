@@ -64,6 +64,25 @@ function readViewText(root: ParentNode, selector: string): string {
 }
 
 /**
+ * Reads the submission description without the footer links FurAffinity appends to the same node.
+ */
+function readDescriptionText(root: ParentNode): string {
+    const element = root.querySelector(".submission-description-text");
+
+    if (!element) {
+        return "";
+    }
+
+    const clone = element.cloneNode(true);
+
+    if (clone instanceof HTMLElement) {
+        clone.querySelector(".submission-footer")?.remove();
+    }
+
+    return clone.textContent?.trim() ?? "";
+}
+
+/**
  * Resolves a media source URL against the FurAffinity origin.
  */
 function absoluteMediaUrl(value: string): string | null {
@@ -131,8 +150,8 @@ export function buildFuraffinitySnapshot(root: ParentNode): SocialPostSnapshot |
     return {
         text: buildFuraffinityCaptionHtml(
             readViewText(root, ".submission-title h2, h2.submission-title, .submission-title"),
-            readViewText(root, ".submission-artist, .submission-artist-container a"),
-            readViewText(root, ".submission-description")
+            readViewText(root, ".submission-description-artist .c-usernameBlockSimple__displayName, .submission-description-artist a[href^='/user/']:not(.c-avatarFrameCapable), .submission-artist, .submission-artist-container a"),
+            readDescriptionText(root) || readViewText(root, ".submission-description")
         ),
         media
     };

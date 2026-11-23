@@ -7,12 +7,19 @@ import { buildFuraffinitySnapshot, findFuraffinityInsertRow } from "../src/platf
 
 const submissionMarkup = `
     <section class="submission-content">
-        <div class="submission-artist-container">
-            <a class="submission-artist" href="/user/artist">Artist</a>
-            <h2 class="submission-title">Cool Art</h2>
-        </div>
+        <section class="submission-description">
+            <div class="submission-description-artist">
+                <a href="/user/artist"><span class="c-usernameBlockSimple__displayName">Artist</span></a>
+                <div class="submission-title"><h2>Cool Art</h2></div>
+            </div>
+            <div class="section-body">
+                <div class="submission-description-text">
+                    Hello <b>world</b>.
+                    <div class="submission-footer">My TG channel</div>
+                </div>
+            </div>
+        </section>
         <img id="submission-img" src="//d.facdn.net/art/artist/12345/cool.jpg">
-        <div class="submission-description">Hello <b>world</b>.</div>
         <div class="submission-controls"></div>
         <div id="submission-options">
             <a class="button standard mobile-fix" href="/fav/12345">+Fav</a>
