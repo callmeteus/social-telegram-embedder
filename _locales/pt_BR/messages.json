@@ -966,5 +966,11 @@
     },
     "optionsHideRecentChatsDescription": {
         "message": "Mostra apenas os destinos fixados e sua lista de chats no seletor."
+    },
+    "pickerTopicSearchPlaceholder": {
+        "message": "Buscar tópicos"
+    },
+    "pickerNoTopicsFound": {
+        "message": "Nenhum tópico encontrado."
     }
 }

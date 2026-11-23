@@ -139,6 +139,188 @@ describe("showDestinationPicker topic selector", () => {
     });
 });
 
+describe("showDestinationPicker topic search", () => {
+    function topic(topicId: number, title: string, lastMessageAt: number): TelegramDialogEntry {
+        return dialog(-100555, title, {
+            kind: TelegramPeerKind.GROUP,
+            topicId,
+            parentTitle: "Grupo",
+            lastMessageAt
+        });
+    }
+
+    function openTopics(topics: TelegramDialogEntry[], onSend = vi.fn()): { onSend: typeof onSend } {
+        const fake = createFakePort("telegram-user-dialogs");
+
+        showDestinationPicker({ config: configWith(["Notícias"], true), onSend, connectDialogs: () => fake.port });
+        fake.emit({ type: DialogsPortMessageType.SESSION, snapshot: { state: TelegramUserSessionState.READY, hasCredentials: true } });
+        fake.emit({
+            type: DialogsPortMessageType.PAGE,
+            entries: [
+                dialog(-100555, "Grupo", { kind: TelegramPeerKind.GROUP, lastMessageAt: 1000 }),
+                ...topics
+            ],
+            done: true
+        });
+
+        const groupRow = rows().find((row) => row.querySelector(".x2tg-picker__label")?.textContent === "Grupo");
+
+        groupRow?.click();
+        return { onSend };
+    }
+
+    function mainSearch(): HTMLInputElement {
+        return document.querySelector<HTMLInputElement>(".x2tg-picker__search:not(.x2tg-picker__topic-search)")!;
+    }
+
+    function topicSearch(): HTMLInputElement {
+        return document.querySelector<HTMLInputElement>(".x2tg-picker__topic-search")!;
+    }
+
+    function typeTopicQuery(query: string): void {
+        const input = topicSearch();
+
+        input.value = query;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    it("filters topic titles without accents in a separate input", () => {
+        openTopics([
+            topic(1, "Fofocas da semana", 900),
+            topic(2, "São Paulo", 800),
+            topic(3, "Sao Bento", 700)
+        ]);
+
+        expect(mainSearch().hidden).toBe(true);
+        expect(topicSearch().hidden).toBe(false);
+        expect(topicSearch().classList.contains("x2tg-picker__search")).toBe(true);
+        expect(labels()).toEqual(["General", "Fofocas da semana", "São Paulo", "Sao Bento"]);
+
+        typeTopicQuery("SAO");
+
+        expect(labels()).toEqual(["São Paulo", "Sao Bento"]);
+        expect(activeLabel()).toBe("São Paulo");
+    });
+
+    it("restores the full topic list when the query is cleared", () => {
+        openTopics([
+            topic(1, "Alpha", 900),
+            topic(2, "Beta", 800),
+            topic(3, "Gama", 700)
+        ]);
+
+        typeTopicQuery("beta");
+        expect(labels()).toEqual(["Beta"]);
+
+        typeTopicQuery("");
+        expect(labels()).toEqual(["General", "Alpha", "Beta", "Gama"]);
+    });
+
+    it("shows an empty state when no topic matches", () => {
+        openTopics([
+            topic(1, "Alpha", 900),
+            topic(2, "Beta", 800)
+        ]);
+
+        typeTopicQuery("zzz");
+
+        expect(rows()).toHaveLength(0);
+        expect(document.querySelector(".x2tg-picker__status")?.textContent).toBe("No topics found.");
+
+        typeTopicQuery("alpha");
+
+        expect(labels()).toEqual(["Alpha"]);
+        expect(document.querySelector(".x2tg-picker__status")).toBeNull();
+    });
+
+    it("navigates, selects and sends a filtered topic from a large list", () => {
+        const topics: TelegramDialogEntry[] = Array.from({ length: 90 }, (_, index) =>
+            topic(index + 10, `Debate ${String(index + 1).padStart(3, "0")}`, 900 - index));
+
+        topics.push(topic(1, "Fofoca da semana", 500));
+        topics.push(topic(2, "Fofoca do fim de semana", 400));
+
+        const { onSend } = openTopics(topics);
+
+        expect(rows()).toHaveLength(80);
+
+        typeTopicQuery("fofoca");
+
+        expect(labels()).toEqual(["Fofoca da semana", "Fofoca do fim de semana"]);
+        expect(activeLabel()).toBe("Fofoca da semana");
+
+        press("ArrowDown");
+        expect(activeLabel()).toBe("Fofoca do fim de semana");
+
+        press("Enter");
+        expect(rows()[1]?.getAttribute("aria-selected")).toBe("true");
+        expect(onSend).not.toHaveBeenCalled();
+
+        press("Enter", { metaKey: true });
+
+        expect(onSend).toHaveBeenCalledWith([{
+            ref: {
+                type: DestinationRefType.TELEGRAM_PEER,
+                connectionId: "acc",
+                peerId: -100555,
+                kind: TelegramPeerKind.GROUP,
+                title: "Fofoca do fim de semana",
+                topicId: 2
+            },
+            label: "Fofoca do fim de semana"
+        }], "");
+    });
+
+    it("goes back with Escape and sends the selected topic from the main list", () => {
+        const { onSend } = openTopics([
+            topic(1, "Fofoca da semana", 900),
+            topic(2, "Outro", 800)
+        ]);
+
+        typeTopicQuery("fofoca");
+        rows()[0]?.click();
+
+        expect(rows()[0]?.getAttribute("aria-selected")).toBe("true");
+
+        press("Escape");
+
+        expect(document.querySelector(".x2tg-picker__title")?.textContent).toBe("Send to which channel?");
+        expect(mainSearch().hidden).toBe(false);
+        expect(topicSearch().hidden).toBe(true);
+        expect(labels()).not.toContain("Fofoca da semana");
+
+        press("Enter", { ctrlKey: true });
+
+        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({
+            label: "Fofoca da semana",
+            ref: expect.objectContaining({ topicId: 1 })
+        })], "");
+    });
+
+    it("does not change the main query or run a server search while typing in the topic input", () => {
+        vi.useFakeTimers();
+        const fake = createFakePort("telegram-user-dialogs");
+
+        showDestinationPicker({ config: configWith([], true), onSend: vi.fn(), connectDialogs: () => fake.port });
+        fake.emit({ type: DialogsPortMessageType.SESSION, snapshot: { state: TelegramUserSessionState.READY, hasCredentials: true } });
+        fake.emit({
+            type: DialogsPortMessageType.PAGE,
+            entries: [
+                dialog(-100555, "Grupo", { kind: TelegramPeerKind.GROUP, lastMessageAt: 10 }),
+                dialog(-100555, "Fofocas", { kind: TelegramPeerKind.GROUP, topicId: 1, parentTitle: "Grupo", lastMessageAt: 9 })
+            ],
+            done: true
+        });
+
+        rows().find((row) => row.querySelector(".x2tg-picker__label")?.textContent === "Grupo")?.click();
+        typeTopicQuery("fofoca");
+        vi.advanceTimersByTime(500);
+
+        expect(mainSearch().value).toBe("");
+        expect(fake.posted.filter((message) => (message as { type: string }).type === DialogsRequestType.SEARCH)).toEqual([]);
+    });
+});
+
 describe("showDestinationPicker keyboard navigation", () => {
     it("moves the active row with arrows, wraps, toggles with Enter and sends with Ctrl+Enter", () => {
         const onSend = vi.fn();

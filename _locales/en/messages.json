@@ -966,5 +966,11 @@
     },
     "optionsHideRecentChatsDescription": {
         "message": "Show only pinned destinations and your chat list in the picker."
+    },
+    "pickerTopicSearchPlaceholder": {
+        "message": "Search topics"
+    },
+    "pickerNoTopicsFound": {
+        "message": "No topics found."
     }
 }
