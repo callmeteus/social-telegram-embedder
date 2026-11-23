@@ -34,13 +34,15 @@
 
         <section id="preferences-view" class="card card--preferences" aria-labelledby="preferences-title" hidden>
             <h2 id="preferences-title" class="card__title" data-i18n="optionsPreferencesTitle">Preferences</h2>
-            <label class="preference" for="hide-recent-chats">
-                <input id="hide-recent-chats" class="preference__checkbox" type="checkbox">
+            <div class="preference">
+                <button id="hide-recent-chats" class="preference__switch" type="button" role="switch" aria-checked="false" aria-labelledby="hide-recent-chats-label">
+                    <span class="preference__switch-indicator"></span>
+                </button>
                 <span class="preference__text">
-                    <span class="preference__label" data-i18n="optionsHideRecentChatsLabel">Hide recent chats</span>
+                    <span id="hide-recent-chats-label" class="preference__label" data-i18n="optionsHideRecentChatsLabel">Hide recent chats</span>
                     <span class="preference__description" data-i18n="optionsHideRecentChatsDescription">Show only pinned destinations and your chat list in the picker.</span>
                 </span>
-            </label>
+            </div>
         </section>
 
         <section id="setup-wizard" class="setup-wizard" aria-labelledby="setup-wizard-title" hidden>

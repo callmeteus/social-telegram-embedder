@@ -6,7 +6,7 @@ import {
 import { buildFuraffinitySnapshot, findFuraffinityInsertRow } from "../src/platforms/furaffinity/content/SubmissionView";
 
 const submissionMarkup = `
-    <section class="submission-content">
+    <div class="submission-details">
         <section class="submission-description">
             <div class="submission-description-artist">
                 <a href="/user/artist"><span class="c-usernameBlockSimple__displayName">Artist</span></a>
@@ -19,7 +19,9 @@ const submissionMarkup = `
                 </div>
             </div>
         </section>
-        <img id="submission-img" src="//d.facdn.net/art/artist/12345/cool.jpg">
+    </div>
+    <section class="submission-content">
+        <img id="submissionImg" src="//d.furaffinity.net/art/artist/12345/cool.jpg">
         <div class="submission-controls"></div>
         <div id="submission-options">
             <a class="button standard mobile-fix" href="/fav/12345">+Fav</a>
@@ -100,7 +102,7 @@ describe("buildFuraffinitySnapshot", () => {
         expect(snapshot?.media).toEqual([
             {
                 kind: "photo",
-                url: "https://d.facdn.net/art/artist/12345/cool.jpg"
+                url: "https://d.furaffinity.net/art/artist/12345/cool.jpg"
             }
         ]);
     });

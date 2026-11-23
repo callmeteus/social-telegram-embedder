@@ -102,7 +102,7 @@ function absoluteMediaUrl(value: string): string | null {
  * @returns The resolved media items, or an empty list when the view has no media.
  */
 export function extractFuraffinityMedia(root: ParentNode): SocialMediaItem[] {
-    const image = root.querySelector("#submission-img, img.submission-image, img[src*='facdn.net']");
+    const image = root.querySelector("#submissionImg, #submission-img, img.submission-image, img[src*='d.furaffinity.net'], img[src*='facdn.net']");
     const videoSource = root.querySelector("video[src], video source[src], source[src]");
     const media: SocialMediaItem[] = [];
     const seen = new Set<string>();
@@ -135,6 +135,24 @@ export function extractFuraffinityMedia(root: ParentNode): SocialMediaItem[] {
 }
 
 /**
+ * Finds the smallest ancestor holding the submission text, which FurAffinity renders outside the
+ * media view used for injection.
+ */
+function findCaptionRoot(root: Element): ParentNode {
+    let node: Element | null = root;
+
+    while (node) {
+        if (node.querySelector(".submission-description, .submission-title")) {
+            return node;
+        }
+
+        node = node.parentElement;
+    }
+
+    return root;
+}
+
+/**
  * Builds a content-script snapshot from the visible submission view.
  *
  * @param root - Submission view subtree.
@@ -147,11 +165,13 @@ export function buildFuraffinitySnapshot(root: ParentNode): SocialPostSnapshot |
         return null;
     }
 
+    const captionRoot = root instanceof Element ? findCaptionRoot(root) : root;
+
     return {
         text: buildFuraffinityCaptionHtml(
-            readViewText(root, ".submission-title h2, h2.submission-title, .submission-title"),
-            readViewText(root, ".submission-description-artist .c-usernameBlockSimple__displayName, .submission-description-artist a[href^='/user/']:not(.c-avatarFrameCapable), .submission-artist, .submission-artist-container a"),
-            readDescriptionText(root) || readViewText(root, ".submission-description")
+            readViewText(captionRoot, ".submission-title h2, h2.submission-title, .submission-title"),
+            readViewText(captionRoot, ".submission-description-artist .c-usernameBlockSimple__displayName, .submission-description-artist a[href^='/user/']:not(.c-avatarFrameCapable), .submission-artist, .submission-artist-container a"),
+            readDescriptionText(captionRoot) || readViewText(captionRoot, ".submission-description")
         ),
         media
     };
