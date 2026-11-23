@@ -77,6 +77,8 @@ export interface ExtensionConfig {
     recentDestinations: RecentDestination[];
     /** Destinations the user pinned to the top of the picker, in pin order. */
     pinnedDestinations: DestinationRef[];
+    /** Hides the Recent section in the picker. Recents are still recorded. */
+    hideRecentChats: boolean;
 }
 
 /**
@@ -88,6 +90,7 @@ export function createDefaultExtensionConfig(): ExtensionConfig {
         connections: [],
         channels: [],
         recentDestinations: [],
-        pinnedDestinations: []
+        pinnedDestinations: [],
+        hideRecentChats: false
     };
 }

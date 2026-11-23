@@ -300,7 +300,8 @@ class DestinationPickerView {
             pinnedDestinations: this.pinned,
             connections: this.options.config.connections,
             accounts: this.accounts.feeds,
-            query: this.query
+            query: this.query,
+            hideRecentChats: this.options.config.hideRecentChats
         });
         const scrollTop = this.list.scrollTop;
         const fragment = document.createDocumentFragment();

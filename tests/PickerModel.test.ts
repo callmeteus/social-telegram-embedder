@@ -79,6 +79,32 @@ describe("buildPickerSections", () => {
         ]);
     });
 
+    it("keeps the Recent section by default", () => {
+        const sections = buildPickerSections(input({
+            channels: [...channels],
+            recentDestinations: [{ ref: { type: DestinationRefType.CHANNEL, channelId: "c1" }, usedAt: 1 }]
+        }));
+
+        expect(sections.map((section) => section.id)).toEqual([PickerSectionId.RECENT]);
+    });
+
+    it("omits the Recent section when hideRecentChats is set, keeping pins and the chat list", () => {
+        const recent = { ref: { type: DestinationRefType.TELEGRAM_PEER, connectionId: "acc", peerId: 9, kind: TelegramPeerKind.GROUP, title: "Família" } as const, usedAt: 1 };
+        const sections = buildPickerSections(input({
+            channels: [...channels],
+            connections: [Bot, Account],
+            pinnedDestinations: [{ type: DestinationRefType.CHANNEL, channelId: "c1" }],
+            recentDestinations: [recent],
+            accounts: [account([dialog(9, "Família", { kind: TelegramPeerKind.GROUP }), dialog(10, "Outro")])],
+            hideRecentChats: true
+        }));
+
+        expect(sections.map((section) => [section.id, section.items.map((item) => item.title)])).toEqual([
+            [PickerSectionId.PINNED, ["Notícias"]],
+            [PickerSectionId.TELEGRAM_ACCOUNT, ["Família", "Outro"]]
+        ]);
+    });
+
     it("ignores server results when the query is empty and drops results without rights", () => {
         const empty = buildPickerSections(input({ accounts: [account([], [dialog(1, "Ana")])] }));
         const filtered = buildPickerSections(input({

@@ -105,6 +105,46 @@ body {
     line-height: 1.3;
 }
 
+.card--preferences .card__title {
+    margin-bottom: var(--x2tg-space-3);
+}
+
+.preference {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--x2tg-space-3);
+    cursor: pointer;
+}
+
+.preference__checkbox {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    margin: 2px 0 0;
+    accent-color: var(--x2tg-accent-fill);
+    cursor: pointer;
+}
+
+.preference__checkbox:focus-visible {
+    outline: none;
+    box-shadow: var(--x2tg-focus-ring);
+}
+
+.preference__text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.preference__label {
+    font-weight: 600;
+}
+
+.preference__description {
+    color: var(--x2tg-text-secondary);
+    font-size: 0.8125rem;
+}
+
 .bot-token-row {
     display: flex;
     flex-wrap: wrap;

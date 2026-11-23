@@ -954,5 +954,14 @@
     },
     "pickerBack": {
         "message": "Voltar"
+    },
+    "optionsPreferencesTitle": {
+        "message": "Preferências"
+    },
+    "optionsHideRecentChatsLabel": {
+        "message": "Ocultar chats recentes"
+    },
+    "optionsHideRecentChatsDescription": {
+        "message": "Mostra apenas os destinos fixados e sua lista de chats no seletor."
     }
 }
