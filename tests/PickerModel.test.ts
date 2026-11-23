@@ -88,7 +88,7 @@ describe("buildPickerSections", () => {
         expect(sections.map((section) => section.id)).toEqual([PickerSectionId.RECENT]);
     });
 
-    it("omits the Recent section when hideRecentChats is set, keeping pins and the chat list", () => {
+    it("lists only pinned destinations when hideRecentChats is set", () => {
         const recent = { ref: { type: DestinationRefType.TELEGRAM_PEER, connectionId: "acc", peerId: 9, kind: TelegramPeerKind.GROUP, title: "Família" } as const, usedAt: 1 };
         const sections = buildPickerSections(input({
             channels: [...channels],
@@ -100,8 +100,7 @@ describe("buildPickerSections", () => {
         }));
 
         expect(sections.map((section) => [section.id, section.items.map((item) => item.title)])).toEqual([
-            [PickerSectionId.PINNED, ["Notícias"]],
-            [PickerSectionId.TELEGRAM_ACCOUNT, ["Família", "Outro"]]
+            [PickerSectionId.PINNED, ["Notícias"]]
         ]);
     });
 

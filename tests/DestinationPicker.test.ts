@@ -499,7 +499,7 @@ describe("showDestinationPicker live Telegram chats", () => {
         expect(fake.port.disconnect).toHaveBeenCalled();
     });
 
-    it("hides the Recent section when the option is enabled, keeping pinned destinations", () => {
+    it("shows only pinned destinations when the option is enabled", () => {
         const fake = createFakePort();
         const config = configWith(["Canal A"], true);
 
@@ -512,8 +512,9 @@ describe("showDestinationPicker live Telegram chats", () => {
         const sectionTitles = Array.from(document.querySelectorAll(".x2tg-picker__section-title")).map((element) => element.textContent);
 
         expect(sectionTitles).not.toContain("Recent");
+        expect(sectionTitles).not.toContain("Your Telegram");
         expect(sectionTitles).toContain("Pinned");
-        expect(labels()).toEqual(["Canal A", "Família"]);
+        expect(labels()).toEqual(["Canal A"]);
     });
 
     it("notes only chats pinned in Telegram, in words", () => {
