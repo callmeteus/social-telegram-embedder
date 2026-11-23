@@ -233,6 +233,15 @@ describe("showDestinationPicker topic search", () => {
         expect(document.querySelector(".x2tg-picker__status")).toBeNull();
     });
 
+    it("does not duplicate the general topic when it is already a dialog", () => {
+        openTopics([
+            topic(1, "General", 900),
+            topic(2, "Piquenique", 800)
+        ]);
+
+        expect(labels().filter((label) => label === "General")).toHaveLength(1);
+    });
+
     it("navigates, selects and sends a filtered topic from a large list", () => {
         const topics: TelegramDialogEntry[] = Array.from({ length: 90 }, (_, index) =>
             topic(index + 10, `Debate ${String(index + 1).padStart(3, "0")}`, 900 - index));
