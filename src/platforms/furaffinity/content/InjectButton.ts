@@ -58,7 +58,7 @@ export function injectFuraffinityContent(root: ParentNode = document): void {
 function buildSendButton(postUrl: string, submission: Element): HTMLButtonElement {
     const button = document.createElement("button");
     button.type = "button";
-    button.classList.add("x2tg-send-button", "x2tg-send-button--furaffinity");
+    button.classList.add("button", "standard", "mobile-fix", "x2tg-send-button", "x2tg-send-button--furaffinity");
     button.setAttribute("aria-label", t("sendToTelegram"));
     button.title = t("sendToTelegram");
 

@@ -37,7 +37,23 @@ export function findFuraffinitySubmissions(root: ParentNode): Element[] {
  * @returns The control row, or the submission view itself.
  */
 export function findFuraffinityInsertRow(submission: Element): Element {
-    return submission.querySelector(".submission-controls, .actions-toolbar, .submission-actions") ?? submission;
+    const selectors = [
+        "#submission-options",
+        ".submission-controls-upper",
+        ".submission-controls",
+        ".actions-toolbar",
+        ".submission-actions"
+    ];
+
+    for (const selector of selectors) {
+        const row = submission.querySelector(selector);
+
+        if (row) {
+            return row;
+        }
+    }
+
+    return submission;
 }
 
 /**

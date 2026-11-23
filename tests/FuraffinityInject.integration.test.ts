@@ -14,6 +14,11 @@ const submissionMarkup = `
         <img id="submission-img" src="//d.facdn.net/art/artist/12345/cool.jpg">
         <div class="submission-description">Hello <b>world</b>.</div>
         <div class="submission-controls"></div>
+        <div id="submission-options">
+            <a class="button standard mobile-fix" href="/fav/12345">+Fav</a>
+            <a class="button standard mobile-fix" href="/newpm/artist">Note</a>
+            <a class="button standard mobile-fix" href="//d.facdn.net/art/artist/12345/cool.jpg">Download</a>
+        </div>
     </section>
 `;
 
@@ -33,10 +38,12 @@ describe("injectFuraffinityContent", () => {
     it("injects the send button into the submission control row", () => {
         injectFuraffinityContent(document);
 
-        const button = document.querySelector(".submission-controls .x2tg-send-button--furaffinity");
+        const button = document.querySelector("#submission-options .x2tg-send-button--furaffinity");
 
         expect(button).not.toBeNull();
-        expect(document.querySelector(".submission-controls")?.lastElementChild).toBe(button);
+        expect(document.querySelector("#submission-options")?.lastElementChild).toBe(button);
+        expect(button?.classList.contains("button")).toBe(true);
+        expect(button?.classList.contains("standard")).toBe(true);
         expect(button?.querySelectorAll("svg path")).toHaveLength(1);
         expect(button?.textContent).toBe("");
     });
@@ -104,10 +111,10 @@ describe("buildFuraffinitySnapshot", () => {
 });
 
 describe("findFuraffinityInsertRow", () => {
-    it("returns the control row when the submission has one", () => {
+    it("prefers the native submission-options row", () => {
         document.body.innerHTML = submissionMarkup;
         const submission = document.querySelector(".submission-content");
-        const controls = document.querySelector(".submission-controls");
+        const controls = document.querySelector("#submission-options");
 
         if (!submission || !controls) {
             throw new Error("submission fixture is missing");
