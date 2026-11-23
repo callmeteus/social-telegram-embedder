@@ -12,6 +12,8 @@ export interface CaptionEditorOptions {
     initialHtml?: string;
     /** Visible character limit; defaults to the Telegram caption limit. */
     maxLength?: number;
+    /** Whether the media spoiler toggle starts checked. */
+    initialHasSpoiler?: boolean;
     /** Whether the caption-above-media toggle starts on. Defaults to false. */
     captionAbove?: boolean;
 }
@@ -22,6 +24,8 @@ export interface CaptionEditor {
     element: HTMLElement;
     /** Sanitized caption HTML, or "" when the user left it empty. */
     getHtml(): string;
+    /** Whether the media spoiler toggle is checked. */
+    getHasSpoiler(): boolean;
     /** Whether Telegram should show the caption above the attached media. */
     getCaptionAbove(): boolean;
     focus(): void;
@@ -172,6 +176,7 @@ export function createCaptionEditor(options: CaptionEditorOptions = {}): Caption
     return {
         element,
         getHtml: () => captionHtmlFromElement(editor, maxLength),
+        getHasSpoiler: () => spoilerCheckbox.checked,
         getCaptionAbove: () => above.getAttribute("aria-pressed") === "true",
         focus: () => focusEnd(editor),
         destroy: () => {

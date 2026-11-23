@@ -213,7 +213,7 @@ describe("sendToDestinations", () => {
         );
 
         for (const call of sendPost.mock.calls) {
-            expect(call[4]).toBe(true);
+            expect(call[5]).toBe(true);
         }
     });
 

@@ -348,6 +348,7 @@ export class MtcuteTelegramUserClient implements TelegramUserClient {
         caption?: FormattedText,
         onProgress?: UploadProgressCallback,
         topicId?: number,
+        hasSpoiler?: boolean,
         captionAbove?: boolean
     ): Promise<void> {
         console.debug("[telegram-user] sending %s (%d bytes) to %d", file.kind, file.blob.size, peerId);
@@ -374,6 +375,7 @@ export class MtcuteTelegramUserClient implements TelegramUserClient {
         caption?: FormattedText,
         onProgress?: (index: number, uploaded: number, total: number) => void,
         topicId?: number,
+        hasSpoiler?: boolean,
         captionAbove?: boolean
     ): Promise<void> {
         const medias = files.map((file, index) => toInputMedia(file, index === 0 ? caption : undefined, true, hasSpoiler));

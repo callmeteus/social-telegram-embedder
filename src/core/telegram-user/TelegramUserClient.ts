@@ -25,6 +25,7 @@ export interface TelegramUserMessenger {
         caption?: FormattedText,
         onProgress?: UploadProgressCallback,
         topicId?: number,
+        hasSpoiler?: boolean,
         captionAbove?: boolean
     ): Promise<void>;
     sendMediaGroup(
@@ -33,6 +34,7 @@ export interface TelegramUserMessenger {
         caption?: FormattedText,
         onProgress?: (index: number, uploaded: number, total: number) => void,
         topicId?: number,
+        hasSpoiler?: boolean,
         captionAbove?: boolean
     ): Promise<void>;
 }

@@ -197,6 +197,7 @@ describe("TelegramClient caption above media", () => {
             post([{ kind: "photo", url: "https://example.com/a.jpg" }]),
             undefined,
             undefined,
+            undefined,
             true
         );
 
@@ -214,6 +215,7 @@ describe("TelegramClient caption above media", () => {
         await new TelegramClient("t").sendSocialPost(
             "-1",
             post([{ kind: "gif", url: "https://example.com/a.gif" }]),
+            undefined,
             undefined,
             undefined,
             true
@@ -241,7 +243,7 @@ describe("TelegramClient caption above media", () => {
     it("leaves text-only sends unchanged", async () => {
         const fetchMock = stubJson();
 
-        await new TelegramClient("t").sendSocialPost("-1", post([]), undefined, undefined, true);
+        await new TelegramClient("t").sendSocialPost("-1", post([]), undefined, undefined, undefined, true);
 
         expect(String(fetchMock.mock.calls[0]![0])).toContain("sendMessage");
 
@@ -257,7 +259,7 @@ describe("TelegramClient caption above media", () => {
         await new TelegramClient("t").sendSocialPost("-1", post([
             { kind: "photo", url: "https://example.com/a.jpg" },
             { kind: "photo", url: "https://example.com/b.jpg" }
-        ]), undefined, undefined, true);
+        ]), undefined, undefined, undefined, true);
 
         const call = fetchMock.mock.calls.find((entry) => String(entry[0]).includes("sendMediaGroup"))!;
         const body = (call[1] as RequestInit).body;
@@ -273,7 +275,7 @@ describe("TelegramClient caption above media", () => {
         await new TelegramClient("t").sendSocialPost("-1", post([
             { kind: "photo", url: "https://pbs.twimg.com/media/a.jpg?name=small" },
             { kind: "photo", url: "https://pbs.twimg.com/media/b.jpg?name=small" }
-        ]), undefined, undefined, true);
+        ]), undefined, undefined, undefined, true);
 
         const call = fetchMock.mock.calls.find((entry) => String(entry[0]).includes("sendMediaGroup"))!;
         const formData = (call[1] as RequestInit).body as FormData;
@@ -289,6 +291,7 @@ describe("TelegramClient caption above media", () => {
         await new TelegramClient("t").sendSocialPost(
             "-1",
             post([{ kind: "photo", url: "https://pbs.twimg.com/media/a.jpg?name=small" }]),
+            undefined,
             undefined,
             undefined,
             true

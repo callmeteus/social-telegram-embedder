@@ -250,8 +250,8 @@ async function handleSendClick(
             config,
             platformId: SocialPlatformId.X,
             initialCaptionHtml: buildCaptionDraftHtml(pendingSnapshot?.text || draftText, postUrl),
-            onSend: (destinations, captionHtml, captionAbove) => {
-                void sendToDestinations(destinations, postUrl, captionHtml, captionAbove, pendingSnapshot);
+            onSend: (destinations, captionHtml, hasSpoiler, captionAbove) => {
+                void sendToDestinations(destinations, postUrl, captionHtml, hasSpoiler, captionAbove, pendingSnapshot);
             }
         });
     };
@@ -299,6 +299,7 @@ async function sendToDestinations(
     destinations: PickedDestination[],
     postUrl: string,
     captionHtml: string,
+    hasSpoiler: boolean,
     captionAbove: boolean,
     pendingSnapshot?: SocialPostSnapshot
 ): Promise<void> {
@@ -328,6 +329,7 @@ async function sendToDestinations(
         postUrl,
         postSnapshot,
         captionHtml,
+        hasSpoiler,
         captionAbove
     });
 

@@ -77,6 +77,7 @@ export interface SocialPlatform {
         post: FetchedSocialPost,
         onProgress?: SendProgressCallback,
         captionHtml?: string,
+        hasSpoiler?: boolean,
         captionAbove?: boolean
     ): Promise<SendResult>;
     progressMessages: {

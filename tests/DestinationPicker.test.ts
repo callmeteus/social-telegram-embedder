@@ -40,6 +40,50 @@ function dialog(peerId: number, title: string, overrides: Partial<TelegramDialog
     };
 }
 
+function topic(topicId: number, title: string, lastMessageAt: number): TelegramDialogEntry {
+    return dialog(-100555, title, {
+        kind: TelegramPeerKind.GROUP,
+        topicId,
+        parentTitle: "Grupo",
+        lastMessageAt
+    });
+}
+
+function openTopics(topics: TelegramDialogEntry[], onSend = vi.fn()): { onSend: typeof onSend } {
+    const fake = createFakePort("telegram-user-dialogs");
+
+    showDestinationPicker({ config: configWith(["Notícias"], true), onSend, connectDialogs: () => fake.port });
+    fake.emit({ type: DialogsPortMessageType.SESSION, snapshot: { state: TelegramUserSessionState.READY, hasCredentials: true } });
+    fake.emit({
+        type: DialogsPortMessageType.PAGE,
+        entries: [
+            dialog(-100555, "Grupo", { kind: TelegramPeerKind.GROUP, lastMessageAt: 1000 }),
+            ...topics
+        ],
+        done: true
+    });
+
+    const groupRow = rows().find((row) => row.querySelector(".x2tg-picker__label")?.textContent === "Grupo");
+
+    groupRow?.click();
+    return { onSend };
+}
+
+function mainSearch(): HTMLInputElement {
+    return document.querySelector<HTMLInputElement>(".x2tg-picker__search:not(.x2tg-picker__topic-search)")!;
+}
+
+function topicSearch(): HTMLInputElement {
+    return document.querySelector<HTMLInputElement>(".x2tg-picker__topic-search")!;
+}
+
+function typeTopicQuery(query: string): void {
+    const input = topicSearch();
+
+    input.value = query;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
 function rows(): HTMLElement[] {
     return Array.from(document.querySelectorAll<HTMLElement>(".x2tg-picker__item"));
 }
@@ -135,7 +179,7 @@ describe("showDestinationPicker topic selector", () => {
                 topicId: 42
             },
             label: "Fofocas"
-        }], "", false);
+        }], "", false, false);
     });
 
     it("goes back with Escape and sends the selected topic from the main list", () => {
@@ -161,7 +205,7 @@ describe("showDestinationPicker topic selector", () => {
         expect(onSend).toHaveBeenCalledWith([expect.objectContaining({
             label: "Fofoca da semana",
             ref: expect.objectContaining({ topicId: 1 })
-        })], "");
+        })], "", false, false);
     });
 
     it("does not change the main query or run a server search while typing in the topic input", () => {
@@ -221,7 +265,7 @@ describe("showDestinationPicker keyboard navigation", () => {
 
         press("Enter", { ctrlKey: true });
 
-        expect(onSend).toHaveBeenCalledWith([{ ref: { type: DestinationRefType.CHANNEL, channelId: "c2" }, label: "Canal B" }], "", false);
+        expect(onSend).toHaveBeenCalledWith([{ ref: { type: DestinationRefType.CHANNEL, channelId: "c2" }, label: "Canal B" }], "", false, false);
         expect(document.querySelector(".x2tg-picker-overlay")).toBeNull();
     });
 
@@ -232,7 +276,7 @@ describe("showDestinationPicker keyboard navigation", () => {
         press("ArrowDown");
         press("Enter", { metaKey: true });
 
-        expect(onSend).toHaveBeenCalledWith([{ ref: { type: DestinationRefType.CHANNEL, channelId: "c2" }, label: "Canal B" }], "", false);
+        expect(onSend).toHaveBeenCalledWith([{ ref: { type: DestinationRefType.CHANNEL, channelId: "c2" }, label: "Canal B" }], "", false, false);
     });
 
     it("closes on Escape without sending and keeps keys away from the page", () => {
@@ -270,7 +314,7 @@ describe("showDestinationPicker keyboard navigation", () => {
 
         sendButton.click();
 
-        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal B" })], "", false);
+        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal B" })], "", false, false);
     });
 
     it("closes from the close button without sending", () => {
@@ -618,7 +662,7 @@ describe("showDestinationPicker with several accounts", () => {
         expect(onSend).toHaveBeenCalledWith([{
             ref: { type: DestinationRefType.TELEGRAM_PEER, connectionId: "acc-2", peerId: 1, kind: TelegramPeerKind.USER, title: "Grupo" },
             label: "Grupo"
-        }], "", false);
+        }], "", false, false);
     });
 
     it("asks the owning account for each chat photo and closes every port", () => {
@@ -704,7 +748,7 @@ describe("showDestinationPicker multi-select", () => {
         expect(onSend).toHaveBeenCalledWith([
             expect.objectContaining({ label: "Canal A" }),
             expect.objectContaining({ label: "Canal C" })
-        ], "", false);
+        ], "", false, false);
     });
 
     it("toggles from the checkbox or the row, and unselects again", () => {
@@ -720,7 +764,7 @@ describe("showDestinationPicker multi-select", () => {
         expect(rows()[1]?.getAttribute("aria-selected")).toBe("false");
 
         document.querySelector<HTMLButtonElement>(".x2tg-picker__send")?.click();
-        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal A" })], "", false);
+        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal A" })], "", false, false);
     });
 
     it("stops at the selection limit and tells the user", () => {
@@ -949,7 +993,7 @@ describe("showDestinationPicker caption editor", () => {
         editorSurface().focus();
         pressInEditor("Enter", { ctrlKey: true });
 
-        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal B" })], "", false);
+        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal B" })], "", false, false);
         expect(document.querySelector(".x2tg-picker-overlay")).toBeNull();
     });
 
@@ -962,7 +1006,7 @@ describe("showDestinationPicker caption editor", () => {
         editorSurface().focus();
         pressInEditor("Enter", { ctrlKey: true });
 
-        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal A" })], "<b>Oi</b>", false);
+        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal A" })], "<b>Oi</b>", false, false);
     });
 
     it("passes the caption-above-media choice to onSend", () => {
@@ -979,7 +1023,7 @@ describe("showDestinationPicker caption editor", () => {
         rows()[0]?.click();
         document.querySelector<HTMLButtonElement>(".x2tg-picker__send")?.click();
 
-        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal A" })], "", true);
+        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal A" })], "", false, true);
     });
 
     it("prefills the editor with the draft caption", () => {
@@ -1007,7 +1051,7 @@ describe("showDestinationPicker caption editor", () => {
         rows()[0]?.click();
         document.querySelector<HTMLButtonElement>(".x2tg-picker__send")?.click();
 
-        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal A" })], "", true);
+        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal A" })], "", true, false);
     });
 });
 

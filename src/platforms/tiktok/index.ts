@@ -22,9 +22,11 @@ export const tiktokPlatform: SocialPlatform = {
         sender: DestinationSender,
         post: FetchedSocialPost,
         onProgress?: SendProgressCallback,
-        captionHtml?: string
+        captionHtml?: string,
+        hasSpoiler?: boolean,
+        captionAbove?: boolean
     ): Promise<SendResult> {
-        return sender.sendSocialPost(post, onProgress, captionHtml);
+        return sender.sendSocialPost(post, onProgress, captionHtml, hasSpoiler, captionAbove);
     },
     progressMessages: {
         fetching: "progressFetchingPost",
