@@ -529,6 +529,9 @@
             }
         }
     },
+    "captionSpoiler": {
+        "message": "Hide media with a spoiler"
+    },
     "notificationSendSuccessTitle": {
         "message": "Sent to Telegram"
     },

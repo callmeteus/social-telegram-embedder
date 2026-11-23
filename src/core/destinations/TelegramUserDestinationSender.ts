@@ -33,7 +33,7 @@ export class TelegramUserDestinationSender implements DestinationSender {
         post: FetchedSocialPost,
         onProgress?: SendProgressCallback,
         captionHtml?: string,
-        captionAbove?: boolean
+        hasSpoiler?: boolean
     ): Promise<SendResult> {
         const captionHtmlResolved = resolveTelegramCaption(captionHtml, post.embedUrl, post.text);
         const caption = telegramHtmlToFormattedText(captionHtmlResolved);
@@ -52,11 +52,11 @@ export class TelegramUserDestinationSender implements DestinationSender {
                 onProgress?.({ message: t("progressSendingToTelegram") });
                 await this.messenger.sendMedia(this.ref.peerId, file, caption, (uploaded, total) => {
                     onProgress?.(formatUploadProgress(1, 1, uploaded, total));
-                }, this.ref.topicId, captionAbove);
+                }, this.ref.topicId, hasSpoiler);
                 return { ok: true };
             }
 
-            await this.sendBatches(post, caption, onProgress, captionAbove);
+            await this.sendBatches(post, caption, onProgress, hasSpoiler);
             return { ok: true };
         } catch (err) {
             return toFailure(err);
@@ -75,7 +75,7 @@ export class TelegramUserDestinationSender implements DestinationSender {
         post: FetchedSocialPost,
         caption: FormattedText,
         onProgress?: SendProgressCallback,
-        captionAbove?: boolean
+        hasSpoiler?: boolean
     ): Promise<void> {
         const batches = groupSocialMediaForTelegram(post.media);
         const mediaTotal = post.media.length;
@@ -96,7 +96,7 @@ export class TelegramUserDestinationSender implements DestinationSender {
                         onProgress?.(formatUploadProgress(mediaIndex + 1, mediaTotal, uploaded, total));
                     },
                     this.ref.topicId,
-                    captionAbove
+                    hasSpoiler
                 );
 
                 mediaIndex += 1;
@@ -127,7 +127,7 @@ export class TelegramUserDestinationSender implements DestinationSender {
                     onProgress?.(formatUploadProgress(startIndex + index + 1, mediaTotal, uploaded, total));
                 },
                 this.ref.topicId,
-                captionAbove
+                hasSpoiler
             );
 
             mediaIndex += batch.length;

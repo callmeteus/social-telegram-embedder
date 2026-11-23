@@ -899,23 +899,6 @@ describe("showDestinationPicker caption editor", () => {
         expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal A" })], "<b>Oi</b>", false);
     });
 
-    it("passes the caption-above-media choice to onSend", () => {
-        const onSend = vi.fn();
-
-        showDestinationPicker({ config: configWith(["Canal A"]), onSend });
-
-        const toggle = document.querySelector<HTMLButtonElement>(".x2tg-caption__option")!;
-
-        expect(toggle.getAttribute("aria-pressed")).toBe("false");
-        expect(toggle.textContent).toContain("Caption above media");
-
-        toggle.click();
-        rows()[0]?.click();
-        document.querySelector<HTMLButtonElement>(".x2tg-picker__send")?.click();
-
-        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal A" })], "", true);
-    });
-
     it("prefills the editor with the draft caption", () => {
         showDestinationPicker({
             config: configWith(["Canal A"]),
@@ -924,6 +907,24 @@ describe("showDestinationPicker caption editor", () => {
         });
 
         expect(editorSurface().querySelector("b")?.textContent).toBe("user");
+    });
+
+    it("passes the spoiler toggle state to onSend", () => {
+        const onSend = vi.fn();
+
+        showDestinationPicker({ config: configWith(["Canal A"]), onSend });
+
+        const toggle = document.querySelector<HTMLInputElement>(".x2tg-caption__spoiler-check")!;
+
+        expect(toggle.type).toBe("checkbox");
+        expect(toggle.checked).toBe(false);
+        expect(document.querySelector(".x2tg-caption__spoiler")?.textContent).toBe("Hide media with a spoiler");
+
+        toggle.click();
+        rows()[0]?.click();
+        document.querySelector<HTMLButtonElement>(".x2tg-picker__send")?.click();
+
+        expect(onSend).toHaveBeenCalledWith([expect.objectContaining({ label: "Canal A" })], "", true);
     });
 });
 

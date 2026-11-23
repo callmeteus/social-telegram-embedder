@@ -27,7 +27,11 @@ After setup, the options page is a "Send channels" list of connections: any numb
 
 Clicking a row drills in: the detail screen replaces the list, with a Back button in its header (browser back works too, and the URL hash keeps the screen on reload). The bot detail holds the token, its Telegram chats as "destinations" in flat divided rows, and a "Remove bot" danger zone; edits use the bottom save dock. Each destination has an optional topic id, accepted as a number or a link copied from a Telegram topic; when set, every Bot API send includes `message_thread_id` so posts land in that forum topic instead of the group's general chat. "Find destinations" also picks up topics seen in bot updates and labels them "Group · Topic". The picker marks topic destinations with a small "Topic" badge. The account detail holds login and logout. Leaving a screen with unsaved changes asks before discarding.
 
-The picker's caption editor has a "Caption above media" toggle below it. The choice is per send and off by default. When on, Bot API sends include `show_caption_above_media` on each media item, and MTProto sends set mtcute's `invert` for a single item or `invertMedia` for an album. Text-only sends stay unchanged.
+## Spoiler toggle
+
+The destination picker shows a "Hide media with a spoiler" checkbox below the caption editor. Checking it sets `has_spoiler` on Bot API media methods and the MTProto `spoiler` flag on uploaded media, for single photos, videos and animations and for every item of an album. Text-only sends ignore the flag and behave as before.
+
+The toggle hides the media, not the caption text. Picker captions are sanitized to escaped text, `<b>` ranges and line breaks, so a `<spoiler>` entity cannot be authored in the editor. If one reaches the send pipeline from another caller, it stays an independent text spoiler and the media toggle neither strips nor changes it. The two can coexist.
 
 ## Tokens
 

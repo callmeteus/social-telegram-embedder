@@ -77,32 +77,20 @@ describe("createCaptionEditor", () => {
         expect(createCaptionEditor().getHtml()).toBe("");
     });
 
-    it("starts with the caption-above-media option off and localized", () => {
+    it("reports the spoiler toggle state and accepts an initial value", () => {
         const editor = createCaptionEditor();
-        const toggle = aboveToggleOf(editor);
+        const toggle = editor.element.querySelector<HTMLInputElement>(".x2tg-caption__spoiler-check")!;
 
-        expect(editor.getCaptionAbove()).toBe(false);
-        expect(toggle.getAttribute("aria-pressed")).toBe("false");
-        expect(toggle.textContent).toBe("Caption above media");
-    });
-
-    it("accepts an initial caption-above-media state", () => {
-        expect(createCaptionEditor({ captionAbove: true }).getCaptionAbove()).toBe(true);
-    });
-
-    it("toggles the caption-above-media option on and off", () => {
-        const editor = createCaptionEditor();
-        const toggle = aboveToggleOf(editor);
+        expect(toggle.checked).toBe(false);
+        expect(editor.getHasSpoiler()).toBe(false);
 
         toggle.click();
-
-        expect(editor.getCaptionAbove()).toBe(true);
-        expect(toggle.getAttribute("aria-pressed")).toBe("true");
+        expect(editor.getHasSpoiler()).toBe(true);
 
         toggle.click();
+        expect(editor.getHasSpoiler()).toBe(false);
 
-        expect(editor.getCaptionAbove()).toBe(false);
-        expect(toggle.getAttribute("aria-pressed")).toBe("false");
+        expect(createCaptionEditor({ initialHasSpoiler: true }).getHasSpoiler()).toBe(true);
     });
 });
 

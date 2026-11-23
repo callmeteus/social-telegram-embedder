@@ -396,8 +396,8 @@ async function handleSendClick(
             config,
             platformId: SocialPlatformId.FACEBOOK,
             initialCaptionHtml: buildCaptionDraftHtml(draftText, resolvedPostUrl),
-            onSend: (destinations, captionHtml, captionAbove) => {
-                void sendToDestinations(destinations, resolvedPostUrl, captionHtml, captionAbove, snapshotRoot, pending);
+            onSend: (destinations, captionHtml, hasSpoiler) => {
+                void sendToDestinations(destinations, resolvedPostUrl, captionHtml, hasSpoiler, snapshotRoot, pending);
             }
         });
     };
@@ -441,7 +441,7 @@ async function sendToDestinations(
     destinations: PickedDestination[],
     postUrl: string,
     captionHtml: string,
-    captionAbove: boolean,
+    hasSpoiler: boolean,
     snapshotRoot: Element,
     pending?: PendingFacebookSendOptions
 ): Promise<void> {
@@ -473,7 +473,7 @@ async function sendToDestinations(
         postUrl,
         postSnapshot: payloadSnapshot,
         captionHtml,
-        captionAbove
+        hasSpoiler
     });
 
     if (response === undefined) {

@@ -348,12 +348,12 @@ export class MtcuteTelegramUserClient implements TelegramUserClient {
         caption?: FormattedText,
         onProgress?: UploadProgressCallback,
         topicId?: number,
-        captionAbove?: boolean
+        hasSpoiler?: boolean
     ): Promise<void> {
         console.debug("[telegram-user] sending %s (%d bytes) to %d", file.kind, file.blob.size, peerId);
 
         await runWithStallGuard(async (abortSignal, touch) => {
-            await this.client.sendMedia(peerId, toInputMedia(file, caption, false), {
+            await this.client.sendMedia(peerId, toInputMedia(file, caption, false, hasSpoiler), {
                 abortSignal,
                 progressCallback: (uploaded, total) => {
                     touch();
@@ -374,9 +374,9 @@ export class MtcuteTelegramUserClient implements TelegramUserClient {
         caption?: FormattedText,
         onProgress?: (index: number, uploaded: number, total: number) => void,
         topicId?: number,
-        captionAbove?: boolean
+        hasSpoiler?: boolean
     ): Promise<void> {
-        const medias = files.map((file, index) => toInputMedia(file, index === 0 ? caption : undefined, true));
+        const medias = files.map((file, index) => toInputMedia(file, index === 0 ? caption : undefined, true, hasSpoiler));
 
         console.debug("[telegram-user] sending album of %d files to %d", files.length, peerId);
 
@@ -690,12 +690,13 @@ function toTextWithEntities(text: FormattedText): TextWithEntities {
     };
 }
 
-function toInputMedia(file: OutgoingMediaFile, caption: FormattedText | undefined, inAlbum: boolean) {
+function toInputMedia(file: OutgoingMediaFile, caption: FormattedText | undefined, inAlbum: boolean, hasSpoiler?: boolean) {
     const params = {
         caption: caption ? toTextWithEntities(caption) : undefined,
         fileName: file.fileName,
         fileMime: file.blob.type || undefined,
-        fileSize: file.blob.size
+        fileSize: file.blob.size,
+        spoiler: hasSpoiler === true
     };
 
     if (file.kind === "photo") {
