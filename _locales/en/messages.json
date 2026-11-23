@@ -533,6 +533,9 @@
     "captionBold": {
         "message": "Bold"
     },
+    "captionAbove": {
+        "message": "Caption above media"
+    },
     "captionCharCount": {
         "message": "$1/$2",
         "placeholders": {

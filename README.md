@@ -216,6 +216,12 @@ Parse media.all (photos, videos, GIFs)
 
 Each caption includes the tweet text (when available) and the FixupX link so readers can open the original post.
 
+### Caption above the media
+
+The picker has a "Caption above media" toggle below the caption editor. The choice is **per send**, like the edited caption itself, and is not saved as a preference. It starts off, so existing sends are unchanged.
+
+When enabled, Telegram draws the caption above the attachment for both bot and logged-in account destinations, with single media and with albums. On the Bot API the sends carry `show_caption_above_media` on the media item; on the account path mtcute receives `invert` for a single item or `invertMedia` for an album. Text-only sends have no media to invert and stay unchanged.
+
 ---
 
 ## Localization

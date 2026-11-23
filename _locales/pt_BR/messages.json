@@ -533,6 +533,9 @@
     "captionBold": {
         "message": "Negrito"
     },
+    "captionAbove": {
+        "message": "Legenda acima da mídia"
+    },
     "captionCharCount": {
         "message": "$1/$2",
         "placeholders": {

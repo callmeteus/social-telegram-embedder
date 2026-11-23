@@ -11,6 +11,10 @@ function surfaceOf(editor: { element: HTMLElement }): HTMLElement {
     return editor.element.querySelector<HTMLElement>(".x2tg-caption__editor")!;
 }
 
+function aboveToggleOf(editor: { element: HTMLElement }): HTMLButtonElement {
+    return editor.element.querySelector<HTMLButtonElement>(".x2tg-caption__option")!;
+}
+
 describe("createCaptionEditor", () => {
     it("prefills bold ranges and line breaks from the draft", () => {
         const editor = createCaptionEditor({ initialHtml: "@<b>user</b>\n\nhttps://x.com/a/status/1" });
@@ -73,20 +77,32 @@ describe("createCaptionEditor", () => {
         expect(createCaptionEditor().getHtml()).toBe("");
     });
 
-    it("reports the spoiler toggle state and accepts an initial value", () => {
+    it("starts with the caption-above-media option off and localized", () => {
         const editor = createCaptionEditor();
-        const toggle = editor.element.querySelector<HTMLInputElement>(".x2tg-caption__spoiler-check")!;
+        const toggle = aboveToggleOf(editor);
 
-        expect(toggle.checked).toBe(false);
-        expect(editor.getHasSpoiler()).toBe(false);
+        expect(editor.getCaptionAbove()).toBe(false);
+        expect(toggle.getAttribute("aria-pressed")).toBe("false");
+        expect(toggle.textContent).toBe("Caption above media");
+    });
+
+    it("accepts an initial caption-above-media state", () => {
+        expect(createCaptionEditor({ captionAbove: true }).getCaptionAbove()).toBe(true);
+    });
+
+    it("toggles the caption-above-media option on and off", () => {
+        const editor = createCaptionEditor();
+        const toggle = aboveToggleOf(editor);
 
         toggle.click();
-        expect(editor.getHasSpoiler()).toBe(true);
+
+        expect(editor.getCaptionAbove()).toBe(true);
+        expect(toggle.getAttribute("aria-pressed")).toBe("true");
 
         toggle.click();
-        expect(editor.getHasSpoiler()).toBe(false);
 
-        expect(createCaptionEditor({ initialHasSpoiler: true }).getHasSpoiler()).toBe(true);
+        expect(editor.getCaptionAbove()).toBe(false);
+        expect(toggle.getAttribute("aria-pressed")).toBe("false");
     });
 });
 

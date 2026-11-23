@@ -124,8 +124,8 @@ async function handleSendClick(postUrl: string): Promise<void> {
         config,
         platformId: SocialPlatformId.E621,
         initialCaptionHtml: buildCaptionDraftHtml(draftText, resolvedPostUrl),
-        onSend: (destinations, captionHtml, hasSpoiler) => {
-            void sendToDestinations(destinations, resolvedPostUrl, captionHtml, hasSpoiler);
+        onSend: (destinations, captionHtml, captionAbove) => {
+            void sendToDestinations(destinations, resolvedPostUrl, captionHtml, captionAbove);
         }
     });
 }
@@ -137,7 +137,7 @@ async function sendToDestinations(
     destinations: PickedDestination[],
     postUrl: string,
     captionHtml: string,
-    hasSpoiler: boolean
+    captionAbove: boolean
 ): Promise<void> {
     const dedupeKey = `${getDestinationsKey(destinations)}:${postUrl}`;
 
@@ -159,7 +159,7 @@ async function sendToDestinations(
         destinations: destinations.map((destination) => destination.ref),
         postUrl,
         captionHtml,
-        hasSpoiler
+        captionAbove
     });
 
     if (response === undefined) {

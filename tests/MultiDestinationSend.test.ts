@@ -198,8 +198,8 @@ describe("sendToDestinations", () => {
         }
     });
 
-    it("forwards the spoiler flag to every destination but not to link-only sends", async () => {
-        const { deps, sendPost, senders } = setup();
+    it("passes the caption-above-media choice to every destination", async () => {
+        const { deps, sendPost } = setup();
 
         await sendToDestinations(
             {
@@ -207,7 +207,7 @@ describe("sendToDestinations", () => {
                 post: Post,
                 normalizedUrl: "u",
                 destinations: [channel("a"), peer(1, "Ana")],
-                hasSpoiler: true
+                captionAbove: true
             },
             deps
         );
@@ -215,14 +215,6 @@ describe("sendToDestinations", () => {
         for (const call of sendPost.mock.calls) {
             expect(call[4]).toBe(true);
         }
-
-        await sendToDestinations(
-            { platform: { sendPost }, post: null, normalizedUrl: "https://x.com/a/status/1", destinations: [channel("b")], hasSpoiler: true },
-            deps
-        );
-
-        expect(sendPost).toHaveBeenCalledTimes(2);
-        expect(senders.get("b")?.sendLink).toHaveBeenCalledWith("https://x.com/a/status/1");
     });
 
     it("sends only the link when the post could not be fetched", async () => {

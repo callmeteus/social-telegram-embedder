@@ -33,7 +33,7 @@ interface TelegramInputMedia {
     media: string;
     caption?: string;
     parse_mode?: string;
-    has_spoiler?: boolean;
+    show_caption_above_media?: boolean;
 }
 
 interface TelegramSentMessage {
@@ -102,7 +102,7 @@ export class TelegramClient {
         post: FetchedSocialPost,
         onProgress?: SendProgressCallback,
         captionHtml?: string,
-        hasSpoiler?: boolean
+        captionAbove?: boolean
     ): Promise<SendResult> {
         const normalizedChatId = normalizeTelegramChatId(chatId);
         const caption = resolveTelegramCaption(captionHtml, post.embedUrl, post.text);
@@ -114,7 +114,7 @@ export class TelegramClient {
         }
 
         if (post.media.length === 1) {
-            return this.sendSingleMedia(normalizedChatId, post.media[0], caption, 1, mediaTotal, onProgress, hasSpoiler);
+            return this.sendSingleMedia(normalizedChatId, post.media[0], caption, 1, mediaTotal, onProgress, captionAbove);
         }
 
         const batches = groupSocialMediaForTelegram(post.media);
@@ -131,7 +131,7 @@ export class TelegramClient {
                     mediaIndex + 1,
                     mediaTotal,
                     onProgress,
-                    hasSpoiler
+                    captionAbove
                 )
                 : await this.sendMediaBatch(
                     normalizedChatId,
@@ -140,7 +140,7 @@ export class TelegramClient {
                     mediaIndex,
                     mediaTotal,
                     onProgress,
-                    hasSpoiler
+                    captionAbove
                 );
 
             if (!result.ok) {
@@ -269,7 +269,7 @@ export class TelegramClient {
         itemIndex: number,
         itemTotal: number,
         onProgress?: SendProgressCallback,
-        hasSpoiler?: boolean
+        captionAbove?: boolean
     ): Promise<SendResult> {
         const localBlob = resolveLocalMediaBlob(media);
 
@@ -284,12 +284,12 @@ export class TelegramClient {
                 itemIndex,
                 itemTotal,
                 onProgress,
-                hasSpoiler
+                captionAbove
             );
         }
 
         if (media.kind === "photo") {
-            return this.sendMediaByUrl("sendPhoto", chatId, "photo", media.url, caption, itemIndex, itemTotal, onProgress, hasSpoiler);
+            return this.sendMediaByUrl("sendPhoto", chatId, "photo", media.url, caption, itemIndex, itemTotal, onProgress, captionAbove);
         }
 
         if (media.kind === "gif") {
@@ -302,17 +302,17 @@ export class TelegramClient {
                 itemIndex,
                 itemTotal,
                 onProgress,
-                hasSpoiler
+                captionAbove
             );
 
             if (animationResult.ok) {
                 return animationResult;
             }
 
-            return this.sendMediaByUrl("sendVideo", chatId, "video", media.url, caption, itemIndex, itemTotal, onProgress, hasSpoiler);
+            return this.sendMediaByUrl("sendVideo", chatId, "video", media.url, caption, itemIndex, itemTotal, onProgress, captionAbove);
         }
 
-        return this.sendMediaByUrl("sendVideo", chatId, "video", media.url, caption, itemIndex, itemTotal, onProgress, hasSpoiler);
+        return this.sendMediaByUrl("sendVideo", chatId, "video", media.url, caption, itemIndex, itemTotal, onProgress, captionAbove);
     }
 
     private async sendMediaBatch(
@@ -322,7 +322,7 @@ export class TelegramClient {
         startIndex: number,
         itemTotal: number,
         onProgress?: SendProgressCallback,
-        hasSpoiler?: boolean
+        captionAbove?: boolean
     ): Promise<SendResult> {
         onProgress?.({
             message: itemTotal > 1
@@ -347,7 +347,7 @@ export class TelegramClient {
                 startIndex,
                 itemTotal,
                 onProgress,
-                hasSpoiler
+                captionAbove
             );
 
             if (uploaded.ok) {
@@ -368,6 +368,10 @@ export class TelegramClient {
             if (index === 0 && caption) {
                 entry.caption = caption;
                 entry.parse_mode = TELEGRAM_HTML_PARSE_MODE;
+            }
+
+            if (captionAbove) {
+                entry.show_caption_above_media = true;
             }
 
             return entry;
@@ -393,7 +397,7 @@ export class TelegramClient {
                 startIndex + index + 1,
                 itemTotal,
                 onProgress,
-                hasSpoiler
+                captionAbove
             );
 
             if (!result.ok) {
@@ -411,7 +415,7 @@ export class TelegramClient {
         startIndex: number,
         itemTotal: number,
         onProgress?: SendProgressCallback,
-        hasSpoiler?: boolean
+        captionAbove?: boolean
     ): Promise<SendResult> {
         const formData = new FormData();
         const mediaPayload: TelegramInputMedia[] = [];
@@ -463,6 +467,10 @@ export class TelegramClient {
                 entry.parse_mode = TELEGRAM_HTML_PARSE_MODE;
             }
 
+            if (captionAbove) {
+                entry.show_caption_above_media = true;
+            }
+
             mediaPayload.push(entry);
         }
 
@@ -490,7 +498,7 @@ export class TelegramClient {
         itemIndex: number,
         itemTotal: number,
         onProgress?: SendProgressCallback,
-        hasSpoiler?: boolean
+        captionAbove?: boolean
     ): Promise<SendResult> {
         const resolvedUrl = fieldName === "photo"
             ? preferTwitterLargeMediaUrl(mediaUrl)
@@ -512,7 +520,7 @@ export class TelegramClient {
                 itemIndex,
                 itemTotal,
                 onProgress,
-                hasSpoiler
+                captionAbove
             );
         }
 
@@ -521,8 +529,8 @@ export class TelegramClient {
             [fieldName]: resolvedUrl,
             caption,
             parse_mode: TELEGRAM_HTML_PARSE_MODE,
-            ...(hasSpoiler ? { has_spoiler: true } : {}),
-            ...this.threadFields()
+            ...this.threadFields(),
+            ...captionAboveFields(captionAbove)
         });
 
         if (byUrl.ok) {
@@ -538,7 +546,7 @@ export class TelegramClient {
             itemIndex,
             itemTotal,
             onProgress,
-            hasSpoiler
+            captionAbove
         );
     }
 
@@ -551,7 +559,7 @@ export class TelegramClient {
         itemIndex: number,
         itemTotal: number,
         onProgress?: SendProgressCallback,
-        hasSpoiler?: boolean
+        captionAbove?: boolean
     ): Promise<SendResult> {
         try {
             const blob = await fetchBlobWithProgress(mediaUrl, (loaded, total) => {
@@ -569,7 +577,7 @@ export class TelegramClient {
                 itemIndex,
                 itemTotal,
                 onProgress,
-                hasSpoiler
+                captionAbove
             );
         } catch (err) {
             if (err instanceof Error && err.message.startsWith("Download failed")) {
@@ -596,7 +604,7 @@ export class TelegramClient {
         itemIndex: number,
         itemTotal: number,
         onProgress?: SendProgressCallback,
-        hasSpoiler?: boolean
+        captionAbove?: boolean
     ): Promise<SendResult> {
         onProgress?.({
             message: itemTotal > 1
@@ -619,6 +627,8 @@ export class TelegramClient {
             formData.append("caption", caption);
             formData.append("parse_mode", TELEGRAM_HTML_PARSE_MODE);
         }
+
+        appendCaptionAboveField(formData, captionAbove);
 
         return this.requestForm(method, formData);
     }
@@ -707,6 +717,22 @@ export class TelegramClient {
         }
 
         return { ok: true };
+    }
+}
+
+/**
+ * Bot API field that draws a single-media caption above the attachment.
+ */
+function captionAboveFields(captionAbove?: boolean): Record<string, boolean> {
+    return captionAbove ? { show_caption_above_media: true } : {};
+}
+
+/**
+ * Multipart counterpart of {@link captionAboveFields}, for uploaded single media.
+ */
+function appendCaptionAboveField(formData: FormData, captionAbove?: boolean): void {
+    if (captionAbove) {
+        formData.append("show_caption_above_media", "true");
     }
 }
 
