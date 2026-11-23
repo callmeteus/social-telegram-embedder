@@ -15,6 +15,13 @@ describe("getPlatformSiteForUrl", () => {
         expect(getPlatformSiteForUrl("https://m.facebook.com/post/1")?.id).toBe(SocialPlatformId.FACEBOOK);
     });
 
+    it("recognizes Instagram from the platform manifest", () => {
+        expect(getPlatformSiteForUrl("https://www.instagram.com/p/ABC123def45/")?.id)
+            .toBe(SocialPlatformId.INSTAGRAM);
+        expect(getPlatformSiteForUrl("https://www.instagram.com/reel/XYZ987abc12/")?.id)
+            .toBe(SocialPlatformId.INSTAGRAM);
+    });
+
     it("recognizes the FurAffinity hosts from the platform manifest", () => {
         expect(getPlatformSiteForUrl("https://www.furaffinity.net/view/12345/")?.id).toBe(SocialPlatformId.FURAFINITY);
         expect(getPlatformSiteForUrl("https://furaffinity.net/view/12345")?.id).toBe(SocialPlatformId.FURAFINITY);

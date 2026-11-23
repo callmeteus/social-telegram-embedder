@@ -10,7 +10,11 @@ import { socialPlatforms } from "../platforms/registry";
 import { updateProgressToast } from "./ui/Toast";
 
 let domObserver: MutationObserver | null = null;
+let rescanTimer: number | undefined;
 let contentScriptStopped = false;
+
+/** Re-scans for late-rendered action bars on SPAs such as Instagram reels. */
+const RESCAN_INTERVAL_MS = 1000;
 
 try {
     chrome.runtime.onMessage.addListener((message: ContentMessage) => {
@@ -47,6 +51,11 @@ export function stopContentScript(): void {
     contentScriptStopped = true;
     domObserver?.disconnect();
     domObserver = null;
+
+    if (rescanTimer !== undefined) {
+        window.clearInterval(rescanTimer);
+        rescanTimer = undefined;
+    }
 }
 
 /**
@@ -103,6 +112,15 @@ function startObserver(): void {
         childList: true,
         subtree: true
     });
+
+    rescanTimer = window.setInterval(() => {
+        if (contentScriptStopped || !isExtensionContextValid()) {
+            stopContentScript();
+            return;
+        }
+
+        scanPlatforms(document);
+    }, RESCAN_INTERVAL_MS);
 }
 
 if (document.readyState === "loading") {
