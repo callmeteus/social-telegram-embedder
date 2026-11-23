@@ -12,7 +12,9 @@ function surfaceOf(editor: { element: HTMLElement }): HTMLElement {
 }
 
 function aboveToggleOf(editor: { element: HTMLElement }): HTMLButtonElement {
-    return editor.element.querySelector<HTMLButtonElement>(".x2tg-caption__option")!;
+    const options = Array.from(editor.element.querySelectorAll<HTMLButtonElement>(".x2tg-caption__option"));
+
+    return options.find((option) => option.textContent?.includes("Caption above media"))!;
 }
 
 describe("createCaptionEditor", () => {

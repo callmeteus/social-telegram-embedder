@@ -360,6 +360,15 @@
     outline: none;
 }
 
+.x2tg-picker button:hover,
+.x2tg-picker button:focus,
+.x2tg-picker button:focus-visible,
+.x2tg-picker__item:hover,
+.x2tg-picker__item:focus,
+.x2tg-picker__item:focus-visible {
+    text-decoration: none !important;
+}
+
 .x2tg-picker__list--reordering {
     cursor: grabbing;
     user-select: none;
@@ -1068,7 +1077,9 @@
 
 .x2tg-caption__options {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
     padding: 0 4px;
 }
 
@@ -1142,25 +1153,6 @@
     color: #6d8499;
 }
 
-.x2tg-caption__spoiler {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 0 4px;
-    color: #a9bccd;
-    font-size: 12px;
-    cursor: pointer;
-    user-select: none;
-}
-
-.x2tg-caption__spoiler-check {
-    width: 14px;
-    height: 14px;
-    margin: 0;
-    accent-color: #2aabee;
-    cursor: pointer;
-}
-
 .x2tg-picker--facebook .x2tg-caption__title,
 .x2tg-picker--facebook .x2tg-caption__count {
     color: var(--secondary-text, #B0B3B8);
@@ -1209,14 +1201,6 @@
 
 .x2tg-picker--facebook .x2tg-caption__editor:empty::before {
     color: var(--secondary-text, #B0B3B8);
-}
-
-.x2tg-picker--facebook .x2tg-caption__spoiler {
-    color: var(--secondary-text, #B0B3B8);
-}
-
-.x2tg-picker--facebook .x2tg-caption__spoiler-check {
-    accent-color: #2aabee;
 }
 
 @media (max-width: 560px) {
