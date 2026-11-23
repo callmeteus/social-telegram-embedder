@@ -44,19 +44,12 @@ export function findE621ControlStrips(root: ParentNode): Element[] {
 }
 
 /**
- * Finds the row that holds the size selector, or the last toolbar row as a fallback.
+ * Finds the last toolbar row so the send button is the final control in the strip.
  *
  * @param strip - E621 control strip.
  * @returns The row where the send button should be appended.
  */
 export function findE621InsertRow(strip: Element): Element {
-    const sizeSelector = strip.querySelector("#image-resize-selector");
-    const sizeRow = sizeSelector?.closest(".ptbr-row");
-
-    if (sizeRow) {
-        return sizeRow;
-    }
-
     const rows = Array.from(strip.querySelectorAll(".ptbr-row"));
 
     return rows[rows.length - 1] ?? strip;

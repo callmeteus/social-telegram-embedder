@@ -10,7 +10,6 @@ import {
     findE621InsertRow
 } from "./ControlStrip";
 import { dismissProgressToast, openOptionsPage, showToast, updateProgressToast } from "../../../content/ui/Toast";
-import { SEND_TO_TELEGRAM_ICON_PATH } from "../../../content/icons/TelegramIcon";
 import {
     getDestinationsKey,
     showDestinationPicker,
@@ -24,6 +23,12 @@ import { isSendPostAccepted, type SendPostResponse } from "../../../core/types/R
 /** Marker set on a control strip after its send button has been injected. */
 export const E621_INJECTED_ATTR = "data-x2tg-e621-injected";
 
+/** Outline paper-plane paths, matching the stroke icons used by E621 controls. */
+const E621_SEND_ICON_PATHS = [
+    "M22 2 11 13",
+    "M22 2 15 22l-4-9-9-4Z"
+];
+
 /**
  * Injects a Telegram send button into the control strip of each visible E621 post.
  *
@@ -35,7 +40,7 @@ export function injectE621Content(root: ParentNode = document): void {
             continue;
         }
 
-        if (strip.querySelector(".x2tg-send-button-slot--e621")) {
+        if (strip.querySelector(".x2tg-send-button--e621")) {
             strip.setAttribute(E621_INJECTED_ATTR, "true");
             continue;
         }
@@ -52,12 +57,11 @@ export function injectE621Content(root: ParentNode = document): void {
 }
 
 /**
- * Builds a toolbar button styled like the existing E621 controls.
+ * Builds a toolbar control that reuses E621's native button styles.
+ * The visible icon avoids mixing the extension locale with the site language; the
+ * accessible name stays localized through i18n.
  */
-function buildSendButton(postUrl: string): HTMLElement {
-    const slot = document.createElement("div");
-    slot.classList.add("x2tg-send-button-slot", "x2tg-send-button-slot--e621");
-
+function buildSendButton(postUrl: string): HTMLButtonElement {
     const button = document.createElement("button");
     button.type = "button";
     button.classList.add("st-button", "x2tg-send-button", "x2tg-send-button--e621");
@@ -66,22 +70,22 @@ function buildSendButton(postUrl: string): HTMLElement {
 
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("viewBox", "0 0 24 24");
-    svg.setAttribute("width", "18");
-    svg.setAttribute("height", "18");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "2");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
     svg.setAttribute("aria-hidden", "true");
-    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    path.setAttribute("fill", "currentColor");
-    path.setAttribute("d", SEND_TO_TELEGRAM_ICON_PATH);
-    svg.appendChild(path);
-
-    const label = document.createElement("span");
-    label.textContent = t("sendToTelegram");
-    button.append(svg, label);
-    slot.appendChild(button);
+    for (const pathData of E621_SEND_ICON_PATHS) {
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", pathData);
+        svg.appendChild(path);
+    }
+    button.appendChild(svg);
 
     wireSendButton(button, postUrl);
 
-    return slot;
+    return button;
 }
 
 /**

@@ -11,7 +11,10 @@ const postMarkup = `
                 <select id="image-resize-selector"><option>Sample (850px)</option></select>
             </div>
         </div>
-        <div class="ptbr-row"><button>Fullscreen</button></div>
+        <div class="ptbr-row">
+            <button class="st-button">Fullscreen</button>
+            <button class="st-button" aria-label="More Options">...</button>
+        </div>
     </section>
 `;
 
@@ -28,24 +31,34 @@ describe("injectE621Content", () => {
         vi.unstubAllGlobals();
     });
 
-    it("injects the send button in the size selector row, after the existing controls", () => {
+    it("injects the send button as the last control of the toolbar row", () => {
         injectE621Content(document);
 
-        const row = document.querySelector(".ptbr-row");
-        const slot = row?.querySelector(".x2tg-send-button-slot--e621");
-        const resizeSlot = document.querySelector("#image-resize-selector")?.parentElement;
+        const rows = document.querySelectorAll("#ptbr-wrapper .ptbr-row");
+        const lastRow = rows[rows.length - 1];
+        const button = lastRow?.querySelector(".x2tg-send-button--e621");
 
-        expect(slot).not.toBeNull();
-        expect(slot?.previousElementSibling).toBe(resizeSlot);
-        expect(slot?.querySelector("button")?.getAttribute("aria-label")).toBe("Send to Telegram");
-        expect(slot?.querySelector("button")?.textContent).toBe("Send to Telegram");
+        expect(button).not.toBeNull();
+        expect(lastRow?.lastElementChild).toBe(button);
+        expect(button?.classList.contains("st-button")).toBe(true);
+        expect(button?.querySelectorAll("svg path")).toHaveLength(2);
+        expect(button?.textContent).toBe("");
+    });
+
+    it("keeps the accessible name localized through i18n", () => {
+        injectE621Content(document);
+
+        const button = document.querySelector(".x2tg-send-button--e621");
+
+        expect(button?.getAttribute("aria-label")).toBe("Send to Telegram");
+        expect(button?.getAttribute("title")).toBe("Send to Telegram");
     });
 
     it("does not duplicate the button on repeated scans", () => {
         injectE621Content(document);
         injectE621Content(document);
 
-        expect(document.querySelectorAll(".x2tg-send-button-slot--e621")).toHaveLength(1);
+        expect(document.querySelectorAll(".x2tg-send-button--e621")).toHaveLength(1);
     });
 
     it("does not inject outside a post view", () => {
@@ -57,7 +70,7 @@ describe("injectE621Content", () => {
 
         injectE621Content(document);
 
-        expect(document.querySelector(".x2tg-send-button-slot--e621")).toBeNull();
+        expect(document.querySelector(".x2tg-send-button--e621")).toBeNull();
     });
 });
 
@@ -74,9 +87,8 @@ describe("extractE621CaptionText", () => {
 });
 
 describe("findE621InsertRow", () => {
-    it("falls back to the last toolbar row when there is no size selector", () => {
+    it("returns the last toolbar row so the button is the final control", () => {
         document.body.innerHTML = postMarkup;
-        document.querySelector("#image-resize-selector")?.remove();
         const strip = document.querySelector("#ptbr-wrapper");
 
         if (!strip) {
