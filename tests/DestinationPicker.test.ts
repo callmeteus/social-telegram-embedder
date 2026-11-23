@@ -268,7 +268,7 @@ describe("showDestinationPicker topic search", () => {
                 topicId: 2
             },
             label: "Fofoca do fim de semana"
-        }], "");
+        }], "", false, false);
     });
 
     it("goes back with Escape and sends the selected topic from the main list", () => {
@@ -294,7 +294,7 @@ describe("showDestinationPicker topic search", () => {
         expect(onSend).toHaveBeenCalledWith([expect.objectContaining({
             label: "Fofoca da semana",
             ref: expect.objectContaining({ topicId: 1 })
-        })], "");
+        })], "", false, false);
     });
 
     it("does not change the main query or run a server search while typing in the topic input", () => {
