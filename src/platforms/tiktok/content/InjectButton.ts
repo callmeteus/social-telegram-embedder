@@ -20,9 +20,7 @@ import { SEND_TO_TELEGRAM_ICON_PATH } from "../../../content/icons/TelegramIcon"
 import { buildCaptionDraftHtml } from "../../../core/telegram/Caption";
 import { registerPendingSend, takePendingSend, wasRecentlySent } from "../../../content/send/PendingSend";
 import { isSendPostAccepted, type SendPostResponse } from "../../../core/types/Results";
-import { offloadSnapshotMediaBlobs } from "../../../content/media/BlobSnapshotTransfer";
 import { buildTikTokSnapshot } from "./TikTokSnapshot";
-import type { SocialPostSnapshot } from "../../types";
 
 /** Marker set on an action rail after its send button has been injected. */
 export const TIKTOK_INJECTED_ATTR = "data-x2tg-tiktok-injected";
@@ -134,13 +132,6 @@ async function sendToDestinations(
     // TikTok's public endpoints no longer expose the video, so capture it from the page payload.
     // TikTok's CSP blocks chrome.storage.session, so the inline blob travels in the message itself.
     const snapshot = await buildTikTokSnapshot(postUrl);
-    let payloadSnapshot: SocialPostSnapshot = snapshot;
-
-    try {
-        payloadSnapshot = await offloadSnapshotMediaBlobs(snapshot, requestId);
-    } catch (err) {
-        console.debug("[tiktok] storage offload unavailable, sending inline bytes directly", err);
-    }
 
     registerPendingSend(requestId, { dedupeKey, destinations });
 
@@ -150,7 +141,7 @@ async function sendToDestinations(
         requestId,
         destinations: destinations.map((destination) => destination.ref),
         postUrl,
-        postSnapshot: payloadSnapshot,
+        postSnapshot: snapshot,
         captionHtml
     });
 
