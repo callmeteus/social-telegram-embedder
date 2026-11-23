@@ -15,6 +15,8 @@ export const dist = join(root, "dist");
 export const entries = [
     { in: "src/background/ServiceWorker.ts", out: "background" },
     { in: "src/content/ContentScript.ts", out: "content" },
+    { in: "src/content/InstagramVideoMapBootstrap.ts", out: "instagram-video-map-bootstrap" },
+    { in: "src/injected/InstagramVideoMap.ts", out: "instagram-video-map" },
     { in: "src/options/OptionsPage.ts", out: "options" },
     { in: "src/popup/Popup.ts", out: "popup" }
 ];

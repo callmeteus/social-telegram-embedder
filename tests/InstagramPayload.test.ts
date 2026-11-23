@@ -39,6 +39,43 @@ describe("Instagram page extraction", () => {
         expect(extractInstagramPostUrl(article)).toBe(postUrl);
     });
 
+    it("prefers the real caption span and ignores interface chrome", () => {
+        document.body.innerHTML = `
+            <article>
+                <header><a href="/traveler">traveler</a></header>
+                <span class="x193iq5w">Sugestões para vocêÁudio originalSugestões para você</span>
+                <span class="x193iq5w">Curtido por fã e outras 2 pessoas</span>
+                <span class="x193iq5w">outras 2 pessoas</span>
+                <span class="_ap3a _aaco _aacu _aacx _aad7 _aade">A real caption here.</span>
+            </article>
+        `;
+        const article = document.querySelector("article");
+
+        if (!article) {
+            throw new Error("post fixture is missing");
+        }
+
+        expect(extractInstagramCaptionText(article)).toBe("A real caption here.");
+    });
+
+    it("omits the author name when a carousel post has no caption", () => {
+        document.body.innerHTML = `
+            <article>
+                <header><a href="/traveler">traveler</a></header>
+                <span class="x193iq5w">traveler</span>
+                <span class="x193iq5w">Curtido por fã e outras 2 pessoas</span>
+                <span class="x193iq5w">outras 2 pessoas</span>
+            </article>
+        `;
+        const article = document.querySelector("article");
+
+        if (!article) {
+            throw new Error("post fixture is missing");
+        }
+
+        expect(extractInstagramCaptionText(article)).toBe("");
+    });
+
     it("maps a photo carousel in display order and skips avatars and duplicates", () => {
         document.body.innerHTML = photoPostMarkup;
         const article = document.querySelector("article");

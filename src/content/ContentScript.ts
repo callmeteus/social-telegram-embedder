@@ -8,6 +8,7 @@ import {
 import { handleSendPostDone } from "./send/SendResultHandler";
 import { socialPlatforms } from "../platforms/registry";
 import { updateProgressToast } from "./ui/Toast";
+import { startInstagramVideoMapListener } from "./media/InstagramVideoMap";
 
 let domObserver: MutationObserver | null = null;
 let rescanTimer: number | undefined;
@@ -89,6 +90,7 @@ function startObserver(): void {
         return;
     }
 
+    startInstagramVideoMapListener();
     scanPlatforms(document);
 
     domObserver = new MutationObserver((mutations) => {
