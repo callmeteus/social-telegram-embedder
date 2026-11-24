@@ -1,4 +1,4 @@
-import { createTabProgressReporter } from "../ProgressReporter";
+import { createProgressBroadcaster } from "../ProgressReporter";
 import {
     dedupeDestinationRefs,
     prefetchPostMedia,
@@ -57,7 +57,7 @@ export function validateSendPostRequest(message: SendPostMessage): string | null
  */
 export async function handleSendPost(
     message: SendPostMessage,
-    sender: chrome.runtime.MessageSender
+    _sender: chrome.runtime.MessageSender
 ): Promise<SendPostResult> {
     const invalid = validateSendPostRequest(message);
 
@@ -73,10 +73,7 @@ export async function handleSendPost(
     const normalizedUrl = platform.normalizePostUrl(message.postUrl)!;
 
     const config = await loadConfig();
-    const tabId = sender.tab?.id;
-    const onProgress = tabId
-        ? createTabProgressReporter(tabId, message.requestId)
-        : undefined;
+    const onProgress = createProgressBroadcaster(message.requestId);
     const accountConnectionIds = new Set(destinations
         .filter((ref) => ref.type === DestinationRefType.TELEGRAM_PEER)
         .map((ref) => ref.connectionId)

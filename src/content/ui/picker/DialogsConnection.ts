@@ -1,3 +1,4 @@
+import { runtime } from "../../../core/extension/BrowserApi";
 import {
     DialogListActionType,
     reduceDialogList,
@@ -31,7 +32,7 @@ export type DialogsPortFactory = (connectionId: string) => chrome.runtime.Port;
  * Opens the real dialogs port of a Telegram account connection.
  */
 export function connectDialogsPort(connectionId: string): chrome.runtime.Port {
-    return chrome.runtime.connect({ name: buildTelegramUserPortName(TelegramUserPortName.DIALOGS, connectionId) });
+    return runtime.connect({ name: buildTelegramUserPortName(TelegramUserPortName.DIALOGS, connectionId) });
 }
 
 /**

@@ -1,3 +1,4 @@
+import { getExtensionUrl, getExtensionManifest } from "../../core/extension/BrowserApi";
 import {
     Chat,
     Dialog,
@@ -101,11 +102,11 @@ export class MtcuteTelegramUserClient implements TelegramUserClient {
             apiId: credentials.apiId,
             apiHash: credentials.apiHash,
             storage: new IdbStorage(databaseName),
-            crypto: new WebCryptoProvider({ wasmInput: chrome.runtime.getURL(MTCUTE_WASM_FILE) }),
+            crypto: new WebCryptoProvider({ wasmInput: getExtensionUrl(MTCUTE_WASM_FILE) }),
 
             initConnectionOptions: {
                 deviceModel: "Chrome",
-                appVersion: chrome.runtime.getManifest().version
+                appVersion: getExtensionManifest().version
             },
 
             network: {

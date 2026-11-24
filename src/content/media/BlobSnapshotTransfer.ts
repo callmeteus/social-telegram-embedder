@@ -1,3 +1,4 @@
+import { storage } from "../../core/extension/BrowserApi";
 import { isExtensionContextError, isExtensionContextValid } from "../../core/extension";
 import type { SocialMediaInlineBlob, SocialPostSnapshot } from "../../platforms/types";
 
@@ -22,7 +23,7 @@ export async function offloadSnapshotMediaBlobs(
         const storageKey = `${STORAGE_PREFIX}${requestId}:${index}`;
 
         try {
-            await chrome.storage.session.set({
+            await storage.session.set({
                 [storageKey]: item.inlineBlob
             });
         } catch (err) {
@@ -57,11 +58,11 @@ export async function hydrateSnapshotMediaBlobs(
             return item;
         }
 
-        const stored = await chrome.storage.session.get(item.inlineBlobStorageKey);
+        const stored = await storage.session.get(item.inlineBlobStorageKey);
         const inlineBlob = stored[item.inlineBlobStorageKey] as SocialMediaInlineBlob | undefined;
 
         if (inlineBlob) {
-            await chrome.storage.session.remove(item.inlineBlobStorageKey);
+            await storage.session.remove(item.inlineBlobStorageKey);
         }
 
         return {

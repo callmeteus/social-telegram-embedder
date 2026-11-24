@@ -17,6 +17,7 @@ import {
 import { migrateConfig } from "./ConfigMigrations";
 import { findBotConnection, getAccountConnections, withConnection, withoutConnection } from "./Connections";
 import { isExtensionContextError, isExtensionContextValid } from "../extension";
+import { storage } from "../extension/BrowserApi";
 
 const STORAGE_KEY = "xToTelegramConfig";
 
@@ -29,7 +30,7 @@ export async function loadConfig(): Promise<ExtensionConfig> {
     }
 
     try {
-        const result = await chrome.storage.sync.get(STORAGE_KEY);
+        const result = await storage.sync.get(STORAGE_KEY);
         const { config, migrated, fromVersion } = migrateConfig(result[STORAGE_KEY]);
 
         if (migrated) {
@@ -51,7 +52,7 @@ export async function loadConfig(): Promise<ExtensionConfig> {
  * Persists extension configuration to chrome.storage.sync.
  */
 export async function saveConfig(config: ExtensionConfig): Promise<void> {
-    await chrome.storage.sync.set({
+    await storage.sync.set({
         [STORAGE_KEY]: config
     });
 }

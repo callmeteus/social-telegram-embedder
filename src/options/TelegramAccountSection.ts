@@ -1,3 +1,4 @@
+import { runtime } from "../core/extension/BrowserApi";
 import { renderSVG } from "uqr";
 import { t } from "../core/i18n/I18n";
 import { parseTelegramApiCredentials, TelegramCredentialsField } from "../core/telegram-user/Credentials";
@@ -67,7 +68,7 @@ export interface TelegramAccountSectionControls {
  * Opens the real auth port of an account connection.
  */
 export function connectAuthPort(connectionId: string): chrome.runtime.Port {
-    return chrome.runtime.connect({ name: buildTelegramUserPortName(TelegramUserPortName.AUTH, connectionId) });
+    return runtime.connect({ name: buildTelegramUserPortName(TelegramUserPortName.AUTH, connectionId) });
 }
 
 /**

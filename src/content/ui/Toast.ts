@@ -1,3 +1,4 @@
+import { openOptionsPage as openExtensionOptionsPage } from "../../core/extension/BrowserApi";
 /**
  * Floating toast notifications inside the X/Twitter page.
  */
@@ -153,8 +154,8 @@ export function dismissProgressToast(requestId: string): void {
  */
 export function openOptionsPage(): void {
     try {
-        if (isExtensionContextValid() && chrome.runtime.openOptionsPage) {
-            chrome.runtime.openOptionsPage();
+        if (isExtensionContextValid()) {
+            void openExtensionOptionsPage().catch(() => undefined);
         }
     } catch {
         // Extension was reloaded while the page stayed open.

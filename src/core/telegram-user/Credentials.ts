@@ -1,3 +1,4 @@
+import { storage } from "../extension/BrowserApi";
 const CREDENTIALS_STORAGE_KEY = "telegramUserCredentials";
 const API_HASH_PATTERN = /^[0-9a-f]{32}$/;
 
@@ -40,7 +41,7 @@ export function parseTelegramApiCredentials(rawApiId: unknown, rawApiHash: unkno
  * Reads stored credentials, or null when missing or malformed.
  */
 export async function loadTelegramApiCredentials(): Promise<TelegramApiCredentials | null> {
-    const result = await chrome.storage.local.get(CREDENTIALS_STORAGE_KEY);
+    const result = await storage.local.get(CREDENTIALS_STORAGE_KEY);
     const stored = result[CREDENTIALS_STORAGE_KEY] as { apiId?: unknown; apiHash?: unknown } | undefined;
 
     if (!stored) {
@@ -53,15 +54,15 @@ export async function loadTelegramApiCredentials(): Promise<TelegramApiCredentia
 }
 
 /**
- * Persists credentials in chrome.storage.local (this device only).
+ * Persists credentials in storage.local (this device only).
  */
 export async function saveTelegramApiCredentials(credentials: TelegramApiCredentials): Promise<void> {
-    await chrome.storage.local.set({ [CREDENTIALS_STORAGE_KEY]: credentials });
+    await storage.local.set({ [CREDENTIALS_STORAGE_KEY]: credentials });
 }
 
 /**
  * Removes stored credentials.
  */
 export async function clearTelegramApiCredentials(): Promise<void> {
-    await chrome.storage.local.remove(CREDENTIALS_STORAGE_KEY);
+    await storage.local.remove(CREDENTIALS_STORAGE_KEY);
 }

@@ -1,11 +1,15 @@
 node_modules/
 dist/
+dist-firefox/
 dist-dev-options/
 release/
 *.log
 .DS_Store
 Thumbs.db
 telegram-api.local.json
+.yarn/
+.pnp.*
+.private/
 
 # Stillmark
 .stillmark/plans/

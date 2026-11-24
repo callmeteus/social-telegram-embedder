@@ -1,3 +1,4 @@
+import { storage } from "../core/extension/BrowserApi";
 import { initBotConnectionEditor, type BotConnectionEditor } from "./BotConnectionEditor";
 import { renderConnectionsList } from "./ConnectionsList";
 import { formatOptionsRoute, OptionsView, parseOptionsRoute, type OptionsRoute } from "./OptionsRoute";
@@ -66,7 +67,7 @@ async function init(): Promise<void> {
         }
     });
 
-    chrome.storage.onChanged.addListener((_changes, area) => {
+    storage.onChanged.addListener((_changes, area) => {
         if (area === "sync") {
             void refreshConfig();
         }

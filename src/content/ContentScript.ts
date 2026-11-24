@@ -1,13 +1,15 @@
+import { isFirefoxRuntime, runtime } from "../core/extension/BrowserApi";
 import { isExtensionContextError, isExtensionContextValid } from "../core/extension";
 import {
     ContentMessageType,
     type ContentMessage,
     type SendPostDonePayload,
+    type SendProgressEndPayload,
     type SendProgressPayload
 } from "../core/network/SendProgress";
 import { handleSendPostDone } from "./send/SendResultHandler";
 import { socialPlatforms } from "../platforms/registry";
-import { updateProgressToast } from "./ui/Toast";
+import { dismissProgressToast, updateProgressToast } from "./ui/Toast";
 import { startInstagramVideoMapListener } from "./media/InstagramVideoMap";
 
 let domObserver: MutationObserver | null = null;
@@ -18,7 +20,7 @@ let contentScriptStopped = false;
 const RESCAN_INTERVAL_MS = 1000;
 
 try {
-    chrome.runtime.onMessage.addListener((message: ContentMessage) => {
+    runtime.onMessage.addListener((message: ContentMessage) => {
         if (!isExtensionContextValid()) {
             stopContentScript();
             return;
@@ -28,6 +30,11 @@ try {
             const progress = message as SendProgressPayload;
 
             updateProgressToast(progress.requestId, progress.message, progress.percent);
+            return;
+        }
+
+        if (message.type === ContentMessageType.SEND_PROGRESS_END) {
+            dismissProgressToast((message as SendProgressEndPayload).requestId);
             return;
         }
 
@@ -91,6 +98,14 @@ function startObserver(): void {
     }
 
     startInstagramVideoMapListener();
+
+    // Shared-DOM marker identifying which browser ran the content script.
+    // Useful for diagnostics and for the cross-browser smoke tests.
+    document.documentElement.setAttribute(
+        "data-x2tg-content-script",
+        isFirefoxRuntime() ? "firefox" : "chrome"
+    );
+
     scanPlatforms(document);
 
     domObserver = new MutationObserver((mutations) => {
