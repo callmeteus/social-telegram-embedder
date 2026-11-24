@@ -3,6 +3,13 @@ $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName UIAutomationTypes
 Add-Type -AssemblyName System.Windows.Forms
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+public static class Win32Foreground {
+    [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
+}
+"@
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $distPath = (Resolve-Path (Join-Path $repoRoot "dist")).Path
@@ -96,7 +103,12 @@ try {
 
         $omnibox.SetFocus()
         $omnibox.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).SetValue("chrome://extensions/?id=$extensionId")
-        [System.Windows.Forms.SendKeys]::SendWait("{ENTER}")
+        try {
+            [Win32Foreground]::SetForegroundWindow([IntPtr]$window.Current.NativeWindowHandle) | Out-Null
+            [System.Windows.Forms.SendKeys]::SendWait("{ENTER}")
+        } catch {
+            # Sending keys can still be denied by Windows focus rules.
+        }
         Start-Sleep -Seconds 1
     }
 

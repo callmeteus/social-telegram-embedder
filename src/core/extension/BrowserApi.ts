@@ -36,9 +36,19 @@ function resolveApi(): ExtensionApi {
     return api;
 }
 
-/** True when the native `browser.*` namespace is present (Firefox). */
+/**
+ * True when running in Firefox.
+ *
+ * Newer Chrome versions also expose a `browser.*` alias, so checking for the
+ * namespace alone misidentifies Chrome as Firefox. The user agent is the
+ * reliable signal here (available in both content scripts and workers).
+ */
 export function isFirefoxRuntime(): boolean {
-    return typeof (globalThis as unknown as ExtensionScope).browser !== "undefined";
+    try {
+        return /Firefox\//i.test(globalThis.navigator?.userAgent ?? "");
+    } catch {
+        return false;
+    }
 }
 
 /** Scheme used by extension URLs in the current browser. */
