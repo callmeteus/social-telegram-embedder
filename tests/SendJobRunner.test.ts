@@ -43,7 +43,10 @@ beforeEach(() => {
                 lastError: undefined
             },
             i18n: realI18n,
-            tabs: { sendMessage: vi.fn(async () => undefined) },
+            tabs: {
+                query: vi.fn(async () => []),
+                sendMessage: vi.fn(async () => undefined)
+            },
             notifications: { create: vi.fn() }
         }
     });

@@ -1,5 +1,6 @@
 import { tabs, runtime } from "../core/extension/BrowserApi";
 import { handleSendPost } from "./handlers/SendPostHandler";
+import { broadcastProgressEnd } from "./ProgressReporter";
 import { notifySendResult } from "./SendNotifier";
 import { t } from "../core/i18n/I18n";
 import { ContentMessageType, type SendPostDonePayload } from "../core/network/SendProgress";
@@ -43,6 +44,7 @@ export async function runSendJob(
         endJob();
     }
 
+    await broadcastProgressEnd(message.requestId);
     await deliverSendResult(sender.tab?.id, message.requestId, result);
     return result;
 }

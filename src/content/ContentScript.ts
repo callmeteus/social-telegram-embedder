@@ -4,11 +4,12 @@ import {
     ContentMessageType,
     type ContentMessage,
     type SendPostDonePayload,
+    type SendProgressEndPayload,
     type SendProgressPayload
 } from "../core/network/SendProgress";
 import { handleSendPostDone } from "./send/SendResultHandler";
 import { socialPlatforms } from "../platforms/registry";
-import { updateProgressToast } from "./ui/Toast";
+import { dismissProgressToast, updateProgressToast } from "./ui/Toast";
 import { startInstagramVideoMapListener } from "./media/InstagramVideoMap";
 
 let domObserver: MutationObserver | null = null;
@@ -29,6 +30,11 @@ try {
             const progress = message as SendProgressPayload;
 
             updateProgressToast(progress.requestId, progress.message, progress.percent);
+            return;
+        }
+
+        if (message.type === ContentMessageType.SEND_PROGRESS_END) {
+            dismissProgressToast((message as SendProgressEndPayload).requestId);
             return;
         }
 

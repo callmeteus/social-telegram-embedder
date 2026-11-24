@@ -5,6 +5,7 @@ import type { SendPostResult } from "../types/Results";
  */
 export enum ContentMessageType {
     SEND_PROGRESS = "SEND_PROGRESS",
+    SEND_PROGRESS_END = "SEND_PROGRESS_END",
     SEND_POST_DONE = "SEND_POST_DONE"
 }
 
@@ -16,6 +17,12 @@ export interface SendProgressPayload {
     percent?: number;
 }
 
+/** Payload that closes a progress toast in tabs that will not receive the final result. */
+export interface SendProgressEndPayload {
+    type: ContentMessageType.SEND_PROGRESS_END;
+    requestId: string;
+}
+
 /** Payload with the final outcome of a queued send, pushed once the background job finishes. */
 export interface SendPostDonePayload {
     type: ContentMessageType.SEND_POST_DONE;
@@ -24,7 +31,7 @@ export interface SendPostDonePayload {
 }
 
 /** Every message the service worker pushes into a content script tab. */
-export type ContentMessage = SendProgressPayload | SendPostDonePayload;
+export type ContentMessage = SendProgressPayload | SendProgressEndPayload | SendPostDonePayload;
 
 /** Progress callback used while sending a social post. */
 export interface SendProgressUpdate {
