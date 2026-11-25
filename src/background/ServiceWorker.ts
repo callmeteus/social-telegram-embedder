@@ -2,6 +2,7 @@ import { runtime, scripting } from "../core/extension/BrowserApi";
 import { validateSendPostRequest } from "./handlers/SendPostHandler";
 import { startSendJob } from "./SendJobRunner";
 import { routeTelegramUserPort, telegramUserSessions } from "./telegram-user";
+import { recoverTelegramAccountConnections } from "./telegram-user/AccountRecovery";
 import { createDestinationSender } from "../core/destinations";
 import { t } from "../core/i18n/I18n";
 import { findBotConnection } from "../core/storage/Connections";
@@ -30,6 +31,7 @@ runtime.onInstalled.addListener((details) => {
     loadConfig().catch((err: unknown) => {
         console.error("[storage] config migration on update failed: %O", err);
     });
+    void recoverTelegramAccountConnections();
 });
 
 /**
@@ -39,6 +41,8 @@ runtime.onInstalled.addListener((details) => {
 runtime.onConnect.addListener((port) => {
     routeTelegramUserPort(port, telegramUserSessions, runtime.id);
 });
+
+void recoverTelegramAccountConnections();
 
 /**
  * Handles runtime messages from content script and options page.

@@ -58,6 +58,19 @@ export async function saveConfig(config: ExtensionConfig): Promise<void> {
 }
 
 /**
+ * Saves the picker preference against the latest stored config, never a page's cached snapshot.
+ */
+export async function saveHideRecentChats(hideRecentChats: boolean): Promise<void> {
+    const config = await loadConfig();
+
+    if (config.hideRecentChats === hideRecentChats) {
+        return;
+    }
+
+    await saveConfig({ ...config, hideRecentChats });
+}
+
+/**
  * Returns true when a Telegram account is connected or at least one channel is ready.
  */
 export function isConfigReady(config: ExtensionConfig): boolean {

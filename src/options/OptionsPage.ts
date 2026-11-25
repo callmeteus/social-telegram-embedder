@@ -7,7 +7,7 @@ import { initTelegramAccountSection, type TelegramAccountSectionControls } from 
 import { applyOptionsPageI18n } from "../core/i18n/ApplyOptionsPageI18n";
 import { t } from "../core/i18n/I18n";
 import { createConnectionId } from "../core/storage/Connections";
-import { loadConfig, saveConfig } from "../core/storage/Storage";
+import { loadConfig, saveHideRecentChats } from "../core/storage/Storage";
 import { SendConnectionType, type ExtensionConfig } from "../core/types/Config";
 
 const connectionsView = document.getElementById("connections-view") as HTMLElement;
@@ -42,12 +42,12 @@ async function init(): Promise<void> {
 
     document.getElementById("connections-add")?.addEventListener("click", () => navigate({ view: OptionsView.ADD }));
     hideRecentChatsSwitch.addEventListener("click", () => {
-        if (config) {
-            const enabled = hideRecentChatsSwitch.getAttribute("aria-checked") !== "true";
+        const enabled = hideRecentChatsSwitch.getAttribute("aria-checked") !== "true";
 
-            hideRecentChatsSwitch.setAttribute("aria-checked", String(enabled));
-            void saveConfig({ ...config, hideRecentChats: enabled });
-        }
+        hideRecentChatsSwitch.setAttribute("aria-checked", String(enabled));
+        void saveHideRecentChats(enabled).catch((err: unknown) => {
+            console.error("[options] failed to save picker preference: %O", err);
+        });
     });
     document.getElementById("bot-back")?.addEventListener("click", () => navigate({ view: OptionsView.LIST }));
     document.getElementById("account-back")?.addEventListener("click", () => navigate({ view: OptionsView.LIST }));

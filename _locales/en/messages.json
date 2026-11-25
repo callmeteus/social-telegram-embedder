@@ -975,5 +975,14 @@
     },
     "pickerNoTopicsFound": {
         "message": "No topics found."
+    },
+    "optionsPreferencesTitle": {
+        "message": "Preferences"
+    },
+    "optionsHideRecentChatsLabel": {
+        "message": "Hide recent chats"
+    },
+    "optionsHideRecentChatsDescription": {
+        "message": "Show only pinned destinations and your chat list in the picker."
     }
 }
